@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: larimarpharma
+
+  profiles:
+    active: dev
+
+  jackson:
+    serialization:
+      indent-output: true
+    time-zone: Asia/Kolkata
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
