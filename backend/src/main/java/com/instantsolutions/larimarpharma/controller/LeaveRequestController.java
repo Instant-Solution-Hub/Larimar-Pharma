@@ -1,0 +1,22 @@
+package com.instantsolutions.larimarpharma.controller;
+
+import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
+import com.instantsolutions.larimarpharma.entity.LeaveRequest;
+import com.instantsolutions.larimarpharma.service.LeaveRequestService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/leaves")
+public class LeaveRequestController {
+
+    @Autowired
+    private LeaveRequestService leaveRequestService;
+
+    @PostMapping("/apply")
+    public ResponseEntity<LeaveRequest> applyLeave(@RequestBody LeaveRequestDto dto) {
+        LeaveRequest leaveRequest = leaveRequestService.applyLeave(dto);
+        return ResponseEntity.ok(leaveRequest);
+    }
+}
