@@ -30,16 +30,16 @@ public class SecurityConfig {
 
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/error",
-                                "/fe/test",
-                                "/health",
-                                "/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+//                        .requestMatchers(
+//                                "/",
+//                                "/error",
+//                                "/fe/test",
+//                                "/health",
+//                                "/auth/**",
+//                                "/swagger-ui/**",
+//                                "/v3/api-docs/**"
+//                        ).permitAll()
+                        .anyRequest().permitAll()
                 );
 
         return http.build();
