@@ -23,10 +23,9 @@ public class FieldExecutiveProfile {
     private Double targetAchieved; // percentage
     private Double incentiveEarned;
     private Integer totalLeaves;
-    private Integer leavesTaken;
     private Integer casualLeaves;
     private Integer sickLeaves;
-    private Integer leavesRemaining;
+
 
     // Monthly targets
     private Integer aPlusDoctorTarget = 90; // 30 doctors × 3 visits
