@@ -3,7 +3,10 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.LoginResponseDto;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.AuthenticationException;
+import com.instantsolutions.larimarpharma.repository.AdminRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import com.instantsolutions.larimarpharma.repository.ManagerRepository;
+import com.instantsolutions.larimarpharma.repository.SuperAdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
