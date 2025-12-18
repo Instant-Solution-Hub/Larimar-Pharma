@@ -24,7 +24,10 @@ public class Doctor {
     @Column(nullable = false)
     private Category category; // A_PLUS, A, B
 
-    private String practiceType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PracticeType practiceType; // RP , OP , NP
+
     private String designation;
 
     @Column(nullable = false)
@@ -67,5 +70,9 @@ public class Doctor {
 
     public enum Category {
         A_PLUS, A, B
+    }
+
+    public enum PracticeType {
+        RP , OP , NP
     }
 }

@@ -24,6 +24,8 @@ public class FieldExecutiveProfile {
     private Double incentiveEarned;
     private Integer totalLeaves;
     private Integer leavesTaken;
+    private Integer casualLeaves;
+    private Integer sickLeaves;
     private Integer leavesRemaining;
 
     // Monthly targets
@@ -31,8 +33,9 @@ public class FieldExecutiveProfile {
     private Integer aDoctorTarget = 120;    // 60 doctors × 2 visits
     private Integer bDoctorTarget = 10;     // 10 doctors × 1 visit
 
-    private Integer pharmacyVisitTarget;
-    private Integer stockistVisitTarget;
+    private Integer pharmacyVisitProgress;
+    private Integer stockistVisitProgress;
+    private Integer doctorVisitProgress;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
