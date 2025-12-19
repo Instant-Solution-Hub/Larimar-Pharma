@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.MonthlyOrderStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderItemRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,6 +104,64 @@ public class OrderService {
     public List<Order> getMyOrders(Long feId) {
         return orderRepository.findAllByFieldExecutiveIdAndStatusNot(
                 feId, Order.OrderStatus.CANCELLED);
+    }
+
+    @Transactional
+    public List<Order> getMyOrdersForCurrentMonth(Long feId) {
+
+        if (feId == null) {
+            throw new IllegalArgumentException("Field Executive ID cannot be null");
+        }
+
+        fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new ResourceNotFoundException("Field Executive not found"));
+
+        LocalDate now = LocalDate.now();
+        LocalDateTime start = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+
+        return orderRepository
+                .findAllByFieldExecutiveIdAndOrderDateBetweenOrderByOrderDateDesc(
+                        feId,
+                        start,
+                        end
+                );
+    }
+
+
+    public MonthlyOrderStatsDto getMonthlyOrderStats(Long feId) {
+
+        if (feId == null) {
+            throw new IllegalArgumentException("Field Executive ID cannot be null");
+        }
+
+        fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new ResourceNotFoundException("Field Executive not found"));
+
+        LocalDate now = LocalDate.now();
+        LocalDateTime start = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+
+        long totalOrders =
+                orderRepository.countByFieldExecutiveIdAndOrderDateBetweenAndStatusNot(
+                        feId, start, end, Order.OrderStatus.CANCELLED);
+
+        long pendingOrders =
+                orderRepository.countByFieldExecutiveIdAndOrderDateBetweenAndStatus(
+                        feId, start, end, Order.OrderStatus.PENDING);
+
+        Double totalSales =
+                orderRepository.sumTotalAmountByStatusForMonth(
+                        feId, Order.OrderStatus.CONFIRMED, start, end);
+
+        return MonthlyOrderStatsDto.builder()
+                .fieldExecutiveId(feId)
+                .year(now.getYear())
+                .month(now.getMonthValue())
+                .totalOrders(totalOrders)
+                .pendingOrders(pendingOrders)
+                .totalSales(totalSales)
+                .build();
     }
 
     // ---------- helper ----------

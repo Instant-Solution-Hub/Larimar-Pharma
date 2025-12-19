@@ -1,5 +1,7 @@
 package com.instantsolutions.larimarpharma.controller;
 
+import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.MonthlyOrderStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
 import com.instantsolutions.larimarpharma.entity.Order;
 import com.instantsolutions.larimarpharma.service.OrderService;
@@ -55,6 +57,34 @@ public class FEOrderController {
 
         return ResponseEntity.ok(
                 orderService.getMyOrders(feId)
+        );
+    }
+
+    // 🔹 ALL orders (including cancelled) for current month
+    @GetMapping("/{feId}/current-month")
+    public ResponseEntity<ApiResponseDto<List<Order>>> getMyOrdersForCurrentMonth(
+            @PathVariable Long feId) {
+
+        List<Order> orders =
+                orderService.getMyOrdersForCurrentMonth(feId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        orders,
+                        "Current month orders fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/monthly-stats/{feId}")
+    public ResponseEntity<ApiResponseDto<MonthlyOrderStatsDto>> getMonthlyOrderStats(
+            @PathVariable Long feId) {
+
+        MonthlyOrderStatsDto stats =
+                orderService.getMonthlyOrderStats(feId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(stats, "Monthly order stats fetched successfully")
         );
     }
 }
