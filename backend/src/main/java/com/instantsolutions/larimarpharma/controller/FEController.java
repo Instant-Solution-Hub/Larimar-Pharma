@@ -1,28 +1,29 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.FEUpdateContactDto;
-import com.instantsolutions.larimarpharma.DTOs.MonthlyDoctorVisitDto;
-import com.instantsolutions.larimarpharma.DTOs.MonthlyDoctorVisitStatDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.AttendanceService;
 import com.instantsolutions.larimarpharma.service.FEVisitService;
-import com.instantsolutions.larimarpharma.service.FieldExecutiveService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.instantsolutions.larimarpharma.service.FEService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/fe")
+@RequestMapping("/api/field-executives")
+@RequiredArgsConstructor
 public class FEController {
+
     @Autowired
     AttendanceService attendanceService;
     @Autowired
-    FieldExecutiveService fieldExecutiveService;
+    FEService fieldExecutiveService;
     @Autowired
     FEVisitService feVisitService;
+    final FEService service;
 
     @GetMapping("/{feId}/doctor-visits/monthly")
     public MonthlyDoctorVisitStatDto getMonthlyDoctorVisits(
@@ -70,5 +71,38 @@ public class FEController {
                         "Contact details updated successfully"
                 )
         );
+    }
+
+
+    @PostMapping
+    public ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> create(@RequestBody FieldExecutiveRequest request) {
+        FieldExecutiveResponse response = service.create(request);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(response, "Login successful")
+        );
+
+    }
+
+    @GetMapping
+    public List<FieldExecutiveResponse> getAll() {
+        return service.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public FieldExecutiveResponse getById(@PathVariable Long id) {
+        return service.getById(id);
+    }
+
+    @PutMapping("/{id}")
+    public FieldExecutiveResponse update(
+            @PathVariable Long id,
+            @RequestBody FieldExecutiveRequest request
+    ) {
+        return service.update(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

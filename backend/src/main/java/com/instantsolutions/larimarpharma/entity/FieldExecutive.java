@@ -2,6 +2,8 @@ package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,7 +13,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true, exclude = {"visits", "slots", "orders", "managerJoinings"})
 public class FieldExecutive extends BaseUser {

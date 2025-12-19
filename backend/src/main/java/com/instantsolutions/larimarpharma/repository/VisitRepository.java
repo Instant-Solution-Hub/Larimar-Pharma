@@ -14,12 +14,6 @@ import java.util.List;
 @Repository
 public interface VisitRepository extends JpaRepository<Visit, Long> {
 
-    long countByFieldExecutiveIdAndVisitTypeAndScheduledDateBetween(
-            Long feId,
-            VisitType visitType,
-            LocalDateTime start,
-            LocalDateTime end
-    );
 
     long countByFieldExecutiveIdAndVisitTypeAndStatusAndScheduledDateBetween(
             Long feId,
@@ -40,14 +34,42 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     List<Visit> findDoctorVisitsForMonth(
             @Param("feId") Long feId,
             @Param("visitType") VisitType visitType,
+            @Param("startDate") LocalDateTime start,
+            @Param("endDate") LocalDateTime end);
+
+
+
+
+    @Query("""
+        SELECT
+            COUNT(CASE WHEN v.visitType = 'DOCTOR' THEN 1 END),
+            COUNT(CASE WHEN v.visitType = 'PHARMACIST' THEN 1 END),
+            COUNT(CASE WHEN v.visitType = 'STOCKIST' THEN 1 END)
+        FROM Visit v
+        WHERE v.fieldExecutive.id = :feId
+          AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.COMPLETED
+          AND v.actualDate BETWEEN :startDate AND :endDate
+    """)
+    Object[] getCompletedVisitCountsForMonth(
+            @Param("feId") Long feId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
 
     List<Visit> findByVisitTypeAndStatusAndScheduledDateBefore(
             VisitType visitType,
             VisitStatus status,
             LocalDateTime now
+    );
+
+
+    // Total doctor visits (including scheduled + completed)
+    long countByFieldExecutiveIdAndVisitTypeAndScheduledDateBetween(
+            Long feId,
+            Visit.VisitType visitType,
+            LocalDateTime startDate,
+            LocalDateTime endDate
     );
 }
 
