@@ -17,7 +17,7 @@ public class Visit {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id")
+    @JoinColumn(name = "doctor_id" , nullable = false)
     private Doctor doctor;
 
     @ManyToOne(fetch = FetchType.LAZY)

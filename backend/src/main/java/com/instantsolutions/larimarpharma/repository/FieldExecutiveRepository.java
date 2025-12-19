@@ -26,6 +26,7 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
     List<FieldExecutive> search(@Param("searchTerm") String searchTerm);
 
     boolean existsByEmail(String email);
+
     boolean existsByEmployeeCode(String employeeCode);
 
     @Query("SELECT COUNT(fe) FROM FieldExecutive fe WHERE fe.active = true")
