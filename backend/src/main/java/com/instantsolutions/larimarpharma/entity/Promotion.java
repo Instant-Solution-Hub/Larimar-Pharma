@@ -20,6 +20,8 @@ public class Promotion {
 
     private String description;
 
+    private Type type;
+
     @Column(nullable = false)
     private LocalDateTime startDate;
 
@@ -30,9 +32,6 @@ public class Promotion {
     @Column(nullable = false)
     @Builder.Default
     private PromotionStatus status = PromotionStatus.UPCOMING;
-
-    @Builder.Default
-    private boolean isNewProduct = false;
 
     @Builder.Default
     private boolean active = true;
@@ -67,5 +66,9 @@ public class Promotion {
 
     public enum PromotionStatus {
         UPCOMING, ACTIVE, COMPLETED
+    }
+
+    public enum Type {
+        NEW_PRODUCT, CAMPAIGN, OFFER
     }
 }
