@@ -4,7 +4,6 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.LoginResponseDto;
 import com.instantsolutions.larimarpharma.service.AuthService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
