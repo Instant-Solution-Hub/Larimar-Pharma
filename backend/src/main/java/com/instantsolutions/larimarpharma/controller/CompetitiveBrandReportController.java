@@ -1,12 +1,12 @@
 package com.instantsolutions.larimarpharma.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportResponseDto;
+import com.instantsolutions.larimarpharma.entity.CompetitiveBrandReport;
 import com.instantsolutions.larimarpharma.service.CompetitiveBrandReportService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,46 +17,42 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competitive-reports")
+@RequiredArgsConstructor
 public class CompetitiveBrandReportController {
 
-    @Autowired
-    private CompetitiveBrandReportService reportService;
+    private final CompetitiveBrandReportService reportService;
 
-    // ✅ CREATE
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> create(
             @RequestPart("data") String data,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) throws Exception {
 
+        ObjectMapper mapper = new ObjectMapper();
         CompetitiveBrandReportRequestDto dto =
-                new ObjectMapper()
-                        .registerModule(new JavaTimeModule())
-                        .readValue(data, CompetitiveBrandReportRequestDto.class);
+                mapper.readValue(data, CompetitiveBrandReportRequestDto.class);
 
-        CompetitiveBrandReportResponseDto saved =
-                reportService.create(dto, image);
+        CompetitiveBrandReportResponseDto saved = reportService.create(dto, image);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponseDto.success(saved, "Report created successfully"));
+        return new ResponseEntity<>(
+                ApiResponseDto.success(saved, "Report created successfully"),
+                HttpStatus.CREATED
+        );
     }
 
-    // ✅ UPDATE
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> update(
             @PathVariable Long id,
             @RequestPart("data") CompetitiveBrandReportRequestDto dto,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        CompetitiveBrandReportResponseDto updated =
-                reportService.update(id, dto, image);
-
+        CompetitiveBrandReportResponseDto updated = reportService.update(id, dto, image);
         return ResponseEntity.ok(
                 ApiResponseDto.success(updated, "Report updated successfully")
         );
     }
 
-    // ✅ GET BY ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> getById(
             @PathVariable Long id
@@ -69,7 +65,6 @@ public class CompetitiveBrandReportController {
         );
     }
 
-    // ✅ GET ALL
     @GetMapping
     public ResponseEntity<ApiResponseDto<List<CompetitiveBrandReportResponseDto>>> getAll() {
         return ResponseEntity.ok(
@@ -80,11 +75,9 @@ public class CompetitiveBrandReportController {
         );
     }
 
-    // ✅ DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable Long id) {
         reportService.delete(id);
-
         return ResponseEntity.ok(
                 ApiResponseDto.success(null, "Report deleted successfully")
         );
