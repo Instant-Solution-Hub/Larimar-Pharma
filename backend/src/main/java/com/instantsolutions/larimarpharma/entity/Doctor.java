@@ -36,6 +36,8 @@ public class Doctor {
     private String location;
     private String contactNumber;
     private String doctorCode;
+    private String latitude;
+    private String longitude;
 
     @Builder.Default
     private boolean active = true;

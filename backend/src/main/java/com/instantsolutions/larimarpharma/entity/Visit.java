@@ -29,6 +29,19 @@ public class Visit {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pharmacy_id", nullable = true)
+    private Pharmacy pharmacy;
+
+    @OneToMany(
+    mappedBy = "visit",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ConvertedProduct> convertedProducts = List.of();
+
+
     /* ===== Planning (Slot logic) ===== */
 
     @Column(nullable = false)
@@ -63,7 +76,6 @@ public class Visit {
     private List<String> activitiesPerformed = List.of();
 
     /* ===== Pharmacy / Stockist ===== */
-
     private String pharmacyName;
     private String contactPerson;
     private String contactNumber;

@@ -1,12 +1,12 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.VisitDashboardResponse;
+import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.service.VisitService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/visit")
@@ -18,4 +18,26 @@ public class VisitController {
     public VisitDashboardResponse getVisitDashboard(@PathVariable Long feId) {
         return visitService.getDashboard(feId);
     }
+
+    @PostMapping("/plan/week-day")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> planVisitByWeek(
+            @Valid @RequestBody VisitPlanByWeekDto request
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.planVisitByWeek(request),
+                "Visits Planned successfully"
+        ));
+    }
+
+    @PostMapping("/mark")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> markVisit(
+            @Valid @RequestBody MarkVisitRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.markVisit(request),
+                "Visits Marked successfully"
+        ));
+    }
+
+
 }
