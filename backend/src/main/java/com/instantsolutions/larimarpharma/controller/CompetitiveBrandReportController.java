@@ -7,6 +7,7 @@ import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportResponseDto
 import com.instantsolutions.larimarpharma.entity.CompetitiveBrandReport;
 import com.instantsolutions.larimarpharma.service.CompetitiveBrandReportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CompetitiveBrandReportController {
 
-    private final CompetitiveBrandReportService reportService;
+    @Autowired
+    CompetitiveBrandReportService reportService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> create(
