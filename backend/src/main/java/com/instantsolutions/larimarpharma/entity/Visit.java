@@ -2,6 +2,8 @@ package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,31 +14,59 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Visit {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id" , nullable = false)
-    private Doctor doctor;
+    /* ===== Relationships ===== */
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_executive_id", nullable = false)
     private FieldExecutive fieldExecutive;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", nullable = false)
+    private Doctor doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pharmacy_id", nullable = true)
+    private Pharmacy pharmacy;
+
+    @OneToMany(
+    mappedBy = "visit",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ConvertedProduct> convertedProducts = List.of();
+
+
+    /* ===== Planning (Slot logic) ===== */
+
+    @Column(nullable = false)
+    private LocalDate visitDate;
+
+    @Column(nullable = false)
+    private Integer weekNumber;
+
+    @Column(nullable = false)
+    private Integer dayOfWeek; // 1–7
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private VisitStatus status = VisitStatus.SCHEDULED;
+
+    /* ===== Visit Execution ===== */
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private VisitType visitType; // DOCTOR, PHARMACIST, STOCKIST
 
-    @Column(nullable = false)
-    private LocalDateTime scheduledDate;
+    private LocalDateTime actualVisitTime;
 
-    private LocalDateTime actualDate;
-
-    @Enumerated(EnumType.STRING)
-    private VisitStatus status; // SCHEDULED, COMPLETED, MISSED
-
-    private String location; // captured from FE's current location
+    private String location;
     private String notes;
 
     @ElementCollection
@@ -45,10 +75,7 @@ public class Visit {
     @Builder.Default
     private List<String> activitiesPerformed = List.of();
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean isScheduled = true;
-
+    /* ===== Pharmacy / Stockist ===== */
     private String pharmacyName;
     private String contactPerson;
     private String contactNumber;
@@ -59,27 +86,44 @@ public class Visit {
     private String stockistName;
     private Double orderValue;
 
+    /* ===== Audit ===== */
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    private LocalDateTime scheduledDate;
+
+    private LocalDateTime actualDate;
+
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (actualDate == null && status == VisitStatus.COMPLETED) {
-            actualDate = LocalDateTime.now();
-        }
     }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    /* ===== Enums ===== */
 
     public enum VisitType {
         DOCTOR, PHARMACIST, STOCKIST
     }
 
     public enum VisitStatus {
-        SCHEDULED, COMPLETED, MISSED
+        SCHEDULED,     // slot created
+        APPROVED,    // manager approved
+        REJECTED,    // rejected slot
+        COMPLETED,   // visit done
+        MISSED       // visit not done
     }
+
 
     public enum StockistType {
         SUB_STOCKIST, SUPER_STOCKIST
     }
 }
-

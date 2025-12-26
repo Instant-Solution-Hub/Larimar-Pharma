@@ -29,15 +29,11 @@ public class FieldExecutive extends BaseUser {
     private String territory;
     private String region;
 
-    // Visits conducted by this FE
+    // Visits planned and conducted by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<Visit> visits = new HashSet<>();
 
-    // Slots planned by this FE
-    @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<Slot> slots = new HashSet<>();
 
     // Orders taken by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

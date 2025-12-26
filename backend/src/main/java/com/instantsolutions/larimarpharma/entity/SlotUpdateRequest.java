@@ -17,8 +17,8 @@ public class SlotUpdateRequest {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "slot_id", nullable = false)
-    private Slot slot;
+    @JoinColumn(name = "visit_id", nullable = false)
+    private Visit slot;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_executive_id", nullable = false)
