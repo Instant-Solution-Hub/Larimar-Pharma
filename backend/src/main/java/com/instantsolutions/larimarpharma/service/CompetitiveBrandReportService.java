@@ -41,7 +41,7 @@ public class CompetitiveBrandReportService {
                 .build();
 
         if (image != null && !image.isEmpty()) {
-            report.setImageUrl(fileStorageService.storeFile(image));
+            report.setImageUrl(fileStorageService.storeFile(image, "competitive-reports"));
         }
 
         return toDto(reportRepository.save(report));
@@ -71,7 +71,7 @@ public class CompetitiveBrandReportService {
             report.setDoctor(getDoctor(dto.getDoctorId()));
 
         if (image != null && !image.isEmpty()) {
-            report.setImageUrl(fileStorageService.storeFile(image));
+            report.setImageUrl(fileStorageService.storeFile(image, "competitive-reports"));
         }
 
         return toDto(reportRepository.save(report));
