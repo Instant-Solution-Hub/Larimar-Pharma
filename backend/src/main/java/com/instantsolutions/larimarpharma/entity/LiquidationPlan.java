@@ -19,16 +19,17 @@ public class LiquidationPlan {
     @JoinColumn(name = "field_executive_id", nullable = false)
     private FieldExecutive fieldExecutive;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stockist_id", nullable = false)
-    private Stockist stockist;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false)
-    private Integer currentStock;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", nullable = false)
+    private Doctor doctor;
+
+    private String medicalShopName;
+
 
     @Column(nullable = false)
     private Integer targetLiquidation;

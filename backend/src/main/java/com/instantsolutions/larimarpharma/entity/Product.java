@@ -25,6 +25,11 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
+    @Column(nullable = false)
+    private Double pts;
+
+    private Double ptr;
+
     @Builder.Default
     private boolean active = true;
 
