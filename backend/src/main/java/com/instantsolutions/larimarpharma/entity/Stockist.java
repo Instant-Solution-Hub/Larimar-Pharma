@@ -38,9 +38,13 @@ public class Stockist {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @OneToMany(mappedBy = "stockist", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<LiquidationPlan> liquidationPlans = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "field_executive_id", nullable = false)
+    private FieldExecutive fieldExecutive;
+
+    @OneToMany(mappedBy = "stockist", cascade = CascadeType.ALL)
+    private Set<StockistProductStock> productStocks = new HashSet<>();
+
 
     @PrePersist
     protected void onCreate() {

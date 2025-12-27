@@ -34,6 +34,10 @@ public class FieldExecutive extends BaseUser {
     @Builder.Default
     private Set<Visit> visits = new HashSet<>();
 
+    @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Stockist> stockists = new HashSet<>();
+
 
     // Orders taken by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
