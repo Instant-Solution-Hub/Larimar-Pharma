@@ -19,6 +19,7 @@ public class LiquidationPlan {
     @JoinColumn(name = "field_executive_id", nullable = false)
     private FieldExecutive fieldExecutive;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -29,8 +30,6 @@ public class LiquidationPlan {
 
     private String medicalShopName;
 
-    @Column(nullable = false)
-    private Integer currentStock;
 
     @Column(nullable = false)
     private Integer targetLiquidation;
