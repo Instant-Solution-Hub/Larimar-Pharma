@@ -38,9 +38,9 @@ public class Stockist {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "field_executive_id", nullable = false)
-    private FieldExecutive fieldExecutive;
+    @ManyToMany(mappedBy = "stockists", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<FieldExecutive> fieldExecutives = new HashSet<>();
 
     @OneToMany(mappedBy = "stockist", cascade = CascadeType.ALL)
     private Set<StockistProductStock> productStocks = new HashSet<>();
