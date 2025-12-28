@@ -34,7 +34,12 @@ public class FieldExecutive extends BaseUser {
     @Builder.Default
     private Set<Visit> visits = new HashSet<>();
 
-    @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "field_executive_stockists",
+            joinColumns = @JoinColumn(name = "field_executive_id"),
+            inverseJoinColumns = @JoinColumn(name = "stockist_id")
+    )
     @Builder.Default
     private Set<Stockist> stockists = new HashSet<>();
 
