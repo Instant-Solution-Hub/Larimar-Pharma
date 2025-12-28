@@ -28,9 +28,9 @@ public class FieldExecutiveProfile {
 
 
     // Monthly targets
-    private Integer aPlusDoctorTarget = 90; // 30 doctors × 3 visits
-    private Integer aDoctorTarget = 120;    // 60 doctors × 2 visits
-    private Integer bDoctorTarget = 10;     // 10 doctors × 1 visit
+    private Integer aPlusDoctorTarget ;
+    private Integer aDoctorTarget ;
+    private Integer bDoctorTarget ;
 
     private Integer pharmacyVisitProgress;
     private Integer stockistVisitProgress;

@@ -18,7 +18,8 @@ import java.util.Set;
 @ToString(callSuper = true, exclude = {"visits", "slots", "orders", "managerJoinings"})
 public class FieldExecutive extends BaseUser {
 
-    @OneToOne(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "fieldExecutive", cascade = CascadeType.ALL,
+               orphanRemoval = true , fetch = FetchType.LAZY)
     private FieldExecutiveProfile profile;
 
     @ManyToOne(fetch = FetchType.LAZY)

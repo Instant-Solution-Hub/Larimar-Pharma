@@ -13,14 +13,14 @@ public class FEUpdateContactDto {
     private String email;
 
     @Pattern(
-            regexp = "^[0-9]{10}$",
-            message = "Phone number must be exactly 10 digits"
+            regexp = "^[6-9]\\d{9}$",
+            message = "Invalid Indian phone number"
     )
     private String phone;
 
     @Pattern(
-            regexp = "^[0-9]{10}$",
-            message = "Emergency contact must be exactly 10 digits"
+            regexp = "^[6-9]\\d{9}$",
+            message = "Invalid Indian phone number"
     )
     private String emergencyContact;
 
