@@ -10,19 +10,26 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    private static final String UPLOAD_DIR = "uploads/competitive-reports/";
+    private static final String BASE_UPLOAD_DIR = "uploads";
 
-    public String storeFile(MultipartFile file) {
+    public String storeFile(MultipartFile file, String folder) {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
         try {
-            Files.createDirectories(Paths.get(UPLOAD_DIR));
+            // uploads/{folder}/
+            Path uploadPath = Paths.get(BASE_UPLOAD_DIR, folder);
+            Files.createDirectories(uploadPath);
 
-            String fileName =
-                    UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
 
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            return "/files/competitive-reports/" + fileName;
+            // URL to access file
+            return "/files/" + folder + "/" + fileName;
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
