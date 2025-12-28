@@ -23,6 +23,7 @@ public class ProductService {
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .active(dto.isActive())
+                .pts(dto.getPts())
                 .build();
 
         return productRepository.save(product);

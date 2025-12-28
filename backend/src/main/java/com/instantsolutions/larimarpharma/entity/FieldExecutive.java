@@ -10,12 +10,13 @@ import java.util.Set;
 
 @Entity
 @Table(name = "field_executives")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true, exclude = {"visits", "slots", "orders", "managerJoinings"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class FieldExecutive extends BaseUser {
 
     @OneToOne(mappedBy = "fieldExecutive", cascade = CascadeType.ALL,
@@ -26,6 +27,8 @@ public class FieldExecutive extends BaseUser {
     @JoinColumn(name = "manager_id")
     private Manager manager;
 
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private String employeeCode;
     private String territory;
     private String region;

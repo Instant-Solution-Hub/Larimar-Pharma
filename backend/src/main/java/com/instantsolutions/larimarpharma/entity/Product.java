@@ -4,16 +4,23 @@ package com.instantsolutions.larimarpharma.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -27,7 +34,6 @@ public class Product {
 
     @Column(nullable = false)
     private Double pts;
-
     private Double ptr;
 
     @Builder.Default
@@ -37,6 +43,11 @@ public class Product {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    // Relationships
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<OrderItem> orderItems = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

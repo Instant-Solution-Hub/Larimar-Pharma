@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlyOrderStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.OrderResponseDto;
 import com.instantsolutions.larimarpharma.entity.Order;
 import com.instantsolutions.larimarpharma.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class FEOrderController {
 
     // 🔐 feId should ideally come from JWT, kept simple here
     @PostMapping
-    public ResponseEntity<Order> createOrder(
+    public ResponseEntity<OrderResponseDto> createOrder(
             @RequestParam Long feId,
             @RequestBody OrderRequestDto dto) {
 
@@ -52,7 +53,7 @@ public class FEOrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Order>> getMyOrders(
+    public ResponseEntity<List<OrderResponseDto>> getMyOrders(
             @RequestParam Long feId) {
 
         return ResponseEntity.ok(
@@ -62,10 +63,10 @@ public class FEOrderController {
 
     // 🔹 ALL orders (including cancelled) for current month
     @GetMapping("/{feId}/current-month")
-    public ResponseEntity<ApiResponseDto<List<Order>>> getMyOrdersForCurrentMonth(
+    public ResponseEntity<ApiResponseDto<List<OrderResponseDto>>> getMyOrdersForCurrentMonth(
             @PathVariable Long feId) {
 
-        List<Order> orders =
+        List<OrderResponseDto> orders =
                 orderService.getMyOrdersForCurrentMonth(feId);
 
         return ResponseEntity.ok(
