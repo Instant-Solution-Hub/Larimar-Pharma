@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.PromotionCountResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.PromotionRequestDto;
 import com.instantsolutions.larimarpharma.entity.Promotion;
 import com.instantsolutions.larimarpharma.service.PromotionService;
@@ -53,6 +54,20 @@ public class PromotionController {
         List<Promotion> promotions = promotionService.getAllPromotions();
         return ResponseEntity.ok(
                 ApiResponseDto.success(promotions, "Promotions fetched successfully")
+        );
+    }
+
+    @GetMapping("/active-upcoming")
+    public ResponseEntity<List<Promotion>> getActiveAndUpcomingPromotions() {
+        return ResponseEntity.ok(
+                promotionService.getActiveAndUpcomingPromotions()
+        );
+    }
+
+    @GetMapping("/counts")
+    public ResponseEntity<PromotionCountResponseDto> getPromotionCounts() {
+        return ResponseEntity.ok(
+                promotionService.getPromotionCounts()
         );
     }
 
