@@ -59,7 +59,7 @@ public class OrderService {
     }
 
 
-    public Order updateOrder(Long feId, Long orderId, OrderRequestDto dto) {
+    public OrderResponseDto updateOrder(Long feId, Long orderId, OrderRequestDto dto) {
 
         Order order = orderRepository.findByIdAndFieldExecutiveId(orderId, feId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -76,15 +76,22 @@ public class OrderService {
         order.setDiscount(dto.getDiscount());
         order.setNotes(dto.getNotes());
 
+
+        // this functionality can be deleted as FE caannot alter the
+        // order items once added , he can only change the details and quantity
         // Replace order items
         order.getOrderItems().clear();
         order.getOrderItems().addAll(buildOrderItems(order, dto.getItems()));
 
-        return orderRepository.save(order);
+         orderRepository.save(order);
+         return mapToDto(order);
     }
 
 
     public void cancelOrder(Long feId, Long orderId) {
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
 
         Order order = orderRepository.findByIdAndFieldExecutiveId(orderId, feId)
                 .orElseThrow(() -> new ResourceNotFoundException(

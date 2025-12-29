@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderResponseDto;
 import com.instantsolutions.larimarpharma.entity.Order;
 import com.instantsolutions.larimarpharma.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class FEOrderController {
     @PostMapping
     public ResponseEntity<OrderResponseDto> createOrder(
             @RequestParam Long feId,
-            @RequestBody OrderRequestDto dto) {
+            @Valid @RequestBody OrderRequestDto dto) {
 
         return ResponseEntity.ok(
                 orderService.createOrder(feId, dto)
@@ -33,10 +34,10 @@ public class FEOrderController {
     }
 
     @PutMapping("/{orderId}")
-    public ResponseEntity<Order> updateOrder(
+    public ResponseEntity<OrderResponseDto> updateOrder(
             @RequestParam Long feId,
             @PathVariable Long orderId,
-            @RequestBody OrderRequestDto dto) {
+           @Valid @RequestBody OrderRequestDto dto) {
 
         return ResponseEntity.ok(
                 orderService.updateOrder(feId, orderId, dto)
@@ -44,12 +45,12 @@ public class FEOrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<Void> cancelOrder(
+    public ResponseEntity<String> cancelOrder(
             @RequestParam Long feId,
             @PathVariable Long orderId) {
 
         orderService.cancelOrder(feId, orderId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Order has been cancelled successfully");
     }
 
     @GetMapping
