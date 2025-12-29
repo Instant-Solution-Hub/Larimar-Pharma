@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportResponseDto;
 import com.instantsolutions.larimarpharma.entity.CompetitiveBrandReport;
 import com.instantsolutions.larimarpharma.service.CompetitiveBrandReportService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,13 +27,9 @@ public class CompetitiveBrandReportController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> create(
-            @RequestPart("data") String data,
+            @Valid @RequestPart("data") CompetitiveBrandReportRequestDto dto,
             @RequestPart(value = "image", required = false) MultipartFile image
-    ) throws Exception {
-
-        ObjectMapper mapper = new ObjectMapper();
-        CompetitiveBrandReportRequestDto dto =
-                mapper.readValue(data, CompetitiveBrandReportRequestDto.class);
+    ) {
 
         CompetitiveBrandReportResponseDto saved = reportService.create(dto, image);
 

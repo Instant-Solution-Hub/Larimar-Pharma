@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,7 @@ public class MonthlyTargetPlan {
     // FE who created the plan
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_executive_id", nullable = false)
+    @JsonIgnore
     private FieldExecutive fieldExecutive;
 
     @Column(nullable = false)

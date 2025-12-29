@@ -53,6 +53,7 @@ public class CompanyPolicyService {
 
         CompanyPolicy existing = getPolicyById(id);
 
+
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());
         existing.setCategory(updated.getCategory());
@@ -88,6 +89,11 @@ public class CompanyPolicyService {
         }
         if (policy.getCategory() == null) {
             throw new BadRequestException("Policy category is required");
+        }
+        try {
+            CompanyPolicy.PolicyCategory.valueOf(policy.getCategory().name());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid policy category");
         }
     }
 }

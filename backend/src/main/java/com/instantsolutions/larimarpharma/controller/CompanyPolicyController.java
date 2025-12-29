@@ -51,8 +51,8 @@ public class CompanyPolicyController {
 
     /* DELETE */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePolicy(@PathVariable Long id) {
+    public ResponseEntity<String> deletePolicy(@PathVariable Long id) {
         companyPolicyService.deletePolicy(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Policy deleted successfully");
     }
 }
