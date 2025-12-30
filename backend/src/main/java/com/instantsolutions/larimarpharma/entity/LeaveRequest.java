@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ public class LeaveRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_executive_id", nullable = false)
+    @JsonIgnore
     private FieldExecutive fieldExecutive;
 
     @ManyToOne(fetch = FetchType.LAZY)

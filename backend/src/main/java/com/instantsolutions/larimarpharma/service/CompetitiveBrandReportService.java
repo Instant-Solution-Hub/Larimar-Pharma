@@ -32,6 +32,7 @@ public class CompetitiveBrandReportService {
         CompetitiveBrandReport report = CompetitiveBrandReport.builder()
                 .fieldExecutive(getFieldExecutive(dto.getFieldExecutiveId()))
                 .brandName(dto.getBrandName())
+                .companyName(dto.getCompanyName())
                 .product(getProduct(dto.getProductId()))
                 .productCategory(dto.getProductCategory())
                 .doctor(getDoctor(dto.getDoctorId()))
@@ -108,6 +109,7 @@ public class CompetitiveBrandReportService {
                 .fieldExecutiveName(report.getFieldExecutive().getName())
 
                 .brandName(report.getBrandName())
+                .companyName(report.getCompanyName())
 
                 .productId(report.getProduct() != null ? report.getProduct().getId() : null)
                 .productName(report.getProduct() != null ? report.getProduct().getName() : null)
@@ -135,7 +137,8 @@ public class CompetitiveBrandReportService {
                 );
     }
 
-    private FieldExecutive getFieldExecutive(Long id) {
+    private FieldExecutive
+    getFieldExecutive(Long id) {
         return fieldExecutiveRepository.findById(id)
                 .orElseThrow(() ->
                         new EntityNotFoundException("FieldExecutive not found: " + id)

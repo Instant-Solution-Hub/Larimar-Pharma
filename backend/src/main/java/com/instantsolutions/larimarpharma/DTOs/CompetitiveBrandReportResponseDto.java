@@ -17,6 +17,7 @@ public class CompetitiveBrandReportResponseDto {
 
     // Brand info
     private String brandName;
+    private String companyName;
 
     // Product
     private Long productId;

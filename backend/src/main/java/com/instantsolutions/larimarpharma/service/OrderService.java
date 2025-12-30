@@ -1,8 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.MonthlyOrderStatsDto;
-import com.instantsolutions.larimarpharma.DTOs.OrderItemRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Order;
 import com.instantsolutions.larimarpharma.entity.OrderItem;
@@ -37,7 +35,7 @@ public class OrderService {
     ProductRepository productRepository;
 
 
-    public Order createOrder(Long feId, OrderRequestDto dto) {
+    public OrderResponseDto createOrder(Long feId, OrderRequestDto dto) {
 
         FieldExecutive fe = fieldExecutiveRepository.findById(feId)
                 .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
@@ -56,11 +54,12 @@ public class OrderService {
         Set<OrderItem> items = buildOrderItems(order, dto.getItems());
         order.setOrderItems(items);
 
-        return orderRepository.save(order);
+         orderRepository.save(order);
+         return mapToDto(order);
     }
 
 
-    public Order updateOrder(Long feId, Long orderId, OrderRequestDto dto) {
+    public OrderResponseDto updateOrder(Long feId, Long orderId, OrderRequestDto dto) {
 
         Order order = orderRepository.findByIdAndFieldExecutiveId(orderId, feId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -77,15 +76,22 @@ public class OrderService {
         order.setDiscount(dto.getDiscount());
         order.setNotes(dto.getNotes());
 
+
+        // this functionality can be deleted as FE caannot alter the
+        // order items once added , he can only change the details and quantity
         // Replace order items
         order.getOrderItems().clear();
         order.getOrderItems().addAll(buildOrderItems(order, dto.getItems()));
 
-        return orderRepository.save(order);
+         orderRepository.save(order);
+         return mapToDto(order);
     }
 
 
     public void cancelOrder(Long feId, Long orderId) {
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
 
         Order order = orderRepository.findByIdAndFieldExecutiveId(orderId, feId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -101,13 +107,46 @@ public class OrderService {
 
 
     @Transactional
-    public List<Order> getMyOrders(Long feId) {
-        return orderRepository.findAllByFieldExecutiveIdAndStatusNot(
-                feId, Order.OrderStatus.CANCELLED);
+    public List<OrderResponseDto> getMyOrders(Long feId) {
+
+        List<Order> orders =
+                orderRepository.findAllByFieldExecutiveIdAndStatusNot(
+                        feId, Order.OrderStatus.CANCELLED);
+
+        return orders.stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
+    private OrderResponseDto mapToDto(Order order) {
+
+        return OrderResponseDto.builder()
+                .id(order.getId())
+                .institutionName(order.getInstitutionName())
+                .institutionType(order.getInstitutionType())
+                .contactPerson(order.getContactPerson())
+                .contactNumber(order.getContactNumber())
+                .orderDate(order.getOrderDate())
+                .status(order.getStatus())
+                .discount(order.getDiscount())
+                .totalAmount(order.getTotalAmount())
+                .fieldExecutiveId(order.getFieldExecutive().getId())
+                .items(
+                        order.getOrderItems().stream()
+                                .map(item -> OrderItemResponseDto.builder()
+                                        .productId(item.getProduct().getId())
+                                        .productName(item.getProduct().getName())
+                                        .quantity(item.getQuantity())
+                                        .price(item.getPrice())
+                                        .build())
+                                .toList()
+                )
+                .build();
+    }
+
+
     @Transactional
-    public List<Order> getMyOrdersForCurrentMonth(Long feId) {
+    public List<OrderResponseDto> getMyOrdersForCurrentMonth(Long feId) {
 
         if (feId == null) {
             throw new IllegalArgumentException("Field Executive ID cannot be null");
@@ -120,12 +159,15 @@ public class OrderService {
         LocalDateTime start = now.withDayOfMonth(1).atStartOfDay();
         LocalDateTime end = start.plusMonths(1).minusSeconds(1);
 
-        return orderRepository
+        List<Order> orders =  orderRepository
                 .findAllByFieldExecutiveIdAndOrderDateBetweenOrderByOrderDateDesc(
                         feId,
                         start,
                         end
                 );
+        return orders.stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
 

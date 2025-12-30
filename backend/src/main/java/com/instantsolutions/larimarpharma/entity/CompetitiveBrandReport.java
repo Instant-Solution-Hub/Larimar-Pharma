@@ -23,6 +23,9 @@ public class CompetitiveBrandReport {
     @Column(nullable = false)
     private String brandName;
 
+    @Column(nullable = false)
+    private String companyName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;

@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.DTOs.FEUpdateContactDto;
 import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveRequest;
 import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.exceptions.BadRequestException;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
@@ -27,10 +28,22 @@ public class FEService {
     // CREATE
     public FieldExecutiveResponse create(FieldExecutiveRequest request) {
 
+        if (request == null) {
+            throw new IllegalArgumentException("Request body cannot be null");
+        }
+
+        // Uniqueness checks
         if (repository.existsByEmployeeCode(request.getEmployeeCode())) {
             throw new RuntimeException("Employee code already exists");
         }
 
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (repository.existsByPhone(request.getPhone())) {
+            throw new RuntimeException("Phone number already exists");
+        }
         Manager manager = null;
         if (request.getManagerId() != null && request.getManagerId() > 0) {
             manager = managerRepository.findById(request.getManagerId())
@@ -46,9 +59,28 @@ public class FEService {
                 .territory(request.getTerritory())
                 .region(request.getRegion())
                 .manager(manager)
+                .active(true).build();
+
+        FieldExecutiveProfile profile = FieldExecutiveProfile.builder()
+                .fieldExecutive(fe)
+                .attendancePercentage(0)
+                .targetAchieved(0.0)
+                .incentiveEarned(0.0)
+                .totalLeaves(10)
+                .casualLeaves(5)
+                .sickLeaves(5)
+                .pharmacyVisitProgress(0)
+                .stockistVisitProgress(0)
+                .doctorVisitProgress(0)
+                .aPlusDoctorTarget(90)
+                .bDoctorTarget(30)
+                .aDoctorTarget(60)
                 .build();
 
-        return mapToResponse(repository.save(fe));
+        fe.setProfile(profile); // IMPORTANT
+
+        FieldExecutive saved = repository.save(fe); // profile auto-saved
+        return mapToResponse(saved);
     }
 
     // READ ALL
@@ -73,14 +105,26 @@ public class FEService {
         FieldExecutive fe = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Field Executive not found"));
 
+        // Email uniqueness check
+        if (!fe.getEmail().equals(request.getEmail())
+                && repository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already in use");
+        }
+
+        // Phone uniqueness check
+        if (!fe.getPhone().equals(request.getPhone())
+                && repository.existsByPhone(request.getPhone())) {
+            throw new RuntimeException("Phone already in use");
+        }
+
         Manager manager = null;
         if (request.getManagerId() != null) {
             manager = managerRepository.findById(request.getManagerId())
                     .orElseThrow(() -> new RuntimeException("Manager not found"));
         }
 
-        fe.setName(request.getName());
-        fe.setEmail(request.getEmail());
+        fe.setName(request.getName().trim());
+        fe.setEmail(request.getEmail().toLowerCase());
         fe.setPhone(request.getPhone());
         fe.setTerritory(request.getTerritory());
         fe.setRegion(request.getRegion());

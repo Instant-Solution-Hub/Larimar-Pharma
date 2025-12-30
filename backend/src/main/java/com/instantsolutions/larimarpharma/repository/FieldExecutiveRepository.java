@@ -25,8 +25,9 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
             "LOWER(fe.employeeCode) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<FieldExecutive> search(@Param("searchTerm") String searchTerm);
 
-    boolean existsByEmail(String email);
 
+    boolean existsByEmail(String email);
+    boolean existsByPhone(String phone);
     boolean existsByEmployeeCode(String employeeCode);
 
     @Query("SELECT COUNT(fe) FROM FieldExecutive fe WHERE fe.active = true")

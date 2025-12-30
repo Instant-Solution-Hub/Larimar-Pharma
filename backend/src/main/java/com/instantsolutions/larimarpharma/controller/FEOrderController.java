@@ -3,8 +3,10 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlyOrderStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.OrderRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.OrderResponseDto;
 import com.instantsolutions.larimarpharma.entity.Order;
 import com.instantsolutions.larimarpharma.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +24,9 @@ public class FEOrderController {
 
     // 🔐 feId should ideally come from JWT, kept simple here
     @PostMapping
-    public ResponseEntity<Order> createOrder(
+    public ResponseEntity<OrderResponseDto> createOrder(
             @RequestParam Long feId,
-            @RequestBody OrderRequestDto dto) {
+            @Valid @RequestBody OrderRequestDto dto) {
 
         return ResponseEntity.ok(
                 orderService.createOrder(feId, dto)
@@ -32,10 +34,10 @@ public class FEOrderController {
     }
 
     @PutMapping("/{orderId}")
-    public ResponseEntity<Order> updateOrder(
+    public ResponseEntity<OrderResponseDto> updateOrder(
             @RequestParam Long feId,
             @PathVariable Long orderId,
-            @RequestBody OrderRequestDto dto) {
+           @Valid @RequestBody OrderRequestDto dto) {
 
         return ResponseEntity.ok(
                 orderService.updateOrder(feId, orderId, dto)
@@ -43,16 +45,16 @@ public class FEOrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<Void> cancelOrder(
+    public ResponseEntity<String> cancelOrder(
             @RequestParam Long feId,
             @PathVariable Long orderId) {
 
         orderService.cancelOrder(feId, orderId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Order has been cancelled successfully");
     }
 
     @GetMapping
-    public ResponseEntity<List<Order>> getMyOrders(
+    public ResponseEntity<List<OrderResponseDto>> getMyOrders(
             @RequestParam Long feId) {
 
         return ResponseEntity.ok(
@@ -62,10 +64,10 @@ public class FEOrderController {
 
     // 🔹 ALL orders (including cancelled) for current month
     @GetMapping("/{feId}/current-month")
-    public ResponseEntity<ApiResponseDto<List<Order>>> getMyOrdersForCurrentMonth(
+    public ResponseEntity<ApiResponseDto<List<OrderResponseDto>>> getMyOrdersForCurrentMonth(
             @PathVariable Long feId) {
 
-        List<Order> orders =
+        List<OrderResponseDto> orders =
                 orderService.getMyOrdersForCurrentMonth(feId);
 
         return ResponseEntity.ok(

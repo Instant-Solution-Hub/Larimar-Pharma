@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "promotions")
@@ -19,6 +20,12 @@ public class Promotion {
     private String name;
 
     private String description;
+
+    private String product;
+
+    private List<String> targetAudience;
+
+    private List<String> benefits;
 
     private Type type;
 

@@ -13,4 +13,6 @@ public interface MonthlyTargetPlanRepository extends JpaRepository<MonthlyTarget
     );
 
     List<MonthlyTargetPlan> findAllByMonthAndYear(Integer month, Integer year);
+
+    List<MonthlyTargetPlan> findAllByFieldExecutiveId(Long fieldExecutiveId);
 }

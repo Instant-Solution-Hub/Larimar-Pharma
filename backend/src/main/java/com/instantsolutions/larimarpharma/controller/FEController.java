@@ -75,10 +75,10 @@ public class FEController {
 
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> create(@RequestBody FieldExecutiveRequest request) {
+    public ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> create(@Valid @RequestBody FieldExecutiveRequest request) {
         FieldExecutiveResponse response = service.create(request);
         return ResponseEntity.ok(
-                ApiResponseDto.success(response, "Login successful")
+                ApiResponseDto.success(response, "User Created Successfully!")
         );
 
     }
@@ -94,15 +94,22 @@ public class FEController {
     }
 
     @PutMapping("/{id}")
-    public FieldExecutiveResponse update(
+    public  ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> update(
             @PathVariable Long id,
-            @RequestBody FieldExecutiveRequest request
+           @Valid @RequestBody FieldExecutiveRequest request
     ) {
-        return service.update(id, request);
+        FieldExecutiveResponse response = service.update(id, request);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(response, "User Updated Successfully!")
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable Long id) {
+
         service.delete(id);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(null, "User deleted successfully")
+        );
     }
 }
