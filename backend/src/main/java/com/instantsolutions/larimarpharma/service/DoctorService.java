@@ -1,12 +1,14 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.DoctorRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.DoctorResponseDto;
 import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.repository.DoctorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,7 +16,7 @@ public class DoctorService {
 
     private final DoctorRepository doctorRepository;
 
-    public Doctor create(DoctorRequestDto dto) {
+    public DoctorResponseDto create(DoctorRequestDto dto) {
         Doctor doctor = Doctor.builder()
                 .name(dto.getName())
                 .category(dto.getCategory())
@@ -27,11 +29,12 @@ public class DoctorService {
                 .active(dto.isActive())
                 .build();
 
-        return doctorRepository.save(doctor);
+        Doctor savedDoctor = doctorRepository.save(doctor);
+        return DoctorResponseDto.fromEntity(savedDoctor);
     }
 
-    public Doctor update(Long id, DoctorRequestDto dto) {
-        Doctor doctor = getById(id);
+    public DoctorResponseDto update(Long id, DoctorRequestDto dto) {
+        Doctor doctor = doctorRepository.findById(id).get();
 
         doctor.setName(dto.getName());
         doctor.setCategory(dto.getCategory());
@@ -43,26 +46,45 @@ public class DoctorService {
         doctor.setDoctorCode(dto.getDoctorCode());
         doctor.setActive(dto.isActive());
 
-        return doctorRepository.save(doctor);
+        Doctor savedDoctor = doctorRepository.save(doctor);
+        return DoctorResponseDto.fromEntity(savedDoctor);
     }
 
-    public Doctor getById(Long id) {
-        return doctorRepository.findById(id)
+    public DoctorResponseDto getById(Long id) {
+        Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        return DoctorResponseDto.fromEntity(doctor);
     }
 
-    public List<Doctor> getAll() {
-        return doctorRepository.findAll();
+    public List<DoctorResponseDto> getAll() {
+        return doctorRepository.findAll()
+                .stream()
+                .map(DoctorResponseDto::fromEntity)
+                .toList();
     }
 
     public void delete(Long id) {
-        Doctor doctor = getById(id);
-        doctor.setActive(false);   // SOFT DELETE
-        doctorRepository.save(doctor);
+        Optional<Doctor> doctor = doctorRepository.findById(id);
+        if (doctor.isPresent()){
+            doctor.get().setActive(false);   // SOFT DELETE
+            doctorRepository.save(doctor.get());
+        }
     }
 
-    public List<Doctor> getAllActive() {
-        return doctorRepository.findByActiveTrue();
+    public void activate(Long id){
+        Optional<Doctor> doctor = doctorRepository.findById(id);
+        if(doctor.isPresent()){
+            doctor.get().setActive(true);
+            doctorRepository.save(doctor.get());
+        }
+
+    }
+
+    public List<DoctorResponseDto> getAllActive() {
+        return doctorRepository.findByActiveTrue()
+                .stream()
+                .map(DoctorResponseDto::fromEntity)
+                .toList();
     }
 
     public List<Doctor> getInactive() {

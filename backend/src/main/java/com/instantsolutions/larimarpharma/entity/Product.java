@@ -3,10 +3,13 @@ package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Where;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "products")
+@Where(clause = "active = true")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

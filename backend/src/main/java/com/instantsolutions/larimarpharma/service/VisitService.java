@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.MarkVisitRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.VisitDashboardResponse;
-import com.instantsolutions.larimarpharma.DTOs.VisitPlanByWeekDto;
-import com.instantsolutions.larimarpharma.DTOs.VisitResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.ConvertedProduct;
 import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
@@ -41,15 +38,15 @@ public class VisitService {
         LocalDateTime endOfMonth = now.withDayOfMonth(now.lengthOfMonth())
                 .atTime(LocalTime.MAX);
 
-        Object[] counts = visitRepository.getCompletedVisitCountsForMonth(
+        VisitCountProjection counts = visitRepository.getCompletedVisitCountsForMonth(
                 fieldExecutiveId,
                 startOfMonth,
                 endOfMonth
         );
 
-        long doctorCompleted = (long) counts[0];
-        long pharmacistCompleted = (long) counts[1];
-        long stockistCompleted = (long) counts[2];
+        long doctorCompleted = counts.getDoctor();
+        long pharmacistCompleted = counts.getPharmacist();
+        long stockistCompleted = counts.getStockist();
 
         long totalDoctorVisitsForMonth =
                 visitRepository.countByFieldExecutiveIdAndVisitTypeAndScheduledDateBetween(

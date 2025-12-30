@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.OfferRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.OfferResponseDto;
 import com.instantsolutions.larimarpharma.service.OfferService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,14 +20,14 @@ public class OfferController {
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<OfferResponseDto> createOffer(
-            @ModelAttribute OfferRequestDto dto) throws IOException {
+            @Valid @ModelAttribute OfferRequestDto dto) throws IOException {
         return ResponseEntity.ok(offerService.createOffer(dto));
     }
 
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<OfferResponseDto> updateOffer(
             @PathVariable Long id,
-            @ModelAttribute OfferRequestDto dto) throws IOException {
+            @Valid @ModelAttribute OfferRequestDto dto) throws IOException {
         return ResponseEntity.ok(offerService.updateOffer(id, dto));
     }
 

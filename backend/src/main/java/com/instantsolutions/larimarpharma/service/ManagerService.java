@@ -1,11 +1,14 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +22,7 @@ public class ManagerService {
         Manager manager = Manager.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
+                .password(dto.getPassword())
                 .phone(dto.getPhone())
                 .active(dto.isActive())
                 .employeeCode(dto.getEmployeeCode())
@@ -36,6 +40,7 @@ public class ManagerService {
 
         manager.setName(dto.getName());
         manager.setEmail(dto.getEmail());
+        manager.setPassword(dto.getPassword());
         manager.setPhone(dto.getPhone());
         manager.setActive(dto.isActive());
         manager.setEmployeeCode(dto.getEmployeeCode());
@@ -47,14 +52,20 @@ public class ManagerService {
     }
 
 
-    public Manager getManagerById(Long id) {
-        return managerRepository.findById(id)
+    public ManagerResponseDto getManagerById(Long id) {
+        Manager manager = managerRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new EntityNotFoundException("Manager not found with id: " + id));
+        return toManagerResponseDto(manager);
     }
 
-    public List<Manager> getAllManagers() {
-        return managerRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<ManagerResponseDto> getAllManagers() {
+        return managerRepository.findAllWithExecutives()
+                .stream()
+                .map(this::toManagerResponseDto)
+                .toList();
     }
+
 
     public void deleteManager(Long id) {
         if (!managerRepository.existsById(id)) {
@@ -62,4 +73,30 @@ public class ManagerService {
         }
         managerRepository.deleteById(id);
     }
+
+    public ManagerResponseDto toManagerResponseDto(Manager m) {
+        return ManagerResponseDto.builder()
+                .id(m.getId())
+                .name(m.getName())
+                .email(m.getEmail())
+                .phone(m.getPhone())
+                .employeeCode(m.getEmployeeCode())
+                .department(m.getDepartment())
+                .designation(m.getDesignation())
+                .managedTerritories(m.getManagedTerritories())
+                .fieldExecutives(
+                        m.getFieldExecutives()
+                                .stream()
+                                .map(fe -> FieldExecutiveResponse.builder()
+                                        .id(fe.getId())
+                                        .name(fe.getName())
+                                        .email(fe.getEmail())
+                                        .phone(fe.getPhone())
+                                        .employeeCode(fe.getEmployeeCode())
+                                        .build()
+                                ).toList()
+                )
+                .build();
+    }
+
 }

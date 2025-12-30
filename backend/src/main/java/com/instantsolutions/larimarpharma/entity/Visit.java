@@ -124,6 +124,6 @@ public class Visit {
 
 
     public enum StockistType {
-        SUB_STOCKIST, SUPER_STOCKIST
+        NONE, SUB_STOCKIST, SUPER_STOCKIST
     }
 }
