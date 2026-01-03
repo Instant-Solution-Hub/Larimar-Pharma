@@ -3,8 +3,10 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.service.ManagerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,7 @@ public class ManagerController {
     private final ManagerService managerService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Manager>> create(@RequestBody ManagerRequestDto dto) {
+    public ResponseEntity<ApiResponseDto<Manager>> create(@Valid @RequestBody ManagerRequestDto dto) {
         Manager saved = managerService.createManager(dto);
         return new ResponseEntity<>(
                 ApiResponseDto.success(saved,"Manager created successfully"),
@@ -31,7 +33,7 @@ public class ManagerController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Manager>> update(
             @PathVariable Long id,
-            @RequestBody ManagerRequestDto request
+            @Valid  @RequestBody ManagerRequestDto request
     ) {
         Manager updated = managerService.updateManager(id, request);
         return ResponseEntity.ok(
@@ -40,16 +42,16 @@ public class ManagerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Manager>> getById(@PathVariable Long id) {
-        Manager manager = managerService.getManagerById(id);
+    public ResponseEntity<ApiResponseDto<ManagerResponseDto>> getById(@PathVariable Long id) {
+        ManagerResponseDto manager = managerService.getManagerById(id);
         return ResponseEntity.ok(
                 ApiResponseDto.success(manager,"Manager fetched successfully")
         );
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponseDto<List<Manager>>> getAll() {
-        List<Manager> managers = managerService.getAllManagers();
+    public ResponseEntity<ApiResponseDto<List<ManagerResponseDto>>> getAll() {
+        List<ManagerResponseDto> managers = managerService.getAllManagers();
         return ResponseEntity.ok(
                 ApiResponseDto.success(managers,"Managers fetched successfully")
         );

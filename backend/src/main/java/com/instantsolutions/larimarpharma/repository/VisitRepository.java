@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitType;
@@ -43,19 +44,20 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
 
     @Query("""
         SELECT
-            COUNT(CASE WHEN v.visitType = 'DOCTOR' THEN 1 END),
-            COUNT(CASE WHEN v.visitType = 'PHARMACIST' THEN 1 END),
-            COUNT(CASE WHEN v.visitType = 'STOCKIST' THEN 1 END)
+            COUNT(CASE WHEN v.visitType = 'DOCTOR' THEN 1 END) AS doctor,
+            COUNT(CASE WHEN v.visitType = 'PHARMACIST' THEN 1 END) AS pharmacist,
+            COUNT(CASE WHEN v.visitType = 'STOCKIST' THEN 1 END) AS stockist
         FROM Visit v
         WHERE v.fieldExecutive.id = :feId
           AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.COMPLETED
           AND v.actualDate BETWEEN :startDate AND :endDate
     """)
-    Object[] getCompletedVisitCountsForMonth(
+    VisitCountProjection getCompletedVisitCountsForMonth(
             @Param("feId") Long feId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
 
 
     List<Visit> findByVisitTypeAndStatusAndScheduledDateBefore(

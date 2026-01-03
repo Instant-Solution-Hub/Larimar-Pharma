@@ -125,6 +125,7 @@ public class FEService {
 
         fe.setName(request.getName().trim());
         fe.setEmail(request.getEmail().toLowerCase());
+        fe.setPassword(request.getPassword());
         fe.setPhone(request.getPhone());
         fe.setTerritory(request.getTerritory());
         fe.setRegion(request.getRegion());

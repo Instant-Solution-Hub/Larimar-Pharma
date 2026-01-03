@@ -2,8 +2,10 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.DoctorRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.DoctorResponseDto;
 import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.service.DoctorService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,31 +20,31 @@ public class DoctorController {
 
     // CREATE
     @PostMapping
-    public ApiResponseDto<Doctor> createDoctor(@RequestBody DoctorRequestDto dto) {
-        Doctor doctor = doctorService.create(dto);
+    public ApiResponseDto<DoctorResponseDto> createDoctor(@Valid @RequestBody DoctorRequestDto dto) {
+        DoctorResponseDto doctor = doctorService.create(dto);
         return ApiResponseDto.success(doctor, "Doctor created successfully");
     }
 
     // UPDATE
     @PutMapping("/{id}")
-    public ApiResponseDto<Doctor> updateDoctor(
+    public ApiResponseDto<DoctorResponseDto> updateDoctor(
             @PathVariable Long id,
-            @RequestBody DoctorRequestDto dto
+            @Valid @RequestBody DoctorRequestDto dto
     ) {
-        Doctor doctor = doctorService.update(id, dto);
+        DoctorResponseDto doctor = doctorService.update(id, dto);
         return ApiResponseDto.success(doctor, "Doctor updated successfully");
     }
 
     // GET BY ID
     @GetMapping("/{id}")
-    public ApiResponseDto<Doctor> getDoctor(@PathVariable Long id) {
-        Doctor doctor = doctorService.getById(id);
+    public ApiResponseDto<DoctorResponseDto> getDoctor(@PathVariable Long id) {
+        DoctorResponseDto doctor = doctorService.getById(id);
         return ApiResponseDto.success(doctor, "Doctor fetched successfully");
     }
 
     // GET ALL
     @GetMapping
-    public ApiResponseDto<List<Doctor>> getAllDoctors() {
+    public ApiResponseDto<List<DoctorResponseDto>> getAllDoctors() {
         return ApiResponseDto.success(
                 doctorService.getAllActive(),
                 "Active doctors fetched successfully"
@@ -51,7 +53,7 @@ public class DoctorController {
 
     // GET ALL FOR ADMIN (INACTIVE AND ACTIVE)
     @GetMapping("/all")
-    public ApiResponseDto<List<Doctor>> getAllDoctorsAdmin() {
+    public ApiResponseDto<List<DoctorResponseDto>> getAllDoctorsAdmin() {
         return ApiResponseDto.success(
                 doctorService.getAll(),
                 "All doctors fetched successfully"
@@ -68,10 +70,10 @@ public class DoctorController {
 
     // RE-ACTIVATE
     @PutMapping("/{id}/activate")
-    public ApiResponseDto<Doctor> activateDoctor(@PathVariable Long id) {
-        Doctor doctor = doctorService.getById(id);
-        doctor.setActive(true);
-        return ApiResponseDto.success(doctor, "Doctor activated successfully");
+    public ApiResponseDto<DoctorResponseDto> activateDoctor(@PathVariable Long id) {
+        doctorService.activate(id);
+//        doctor.setActive(true);
+        return ApiResponseDto.success(null,"Doctor activated successfully");
     }
 
 

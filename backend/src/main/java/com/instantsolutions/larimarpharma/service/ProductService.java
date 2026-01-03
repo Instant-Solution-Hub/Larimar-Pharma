@@ -21,6 +21,8 @@ public class ProductService {
                 .name(dto.getName())
                 .category(dto.getCategory())
                 .description(dto.getDescription())
+                .ptr(dto.getPtr())
+                .pts(dto.getPts())
                 .price(dto.getPrice())
                 .active(dto.isActive())
                 .pts(dto.getPts())
@@ -36,6 +38,8 @@ public class ProductService {
         product.setName(dto.getName());
         product.setCategory(dto.getCategory());
         product.setDescription(dto.getDescription());
+        product.setPtr(dto.getPtr());
+        product.setPts(dto.getPts());
         product.setPrice(dto.getPrice());
         product.setActive(dto.isActive());
 
@@ -54,6 +58,8 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        productRepository.delete(getProductById(id));
+        Product product = getProductById(id);
+        product.setActive(false);
+        productRepository.save(product);
     }
 }

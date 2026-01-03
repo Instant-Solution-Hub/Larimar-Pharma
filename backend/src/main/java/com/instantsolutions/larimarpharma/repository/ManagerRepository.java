@@ -30,4 +30,23 @@ public interface ManagerRepository extends JpaRepository<Manager, Long> {
 
     @Query("SELECT COUNT(m) FROM Manager m WHERE m.active = true")
     long countActiveManagers();
+
+    @Query("""
+        SELECT DISTINCT m
+        FROM Manager m
+        LEFT JOIN FETCH m.fieldExecutives
+        LEFT JOIN FETCH m.managedTerritories
+        """)
+    List<Manager> findAllWithExecutives();
+
+    @Query("""
+       SELECT DISTINCT m
+       FROM Manager m
+       LEFT JOIN FETCH m.fieldExecutives
+       LEFT JOIN FETCH m.managedTerritories
+       WHERE m.id = :id
+       """)
+    Optional<Manager> findByIdWithDetails(@Param("id") Long id);
+
+
 }

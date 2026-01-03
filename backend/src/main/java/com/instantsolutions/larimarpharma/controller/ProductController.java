@@ -4,6 +4,7 @@ import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ProductRequestDto;
 import com.instantsolutions.larimarpharma.entity.Product;
 import com.instantsolutions.larimarpharma.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<Product>> create(
-            @RequestBody ProductRequestDto dto
+            @Valid @RequestBody ProductRequestDto dto
     ) {
         Product saved = productService.createProduct(dto);
         return new ResponseEntity<>(
@@ -32,7 +33,7 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<Product>> update(
             @PathVariable Long id,
-            @RequestBody ProductRequestDto dto
+            @Valid  @RequestBody ProductRequestDto dto
     ) {
         Product updated = productService.updateProduct(id, dto);
         return ResponseEntity.ok(
