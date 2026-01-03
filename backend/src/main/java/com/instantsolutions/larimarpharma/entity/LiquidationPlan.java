@@ -30,6 +30,8 @@ public class LiquidationPlan {
 
     private String medicalShopName;
 
+    private String marketName;
+
 
     @Column(nullable = false)
     private Integer targetLiquidation;

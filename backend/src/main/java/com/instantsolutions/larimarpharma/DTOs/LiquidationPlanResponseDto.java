@@ -15,6 +15,7 @@ public class LiquidationPlanResponseDto {
 
     private Long doctorId;
     private String doctorName;
+    private String marketName;
 
     private Integer targetLiquidation;
     private Integer achievedUnits;

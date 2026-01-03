@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Stockist;
 import com.instantsolutions.larimarpharma.entity.StockistProductStock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -7,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface StockistProductStockRepository
         extends JpaRepository<StockistProductStock, Long> {
@@ -27,5 +29,14 @@ public interface StockistProductStockRepository
             @Param("feId") Long feId,
             @Param("productId") Long productId
     );
+
+
+    @Query("""
+        SELECT COALESCE(SUM(s.availableQuantity), 0)
+        FROM StockistProductStock s
+        WHERE s.productId = :productId
+          AND s.stockist IN :stockists
+    """)
+    Integer getTotalAvailableStockForProduct(Long productId, Set<Stockist> stockists);
 
 }

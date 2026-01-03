@@ -2,7 +2,7 @@ package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanResponseDto;
-import com.instantsolutions.larimarpharma.entity.LiquidationPlan;
+import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.BadRequestException;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.*;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,9 @@ public class LiquidationPlanService {
 
     public LiquidationPlanResponseDto create(Long feId, LiquidationPlanRequestDto dto) {
 
+        validateRequest(feId,dto);
+
+
         validateStock(feId, dto.getProductId(), dto.getTargetLiquidation(), null);
 
         LiquidationPlan plan = LiquidationPlan.builder()
@@ -42,13 +46,72 @@ public class LiquidationPlanService {
                 .product(productRepository.getReferenceById(dto.getProductId()))
                 .doctor(doctorRepository.getReferenceById(dto.getDoctorId()))
                 .medicalShopName(dto.getMedicalShopName())
+                .marketName(dto.getMarketName())
                 .targetLiquidation(dto.getTargetLiquidation())
                 .deadline(dto.getDeadline())
                 .strategy(dto.getStrategy())
+                .status(LiquidationPlan.PlanStatus.ACTIVE)
+                .achievedUnits(0)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         liquidationPlanRepository.save(plan);
         return mapToResponse(plan);
+    }
+
+    private void validateRequest(Long feId, LiquidationPlanRequestDto dto) {
+
+        // 1️⃣ Fetch FE
+        FieldExecutive fe = fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Field Executive ID"));
+
+        // 2️⃣ Fetch Product
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Product ID"));
+
+        // 3️⃣ Fetch Doctor
+        Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Doctor ID"));
+
+        // 4️⃣ Validate target
+        if (dto.getTargetLiquidation() == null || dto.getTargetLiquidation() <= 0) {
+            throw new IllegalArgumentException("Target liquidation must be greater than 0");
+        }
+
+        // 5️⃣ Validate deadline
+        if (dto.getDeadline() == null || dto.getDeadline().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Deadline must be a future date");
+        }
+
+        // 6️⃣ FE must have stockists
+        Set<Stockist> stockists = fe.getStockists();
+        if (stockists == null || stockists.isEmpty()) {
+            throw new IllegalStateException("No stockists mapped to Field Executive");
+        }
+
+        // 7️⃣ Check stock availability
+        Integer availableStock =
+                stockRepository.getTotalAvailableStockForProduct(dto.getProductId(), stockists);
+
+        if (availableStock < dto.getTargetLiquidation()) {
+            throw new IllegalStateException(
+                    "Insufficient stock. Available: " + availableStock +
+                            ", Required: " + dto.getTargetLiquidation()
+            );
+        }
+
+        // 8️⃣ Check duplicate active plan
+        liquidationPlanRepository
+                .findByFieldExecutiveAndProductAndDoctorAndStatus(
+                        fe, product, doctor, LiquidationPlan.PlanStatus.ACTIVE
+                )
+                .ifPresent(p -> {
+                    throw new IllegalStateException(
+                            "An active liquidation plan already exists for this product and doctor"
+                    );
+                });
+
+
     }
 
 
@@ -150,6 +213,7 @@ public class LiquidationPlanService {
                 .deadline(plan.getDeadline())
                 .strategy(plan.getStrategy())
                 .createdAt(plan.getCreatedAt())
+                .marketName(plan.getMarketName())
                 .build();
     }
 }

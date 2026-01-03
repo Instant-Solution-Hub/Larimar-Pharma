@@ -1,12 +1,15 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.LiquidationPlan;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan, Long> {
 
@@ -42,6 +45,13 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
             LocalDateTime start,
             LocalDateTime end
     );
+
+     Optional<LiquidationPlan> findByFieldExecutiveAndProductAndDoctorAndStatus(
+            FieldExecutive fieldExecutive,
+            Product product,
+            Doctor doctor,
+            LiquidationPlan.PlanStatus status
+    ) ;
 
 }
 

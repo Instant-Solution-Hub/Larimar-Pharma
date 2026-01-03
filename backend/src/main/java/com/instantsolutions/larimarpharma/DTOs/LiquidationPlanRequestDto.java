@@ -17,6 +17,8 @@ public class LiquidationPlanRequestDto {
 
     private String medicalShopName;
 
+    private String marketName;
+
     @NotNull
     @Min(1)
     private Integer targetLiquidation;
