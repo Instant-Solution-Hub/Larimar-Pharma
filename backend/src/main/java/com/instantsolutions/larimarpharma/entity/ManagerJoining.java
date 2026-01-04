@@ -32,7 +32,6 @@ public class ManagerJoining {
 
     private LocalDateTime actualJoiningTime;
 
-    private Long delayMinutes;
 
     @Enumerated(EnumType.STRING)
     private JoiningStatus status; // ON_TIME, EARLY, LATE

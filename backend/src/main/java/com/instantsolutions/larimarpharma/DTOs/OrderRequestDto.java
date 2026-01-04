@@ -4,6 +4,7 @@ import com.instantsolutions.larimarpharma.entity.Order;
 import jakarta.validation.Valid;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import jakarta.validation.constraints.*;
@@ -34,6 +35,9 @@ public class OrderRequestDto {
 
     @Size(max = 500, message = "Notes cannot exceed 500 characters")
     private String notes;
+
+    @NotNull(message = "Order Date is required")
+    private LocalDateTime orderDate;
 
     @NotEmpty(message = "Order must contain at least one item")
     private Set<@Valid OrderItemRequestDto> items;
