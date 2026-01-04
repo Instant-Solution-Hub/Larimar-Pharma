@@ -81,6 +81,7 @@ public class Visit {
     private String contactNumber;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "stockist_type", length = 20)
     private StockistType stockistType;
 
     private String stockistName;
@@ -121,6 +122,7 @@ public class Visit {
         COMPLETED,   // visit done
         MISSED       // visit not done
     }
+
 
 
     public enum StockistType {

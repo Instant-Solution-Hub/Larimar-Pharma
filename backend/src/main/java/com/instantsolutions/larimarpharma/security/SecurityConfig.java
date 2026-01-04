@@ -8,6 +8,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -16,34 +21,26 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // Disable CSRF (JWT + REST)
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Disable default login & basic auth
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-
-                // Stateless session (JWT)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers(
-//                                "/",
-//                                "/error",
-//                                "/fe/test",
-//                                "/health",
-//                                "/auth/**",
+//                                "/api/v1/auth/**",
+//                                "/swagger-ui.html",
 //                                "/swagger-ui/**",
-//                                "/v3/api-docs/**"
+//                                "/v3/api-docs/**",
+//                                "/error"
 //                        ).permitAll()
                         .anyRequest().permitAll()
                 );
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

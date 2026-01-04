@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -197,6 +199,59 @@ public class VisitService {
                         visit.getPharmacy() != null ? visit.getPharmacy().getId() : null
                 )
                 .build();
+    }
+
+    public List<DoctorVisitSlotDto> getSlotVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<Visit> visits = visitRepository.findVisitsForSlot(
+                fieldExecutiveId,
+                weekNumber,
+                dayOfWeek,
+                startOfMonth,
+                endOfMonth
+        );
+
+        Map<Long, Long> completedCountMap = visitRepository
+                .countCompletedVisitsPerDoctor(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        Map<Long, Long> plannedCountMap = visitRepository
+                .countPlannedVisitsPerDoctor(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        return visits.stream().map(v -> {
+
+            Long doctorId = v.getDoctor().getId();
+
+            return DoctorVisitSlotDto.builder()
+                    .visitId(v.getId())
+                    .doctorId(doctorId)
+                    .doctorName(v.getDoctor().getName())
+                    .specialization(v.getDoctor().getDesignation())
+                    .hospitalName(v.getDoctor().getHospitalName())
+                    .weekNumber(v.getWeekNumber())
+                    .dayOfWeek(v.getDayOfWeek())
+                    .status(v.getStatus())
+                    .visitType(v.getVisitType())
+                    .completedVisitCount(completedCountMap.getOrDefault(doctorId, 0L))
+                    .plannedVisitCount(plannedCountMap.getOrDefault(doctorId, 0L))
+                    .build();
+        }).toList();
     }
 
 }
