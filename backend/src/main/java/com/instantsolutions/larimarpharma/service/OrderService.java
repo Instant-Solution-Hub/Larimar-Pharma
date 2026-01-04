@@ -49,6 +49,7 @@ public class OrderService {
                 .discount(dto.getDiscount())
                 .notes(dto.getNotes())
                 .status(Order.OrderStatus.PENDING)
+                .orderDate(dto.getOrderDate())
                 .build();
 
         Set<OrderItem> items = buildOrderItems(order, dto.getItems());
