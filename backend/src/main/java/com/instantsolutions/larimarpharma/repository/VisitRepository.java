@@ -86,5 +86,50 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             LocalDate start,
             LocalDate end
     );
+
+    @Query("""
+        SELECT v
+        FROM Visit v
+        JOIN FETCH v.doctor d
+        WHERE v.fieldExecutive.id = :feId
+          AND v.weekNumber = :weekNumber
+          AND v.dayOfWeek = :dayOfWeek
+          AND v.visitDate BETWEEN :startDate AND :endDate
+    """)
+    List<Visit> findVisitsForSlot(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.doctor.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.status = 'COMPLETED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.doctor.id
+""")
+    List<Object[]> countCompletedVisitsPerDoctor(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.doctor.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.doctor.id
+""")
+    List<Object[]> countPlannedVisitsPerDoctor(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 }
 

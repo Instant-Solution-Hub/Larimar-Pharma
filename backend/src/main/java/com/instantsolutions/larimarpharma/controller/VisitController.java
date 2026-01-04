@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/visit")
+@RequestMapping("/api/visit")
 public class VisitController {
     @Autowired
     VisitService visitService;
@@ -38,6 +40,19 @@ public class VisitController {
                 "Visits Marked successfully"
         ));
     }
+
+    @GetMapping("/planned-visits")
+    public ResponseEntity<List<DoctorVisitSlotDto>> getSlotVisits(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getSlotVisits(fieldExecutiveId, weekNumber, dayOfWeek)
+        );
+    }
+
+
 
 
 }
