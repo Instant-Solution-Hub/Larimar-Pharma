@@ -1,10 +1,7 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
-import com.instantsolutions.larimarpharma.entity.ConvertedProduct;
-import com.instantsolutions.larimarpharma.entity.Doctor;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
-import com.instantsolutions.larimarpharma.entity.Visit;
+import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.repository.DoctorRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ProductRepository;
@@ -246,12 +243,151 @@ public class VisitService {
                     .hospitalName(v.getDoctor().getHospitalName())
                     .weekNumber(v.getWeekNumber())
                     .dayOfWeek(v.getDayOfWeek())
+                    .practiceType(String.valueOf(v.getDoctor().getPracticeType()))
+                    .category(String.valueOf(v.getDoctor().getCategory()))
                     .status(v.getStatus())
                     .visitType(v.getVisitType())
                     .completedVisitCount(completedCountMap.getOrDefault(doctorId, 0L))
                     .plannedVisitCount(plannedCountMap.getOrDefault(doctorId, 0L))
                     .build();
         }).toList();
+    }
+
+    public List<PharmacyVisitSlotDto> getPharmacySlotVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
+                fieldExecutiveId,
+                weekNumber,
+                dayOfWeek,
+                startOfMonth,
+                endOfMonth
+        );
+
+        Map<Long, Long> completedCountMap =
+                visitRepository.countCompletedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        Map<Long, Long> plannedCountMap =
+                visitRepository.countPlannedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        return visits.stream().map(v -> {
+
+            Long pharmacyId = v.getPharmacy().getId();
+
+            return PharmacyVisitSlotDto.builder()
+                    .visitId(v.getId())
+                    .pharmacyId(pharmacyId)
+                    .pharmacyName(v.getPharmacy().getPharmacyName())
+                    .weekNumber(v.getWeekNumber())
+                    .dayOfWeek(v.getDayOfWeek())
+                    .status(v.getStatus())
+                    .visitType(v.getVisitType())
+                    .completedVisitCount(
+                            completedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .plannedVisitCount(
+                            plannedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .build();
+        }).toList();
+    }
+
+    public List<CompletedVisitDto> getCompletedVisits(Long fieldExecutiveId) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return visitRepository
+                .findAllCompletedVisits(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
+    private CompletedVisitDto mapToCompletedVisitDto(Visit v) {
+
+        CompletedVisitDto.CompletedVisitDtoBuilder builder =
+                CompletedVisitDto.builder()
+                        .visitId(v.getId())
+                        .visitType(v.getVisitType())
+                        .visitDate(v.getVisitDate())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .actualVisitTime(v.getActualVisitTime())
+                        .location(v.getLocation())
+                        .notes(v.getNotes());
+
+        switch (v.getVisitType()) {
+
+            case DOCTOR -> builder.doctor(mapDoctor(v.getDoctor()));
+
+            case PHARMACIST -> builder.pharmacy(mapPharmacy(v.getPharmacy()));
+
+            case STOCKIST -> builder.stockist(mapStockist(v.getStockist()));
+        }
+
+        return builder.build();
+    }
+
+    private DoctorDetailsDto mapDoctor(Doctor d) {
+        return DoctorDetailsDto.builder()
+                .id(d.getId())
+                .name(d.getName())
+                .category(d.getCategory())
+                .practiceType(d.getPracticeType())
+                .designation(d.getDesignation())
+                .hospitalName(d.getHospitalName())
+                .location(d.getLocation())
+                .contactNumber(d.getContactNumber())
+                .doctorCode(d.getDoctorCode())
+                .latitude(d.getLatitude())
+                .longitude(d.getLongitude())
+                .active(d.isActive())
+                .build();
+    }
+
+    private PharmacyDetailsDto mapPharmacy(Pharmacy p) {
+        return PharmacyDetailsDto.builder()
+                .id(p.getId())
+                .pharmacyName(p.getPharmacyName())
+                .location(p.getLocation())
+                .contactPerson(p.getContactPerson())
+                .contactNumber(p.getContactNumber())
+                .doctorId(
+                        p.getDoctor() != null ? p.getDoctor().getId() : null
+                )
+                .doctorName(
+                        p.getDoctor() != null ? p.getDoctor().getName() : null
+                )
+                .build();
+    }
+
+    private StockistDetailsDto mapStockist(Stockist s) {
+        return StockistDetailsDto.builder()
+                .id(s.getId())
+                .name(s.getName())
+                .type(s.getType())
+                .contactPerson(s.getContactPerson())
+                .contactNumber(s.getContactNumber())
+                .location(s.getLocation())
+                .active(s.isActive())
+                .build();
     }
 
 }

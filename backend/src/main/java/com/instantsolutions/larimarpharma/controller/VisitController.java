@@ -41,7 +41,7 @@ public class VisitController {
         ));
     }
 
-    @GetMapping("/planned-visits")
+    @GetMapping("/planned-doctor-visits")
     public ResponseEntity<List<DoctorVisitSlotDto>> getSlotVisits(
             @RequestParam Long fieldExecutiveId,
             @RequestParam Integer weekNumber,
@@ -51,6 +51,31 @@ public class VisitController {
                 visitService.getSlotVisits(fieldExecutiveId, weekNumber, dayOfWeek)
         );
     }
+
+    @GetMapping("/planned-pharmacy-visits")
+    public ResponseEntity<List<PharmacyVisitSlotDto>> getPharmacySlotVisits(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getPharmacySlotVisits(
+                        fieldExecutiveId, weekNumber, dayOfWeek
+                )
+        );
+    }
+
+    @GetMapping("/completed-visits")
+    public ResponseEntity<List<CompletedVisitDto>> getCompletedVisits(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getCompletedVisits(
+                        fieldExecutiveId
+                )
+        );
+    }
+
 
 
 

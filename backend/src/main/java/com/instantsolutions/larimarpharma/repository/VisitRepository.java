@@ -131,5 +131,72 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("endDate") LocalDate endDate
     );
 
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.pharmacy p
+    WHERE v.fieldExecutive.id = :feId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+""")
+    List<Visit> findPharmacyVisitsForSlot(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.pharmacy.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.status = 'COMPLETED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.pharmacy.id
+""")
+    List<Object[]> countCompletedVisitsPerPharmacy(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.pharmacy.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.pharmacy.id
+""")
+    List<Object[]> countPlannedVisitsPerPharmacy(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor d
+    LEFT JOIN FETCH v.pharmacy p
+    LEFT JOIN FETCH v.stockist s
+    WHERE v.fieldExecutive.id = :feId
+      AND v.status = 'COMPLETED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY v.actualVisitTime DESC
+""")
+    List<Visit> findAllCompletedVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
+
 }
 

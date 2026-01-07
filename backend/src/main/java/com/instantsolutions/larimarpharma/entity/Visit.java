@@ -33,6 +33,10 @@ public class Visit {
     @JoinColumn(name = "pharmacy_id", nullable = true)
     private Pharmacy pharmacy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stockist_id", nullable = true)
+    private Stockist stockist;
+
     @OneToMany(
     mappedBy = "visit",
     cascade = CascadeType.ALL,
