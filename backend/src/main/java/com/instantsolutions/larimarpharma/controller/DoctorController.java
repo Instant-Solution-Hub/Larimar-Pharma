@@ -7,6 +7,7 @@ import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -74,6 +75,16 @@ public class DoctorController {
         doctorService.activate(id);
 //        doctor.setActive(true);
         return ApiResponseDto.success(null,"Doctor activated successfully");
+    }
+
+    @PutMapping("/{doctorId}/assign-fe/{feId}")
+    public ResponseEntity<DoctorResponseDto> assignFE(
+            @PathVariable Long doctorId,
+            @PathVariable Long feId
+    ) {
+        return ResponseEntity.ok(
+                doctorService.assignDoctorToFE(doctorId, feId)
+        );
     }
 
 

@@ -68,6 +68,12 @@ public class FieldExecutive extends BaseUser {
     @Builder.Default
     private Set<LiquidationPlan> liquidationPlans = new HashSet<>();
 
+    @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Doctor> doctors = new HashSet<>();
+
+
+
     // Leave requests by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

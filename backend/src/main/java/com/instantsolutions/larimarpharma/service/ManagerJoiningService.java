@@ -8,6 +8,7 @@ import com.instantsolutions.larimarpharma.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,12 +27,13 @@ public class  ManagerJoiningService {
     DoctorRepository doctorRepository;
 
 
+    @Transactional
     public ManagerJoiningResponseDto create(ManagerJoiningRequestDto dto) {
 
         FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
                 .orElseThrow(() -> new ResourceNotFoundException("Field Executive not found"));
 
-        Manager manager = managerRepository.findById(dto.getManagerId())
+        Manager manager = managerRepository.findById(fe.getManager().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
 
         Doctor doctor = doctorRepository.findById(dto.getDoctorId())
@@ -119,7 +121,8 @@ public class  ManagerJoiningService {
                 .id(entity.getId())
                 .fieldExecutiveId(entity.getFieldExecutive().getId())
                 .managerId(entity.getManager().getId())
-                .doctorId(entity.getDoctor().getId())
+                .doctorName(entity.getDoctor().getName())
+                .hospitalName(entity.getDoctor().getHospitalName())
                 .scheduledTime(entity.getScheduledTime())
                 .actualJoiningTime(entity.getActualJoiningTime())
                 .status(entity.getStatus() == null ? null : entity.getStatus().name())

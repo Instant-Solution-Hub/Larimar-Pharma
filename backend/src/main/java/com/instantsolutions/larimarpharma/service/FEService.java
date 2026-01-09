@@ -2,14 +2,17 @@ package com.instantsolutions.larimarpharma.service;
 
 
 
+import com.instantsolutions.larimarpharma.DTOs.DoctorResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.FEUpdateContactDto;
 import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveRequest;
 import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
+import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.exceptions.BadRequestException;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
+import com.instantsolutions.larimarpharma.repository.DoctorRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class FEService {
 
     private final FieldExecutiveRepository repository;
     private final ManagerRepository managerRepository;
+    private final DoctorRepository doctorRepository;
 
     // CREATE
     public FieldExecutiveResponse create(FieldExecutiveRequest request) {
@@ -186,6 +190,21 @@ public class FEService {
         fe.setEmergencyContact(dto.getEmergencyContact());
 
         return repository.save(fe);
+    }
+
+    public List<DoctorResponseDto> getAllocatedDoctors(Long feId) {
+
+        if (!repository.existsById(feId)) {
+            throw new ResourceNotFoundException("Field Executive not found");
+        }
+
+
+        // Option 1: Using repository query (recommended)
+        List<Doctor> doctors = doctorRepository.findByFieldExecutiveId(feId);
+
+        return doctors.stream()
+                .map(DoctorResponseDto::fromEntity)
+                .toList();
     }
 }
 

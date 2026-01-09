@@ -13,7 +13,8 @@ public class ManagerJoiningResponseDto {
     private Long id;
     private Long fieldExecutiveId;
     private Long managerId;
-    private Long doctorId;
+    private String doctorName;
+    private String hospitalName;
     private LocalDateTime scheduledTime;
     private LocalDateTime actualJoiningTime;
     private String status;

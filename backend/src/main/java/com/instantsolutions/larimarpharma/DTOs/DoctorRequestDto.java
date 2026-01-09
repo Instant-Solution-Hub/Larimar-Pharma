@@ -35,4 +35,5 @@ public class DoctorRequestDto {
     @Pattern(regexp = ".*\\S.*", message = "cannot contain only spaces")
     private String doctorCode;
     private boolean active;
+
 }

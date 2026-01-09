@@ -3,7 +3,10 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.DoctorRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.DoctorResponseDto;
 import com.instantsolutions.larimarpharma.entity.Doctor;
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.repository.DoctorRepository;
+import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +19,10 @@ public class DoctorService {
 
     private final DoctorRepository doctorRepository;
 
+    private final FieldExecutiveRepository fieldExecutiveRepository;
+
     public DoctorResponseDto create(DoctorRequestDto dto) {
+
         Doctor doctor = Doctor.builder()
                 .name(dto.getName())
                 .category(dto.getCategory())
@@ -89,5 +95,20 @@ public class DoctorService {
 
     public List<Doctor> getInactive() {
         return doctorRepository.findByActiveFalse();
+    }
+
+    @Transactional
+    public DoctorResponseDto assignDoctorToFE(Long doctorId, Long feId) {
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        doctor.setFieldExecutive(fe);
+
+         doctorRepository.save(doctor);
+         return DoctorResponseDto.fromEntity(doctor);
     }
 }
