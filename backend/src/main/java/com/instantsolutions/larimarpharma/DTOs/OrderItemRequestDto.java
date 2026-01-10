@@ -15,5 +15,8 @@ public class OrderItemRequestDto {
 
     @DecimalMin(value = "0.01", message = "Price must be greater than zero")
     private Double price;
+
+    @PositiveOrZero(message = "Total must not be negative")
+    private Double total;
 }
 

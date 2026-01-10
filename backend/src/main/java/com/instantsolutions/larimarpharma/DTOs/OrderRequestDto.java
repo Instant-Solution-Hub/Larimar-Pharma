@@ -41,6 +41,11 @@ public class OrderRequestDto {
 
     @NotEmpty(message = "Order must contain at least one item")
     private Set<@Valid OrderItemRequestDto> items;
+
+    @NotNull(message = "Total amount cannot be null")
+    private Double totalAmount;
+
+
 }
 
 

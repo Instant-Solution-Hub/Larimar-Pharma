@@ -40,6 +40,7 @@ public class OrderService {
         FieldExecutive fe = fieldExecutiveRepository.findById(feId)
                 .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
 
+
         Order order = Order.builder()
                 .fieldExecutive(fe)
                 .institutionName(dto.getInstitutionName())
@@ -50,9 +51,10 @@ public class OrderService {
                 .notes(dto.getNotes())
                 .status(Order.OrderStatus.PENDING)
                 .orderDate(dto.getOrderDate())
+                .totalAmount(dto.getTotalAmount())
                 .build();
 
-        Set<OrderItem> items = buildOrderItems(order, dto.getItems());
+        List<OrderItem> items = buildOrderItems(order, dto.getItems());
         order.setOrderItems(items);
 
          orderRepository.save(order);
@@ -76,6 +78,7 @@ public class OrderService {
         order.setContactNumber(dto.getContactNumber());
         order.setDiscount(dto.getDiscount());
         order.setNotes(dto.getNotes());
+        order.setTotalAmount(dto.getTotalAmount());
 
 
         // this functionality can be deleted as FE caannot alter the
@@ -139,6 +142,7 @@ public class OrderService {
                                         .productName(item.getProduct().getName())
                                         .quantity(item.getQuantity())
                                         .price(item.getPrice())
+                                        .total(item.getTotal())
                                         .build())
                                 .toList()
                 )
@@ -208,7 +212,7 @@ public class OrderService {
     }
 
     // ---------- helper ----------
-    private Set<OrderItem> buildOrderItems(
+    private List<OrderItem> buildOrderItems(
             Order order, Set<OrderItemRequestDto> items) {
 
         if (items == null || items.isEmpty()) {
@@ -225,7 +229,8 @@ public class OrderService {
                     .product(product)
                     .quantity(i.getQuantity())
                     .price(i.getPrice())
+                    .total(i.getTotal())
                     .build();
-        }).collect(Collectors.toSet());
+        }).collect(Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public class Product {
     // Relationships
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnore
     private Set<OrderItem> orderItems = new HashSet<>();
 
     @PrePersist

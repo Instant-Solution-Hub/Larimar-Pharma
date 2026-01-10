@@ -3,8 +3,12 @@ package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.Builder.Default;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -45,7 +49,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
+    @Default
     private OrderStatus status = OrderStatus.PENDING;
 
     private Double discount;
@@ -53,9 +57,9 @@ public class Order {
     private String notes;
 
     // Relationships
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<OrderItem> orderItems = new HashSet<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY , orphanRemoval = true)
+    @Default
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
