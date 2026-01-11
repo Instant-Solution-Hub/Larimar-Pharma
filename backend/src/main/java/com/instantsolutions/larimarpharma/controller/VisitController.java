@@ -76,6 +76,26 @@ public class VisitController {
         );
     }
 
+    /* ===== Scheduled Doctors ===== */
+    @GetMapping("/scheduled-doctors")
+    public ResponseEntity<List<ScheduledDoctorVisitDto>> getTodayDoctors(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledDoctors(fieldExecutiveId)
+        );
+    }
+
+    /* ===== Scheduled Pharmacies ===== */
+    @GetMapping("/scheduled-pharmacies")
+    public ResponseEntity<List<ScheduledPharmacyVisitDto>> getTodayPharmacies(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledPharmacies(fieldExecutiveId)
+        );
+    }
+
 
 
 

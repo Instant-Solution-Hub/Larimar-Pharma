@@ -197,6 +197,36 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     );
 
 
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.doctor d
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'DOCTOR'
+      AND v.visitDate = :today
+      AND v.status IN ('SCHEDULED', 'APPROVED')
+""")
+    List<Visit> findTodayScheduledDoctorVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("today") LocalDate today
+    );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.pharmacy p
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate = :today
+      AND v.status IN ('SCHEDULED', 'APPROVED')
+""")
+    List<Visit> findTodayScheduledPharmacyVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("today") LocalDate today
+    );
+
+
 
 }
 

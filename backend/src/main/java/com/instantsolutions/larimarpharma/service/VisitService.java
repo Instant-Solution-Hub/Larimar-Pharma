@@ -390,4 +390,52 @@ public class VisitService {
                 .build();
     }
 
+    /* ===== Doctors ===== */
+    public List<ScheduledDoctorVisitDto> getTodayScheduledDoctors(Long fieldExecutiveId) {
+
+        LocalDate today = LocalDate.now();
+
+        return visitRepository
+                .findTodayScheduledDoctorVisits(fieldExecutiveId, today)
+                .stream()
+                .map(v -> ScheduledDoctorVisitDto.builder()
+                        .visitId(v.getId())
+                        .doctorId(v.getDoctor().getId())
+                        .doctorName(v.getDoctor().getName())
+                        .category(v.getDoctor().getCategory())
+                        .practiceType(v.getDoctor().getPracticeType())
+                        .hospitalName(v.getDoctor().getHospitalName())
+                        .location(v.getDoctor().getLocation())
+                        .contactNumber(v.getDoctor().getContactNumber())
+                        .status(v.getStatus())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .build()
+                )
+                .toList();
+    }
+
+    /* ===== Pharmacies ===== */
+    public List<ScheduledPharmacyVisitDto> getTodayScheduledPharmacies(Long fieldExecutiveId) {
+
+        LocalDate today = LocalDate.now();
+
+        return visitRepository
+                .findTodayScheduledPharmacyVisits(fieldExecutiveId, today)
+                .stream()
+                .map(v -> ScheduledPharmacyVisitDto.builder()
+                        .visitId(v.getId())
+                        .pharmacyId(v.getPharmacy().getId())
+                        .pharmacyName(v.getPharmacy().getPharmacyName())
+                        .location(v.getPharmacy().getLocation())
+                        .contactPerson(v.getPharmacy().getContactPerson())
+                        .contactNumber(v.getPharmacy().getContactNumber())
+                        .status(v.getStatus())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .build()
+                )
+                .toList();
+    }
+
 }
