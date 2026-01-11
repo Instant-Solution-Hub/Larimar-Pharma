@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.DTOs;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.*;
@@ -27,23 +28,20 @@ public class CompetitiveBrandReportRequestDto {
     private String companyName;
 
 
-    private Long productId;
+    private String productName;
 
     @NotBlank(message = "Product category is required")
     private String productCategory;
 
-    @NotNull(message = "Doctor ID is required")
-    private Long doctorId;
+    @NotNull(message = "Resource person name is required")
+    private String source;
 
-    @NotBlank(message = "Hospital name is required")
-    private String hospitalName;
+    @NotBlank(message = "Resource person designation is required")
+    private String designation;
 
     private String observations;
 
     private boolean managerNotified;
 
-    @NotNull(message = "Reported date is required")
-    @PastOrPresent(message = "Reported date cannot be in the future")
-    private LocalDateTime reportedDate;
 }
 

@@ -3,6 +3,8 @@ package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,17 +28,17 @@ public class CompetitiveBrandReport {
     @Column(nullable = false)
     private String companyName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
-    private Product product;
 
+    private String productName;
+
+    @Column(nullable = false)
     private String productCategory;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id")
-    private Doctor doctor;
+    @Column(nullable = false)
+    private String source;
 
-    private String hospitalName;
+    @Column(nullable = false)
+    private String designation;
     private String observations;
     private String imageUrl;
 
@@ -44,8 +46,6 @@ public class CompetitiveBrandReport {
     @Builder.Default
     private boolean managerNotified = false;
 
-    @Column(nullable = false)
-    private LocalDateTime reportedDate;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -53,8 +53,6 @@ public class CompetitiveBrandReport {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (reportedDate == null) {
-            reportedDate = LocalDateTime.now();
-        }
+
     }
 }
