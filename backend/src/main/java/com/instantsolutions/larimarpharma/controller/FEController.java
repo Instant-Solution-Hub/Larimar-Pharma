@@ -112,4 +112,18 @@ public class FEController {
                 ApiResponseDto.success(null, "User deleted successfully")
         );
     }
+
+    @GetMapping("/{feId}/doctors")
+    public ResponseEntity<ApiResponseDto<List<DoctorResponseDto>>> getAllocatedDoctors(
+            @PathVariable Long feId
+    ) {
+        List<DoctorResponseDto> doctors = fieldExecutiveService.getAllocatedDoctors(feId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        doctors,
+                        "Doctors fetched successfully"
+                )
+        );
+    }
 }

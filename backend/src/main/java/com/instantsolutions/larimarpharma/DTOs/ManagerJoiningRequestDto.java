@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.DTOs;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -16,14 +17,12 @@ public class ManagerJoiningRequestDto {
     @NotNull(message = "Field Executive ID is required")
     private Long fieldExecutiveId;
 
-    @NotNull(message = "Manager ID is required")
-    private Long managerId;
 
     @NotNull(message = "Doctor ID is required")
     private Long doctorId;
 
     @NotNull(message = "Scheduled time is required")
-    @FutureOrPresent(message = "Scheduled time cannot be in the past")
+    @PastOrPresent(message = "Scheduled time has to be in the past")
     private LocalDateTime scheduledTime;
 
     private LocalDateTime actualJoiningTime;

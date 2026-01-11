@@ -16,12 +16,13 @@ public interface ManagerJoiningRepository extends JpaRepository<ManagerJoining, 
     List<ManagerJoining> findByDoctorId(Long doctorId);
 
     @Query("""
-        SELECT mj
-        FROM ManagerJoining mj
-        WHERE mj.fieldExecutive.id = :feId
-          AND YEAR(mj.scheduledTime) = :year
-          AND MONTH(mj.scheduledTime) = :month
-    """)
+  SELECT mj
+  FROM ManagerJoining mj
+  JOIN FETCH mj.doctor d
+  WHERE mj.fieldExecutive.id = :feId
+    AND MONTH(mj.scheduledTime) = :month
+    AND YEAR(mj.scheduledTime) = :year
+""")
     List<ManagerJoining> findByFeAndMonth(
             @Param("feId") Long feId,
             @Param("month") int month,

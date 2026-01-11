@@ -11,4 +11,5 @@ public class OrderItemResponseDto {
     private String productName;
     private Integer quantity;
     private Double price;
+    private Double total;
 }

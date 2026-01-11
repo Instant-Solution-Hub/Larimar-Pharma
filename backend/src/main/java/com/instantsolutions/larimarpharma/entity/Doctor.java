@@ -60,6 +60,10 @@ public class Doctor {
     @Builder.Default
     private Set<ManagerJoining> managerJoinings = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "field_executive_id")
+    private FieldExecutive fieldExecutive;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

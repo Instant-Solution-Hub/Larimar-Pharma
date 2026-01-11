@@ -9,4 +9,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     List<Doctor> findByActiveTrue();
 
     List<Doctor> findByActiveFalse();
+
+    List<Doctor> findByFieldExecutiveId(Long feId);
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/fe/orders")
+@RequestMapping("/api/fe/orders")
 @RequiredArgsConstructor
 public class FEOrderController {
 
@@ -69,6 +69,7 @@ public class FEOrderController {
 
         List<OrderResponseDto> orders =
                 orderService.getMyOrdersForCurrentMonth(feId);
+        System.out.println("Current month orders: "+orders);
 
         return ResponseEntity.ok(
                 ApiResponseDto.success(

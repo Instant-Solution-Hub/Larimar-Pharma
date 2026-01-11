@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class ProductService {
                         new EntityNotFoundException("Product not found with id: " + id)
                 );
     }
+
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
