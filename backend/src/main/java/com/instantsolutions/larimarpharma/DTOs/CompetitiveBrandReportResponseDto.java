@@ -1,6 +1,8 @@
 package com.instantsolutions.larimarpharma.DTOs;
 
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -20,20 +22,20 @@ public class CompetitiveBrandReportResponseDto {
     private String companyName;
 
     // Product
-    private Long productId;
+
     private String productName;
     private String productCategory;
 
     // Doctor
-    private Long doctorId;
-    private String doctorName;
 
-    private String hospitalName;
+    private String source;
+
+    private String designation;
     private String observations;
     private String imageUrl;
 
     private boolean managerNotified;
 
-    private LocalDateTime reportedDate;
+
     private LocalDateTime createdAt;
 }

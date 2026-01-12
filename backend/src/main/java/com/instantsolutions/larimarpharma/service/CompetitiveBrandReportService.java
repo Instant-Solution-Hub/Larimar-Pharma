@@ -33,12 +33,11 @@ public class CompetitiveBrandReportService {
                 .fieldExecutive(getFieldExecutive(dto.getFieldExecutiveId()))
                 .brandName(dto.getBrandName())
                 .companyName(dto.getCompanyName())
-                .product(getProduct(dto.getProductId()))
+                .productName(dto.getProductName())
                 .productCategory(dto.getProductCategory())
-                .doctor(getDoctor(dto.getDoctorId()))
-                .hospitalName(dto.getHospitalName())
+                .source(dto.getSource())
+                .designation(dto.getDesignation())
                 .observations(dto.getObservations())
-                .reportedDate(dto.getReportedDate())
                 .build();
 
         if (image != null && !image.isEmpty()) {
@@ -58,24 +57,22 @@ public class CompetitiveBrandReportService {
         CompetitiveBrandReport report = getEntityById(id);
 
         report.setBrandName(dto.getBrandName());
+        report.setCompanyName(dto.getCompanyName());
+        report.setProductName(dto.getProductName());
         report.setProductCategory(dto.getProductCategory());
-        report.setHospitalName(dto.getHospitalName());
+        report.setSource(dto.getSource());
+        report.setDesignation(dto.getDesignation());
         report.setObservations(dto.getObservations());
-
-        if (dto.getFieldExecutiveId() != null)
-            report.setFieldExecutive(getFieldExecutive(dto.getFieldExecutiveId()));
-
-        if (dto.getProductId() != null)
-            report.setProduct(getProduct(dto.getProductId()));
-
-        if (dto.getDoctorId() != null)
-            report.setDoctor(getDoctor(dto.getDoctorId()));
 
         if (image != null && !image.isEmpty()) {
             report.setImageUrl(fileStorageService.storeFile(image, "competitive-reports"));
         }
+        else report.setImageUrl(null);
+        reportRepository.save(report);
 
-        return toDto(reportRepository.save(report));
+        return toDto(report);
+
+
     }
 
     /* ---------------- READ ---------------- */
@@ -88,6 +85,22 @@ public class CompetitiveBrandReportService {
     @Transactional(readOnly = true)
     public List<CompetitiveBrandReportResponseDto> getAll() {
         return reportRepository.findAll()
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompetitiveBrandReportResponseDto> getAllByFieldExecutive(Long feId) {
+
+        // Optional safety check (recommended)
+        fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("FieldExecutive not found: " + feId)
+                );
+
+        return reportRepository
+                .findByFieldExecutiveIdOrderByCreatedAtDesc(feId)
                 .stream()
                 .map(this::toDto)
                 .toList();
@@ -111,19 +124,15 @@ public class CompetitiveBrandReportService {
                 .brandName(report.getBrandName())
                 .companyName(report.getCompanyName())
 
-                .productId(report.getProduct() != null ? report.getProduct().getId() : null)
-                .productName(report.getProduct() != null ? report.getProduct().getName() : null)
+                .productName(report.getProductName())
                 .productCategory(report.getProductCategory())
+                .source(report.getSource())
 
-                .doctorId(report.getDoctor() != null ? report.getDoctor().getId() : null)
-                .doctorName(report.getDoctor() != null ? report.getDoctor().getName() : null)
-
-                .hospitalName(report.getHospitalName())
+                .designation(report.getDesignation())
                 .observations(report.getObservations())
                 .imageUrl(report.getImageUrl())
 
                 .managerNotified(report.isManagerNotified())
-                .reportedDate(report.getReportedDate())
                 .createdAt(report.getCreatedAt())
                 .build();
     }

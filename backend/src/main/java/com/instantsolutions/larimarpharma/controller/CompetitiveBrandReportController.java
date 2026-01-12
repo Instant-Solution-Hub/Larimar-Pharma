@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.CompetitiveBrandReportRequestDto;
@@ -27,9 +28,12 @@ public class CompetitiveBrandReportController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> create(
-            @Valid @RequestPart("data") CompetitiveBrandReportRequestDto dto,
+            @Valid @RequestPart("data") String data,
             @RequestPart(value = "image", required = false) MultipartFile image
-    ) {
+    ) throws JsonProcessingException {
+
+        CompetitiveBrandReportRequestDto dto =
+                new ObjectMapper().readValue(data, CompetitiveBrandReportRequestDto.class);
 
         CompetitiveBrandReportResponseDto saved = reportService.create(dto, image);
 
@@ -40,12 +44,16 @@ public class CompetitiveBrandReportController {
     }
 
 
-    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDto<CompetitiveBrandReportResponseDto>> update(
             @PathVariable Long id,
-            @RequestPart("data") CompetitiveBrandReportRequestDto dto,
+            @RequestPart("data") String data,
             @RequestPart(value = "image", required = false) MultipartFile image
-    ) {
+    ) throws JsonProcessingException {
+        CompetitiveBrandReportRequestDto dto =
+                new ObjectMapper().readValue(data, CompetitiveBrandReportRequestDto.class);
+
+
         CompetitiveBrandReportResponseDto updated = reportService.update(id, dto, image);
         return ResponseEntity.ok(
                 ApiResponseDto.success(updated, "Report updated successfully")
@@ -69,6 +77,18 @@ public class CompetitiveBrandReportController {
         return ResponseEntity.ok(
                 ApiResponseDto.success(
                         reportService.getAll(),
+                        "Reports fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/field-executive/{feId}")
+    public ResponseEntity<ApiResponseDto<List<CompetitiveBrandReportResponseDto>>> getAllByFieldExecutive(
+            @PathVariable Long feId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        reportService.getAllByFieldExecutive(feId),
                         "Reports fetched successfully"
                 )
         );

@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -83,6 +86,19 @@ public class GlobalExceptionHandler {
                         ex.getMessage(), // TEMP: expose real error
                         request.getRequestURI(),
                         LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex ,  HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDto(
+                        "INTERNAL_SERVER_ERROR",
+                        "File size exceeds the maximum allowed limit of 10MB",
+                        request.getRequestURI(), LocalDateTime.now()
                 ));
     }
 
