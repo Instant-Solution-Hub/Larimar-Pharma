@@ -98,6 +98,7 @@ public class Visit {
 
     private LocalDateTime updatedAt;
 
+    @Column(name = "scheduled_date", nullable = true)
     private LocalDateTime scheduledDate;
 
     private LocalDateTime actualDate;

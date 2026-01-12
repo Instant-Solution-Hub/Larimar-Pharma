@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.DTOs.TodayScheduledVisitDto;
 import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
@@ -226,6 +227,25 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("today") LocalDate today
     );
 
+
+
+    @Query("""
+    SELECT DISTINCT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor
+    LEFT JOIN FETCH v.pharmacy
+    LEFT JOIN FETCH v.fieldExecutive fe
+    WHERE v.scheduledDate >= :start
+      AND v.scheduledDate < :nextDay
+      AND v.status = :status
+      AND fe.id = :fieldExecutiveId
+""")
+    List<Visit> findTodayScheduledVisitsByFieldExecutive(
+            @Param("start") LocalDateTime start,
+            @Param("nextDay") LocalDateTime nextDay,
+            @Param("status") Visit.VisitStatus status,
+            @Param("fieldExecutiveId") Long fieldExecutiveId
+    );
 
 
 }

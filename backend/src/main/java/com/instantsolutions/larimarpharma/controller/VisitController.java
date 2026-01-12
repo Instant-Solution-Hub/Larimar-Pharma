@@ -41,6 +41,16 @@ public class VisitController {
         ));
     }
 
+    @PostMapping("/mark-stockist")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> markStockistVisit(
+            @Valid @RequestBody MarkStockistVisitRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.markStockistVisit(request),
+                "Visits Marked successfully"
+        ));
+    }
+
     @GetMapping("/planned-doctor-visits")
     public ResponseEntity<List<DoctorVisitSlotDto>> getSlotVisits(
             @RequestParam Long fieldExecutiveId,
@@ -93,6 +103,14 @@ public class VisitController {
     ) {
         return ResponseEntity.ok(
                 visitService.getTodayScheduledPharmacies(fieldExecutiveId)
+        );
+    }
+
+
+    @GetMapping("/today-scheduled")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisits(@RequestParam Long fieldExecutiveId) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledVisits(fieldExecutiveId)
         );
     }
 

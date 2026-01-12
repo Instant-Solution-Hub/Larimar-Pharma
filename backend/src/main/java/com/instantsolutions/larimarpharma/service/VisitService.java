@@ -1,11 +1,9 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.controller.MarkStockistVisitRequestDto;
 import com.instantsolutions.larimarpharma.entity.*;
-import com.instantsolutions.larimarpharma.repository.DoctorRepository;
-import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
-import com.instantsolutions.larimarpharma.repository.ProductRepository;
-import com.instantsolutions.larimarpharma.repository.VisitRepository;
+import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.utils.DateUtil;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,7 +26,10 @@ public class VisitService {
     private final VisitRepository visitRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private final DoctorRepository doctorRepository;
+    private final PharmacyRepository pharmacyRepository;
     private final ProductRepository productRepository;
+
+    private final StockistRepository stockistRepository;
 
     public VisitDashboardResponse getDashboard(Long fieldExecutiveId) {
 
@@ -98,61 +100,90 @@ public class VisitService {
         FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
                 .orElseThrow(() -> new EntityNotFoundException("FE not found"));
 
-        Doctor doctor = doctorRepository.findById(dto.getDoctorId())
-                .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+        if(dto.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
 
-        Visit visit = Visit.builder()
-                .fieldExecutive(fe)
-                .doctor(doctor)
-                .visitType(dto.getVisitType())
-                .visitDate(visitDate)
-                .weekNumber(dto.getWeekNumber())
-                .dayOfWeek(dto.getDayOfWeek())
-                .status(Visit.VisitStatus.SCHEDULED)
-                .scheduledDate(visitDate.atStartOfDay())
-                .pharmacyName(dto.getPharmacyName())
-                .contactPerson(dto.getContactPerson())
-                .contactNumber(dto.getContactNumber())
-                .stockistType(dto.getStockistType())
-                .stockistName(dto.getStockistName())
-                .build();
-        Visit visit1 = visitRepository.save(visit);
-        return mapToDto(visit1);
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .doctor(doctor)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        if(dto.getVisitType().equals(Visit.VisitType.PHARMACIST)){
+            Pharmacy pharmacy = pharmacyRepository.findById(dto.getPharmacistId())
+                    .orElseThrow(() -> new EntityNotFoundException("Pharmacy not found"));
+
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .pharmacy(pharmacy)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        return null;
+
     }
 
     @Transactional
     public VisitResponseDto markVisit(MarkVisitRequestDto dto) {
-
         Visit visit = visitRepository.findById(dto.getVisitId())
                 .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
 
         Doctor doctor = visit.getDoctor();
 
-        if (dto.getLatitude() == null || dto.getLongitude() == null) {
-            throw new IllegalArgumentException("Latitude & Longitude required");
-        }
+        // location checkins disabled for now (geolocation only works in https)
 
-        // If doctor has no location → save it
-        if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
-
-            doctor.setLatitude(dto.getLatitude());
-            doctor.setLongitude(dto.getLongitude());
-            doctorRepository.save(doctor);
-
-        } else {
-            double distance = GeoUtil.distanceInMeters(
-                    Double.parseDouble(doctor.getLatitude()),
-                    Double.parseDouble(doctor.getLongitude()),
-                    Double.parseDouble(dto.getLatitude()),
-                    Double.parseDouble(dto.getLongitude())
-            );
-
-            if (distance > 100) {
-                throw new IllegalStateException(
-                        "You are not within 100 meters of the doctor location"
-                );
-            }
-        }
+//        if (dto.getLatitude() == null || dto.getLongitude() == null) {
+//            throw new IllegalArgumentException("Latitude & Longitude required");
+//        }
+//
+//        // If doctor has no location → save it
+//        if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
+//
+//            doctor.setLatitude(dto.getLatitude());
+//            doctor.setLongitude(dto.getLongitude());
+//            doctorRepository.save(doctor);
+//
+//        } else {
+//            double distance = GeoUtil.distanceInMeters(
+//                    Double.parseDouble(doctor.getLatitude()),
+//                    Double.parseDouble(doctor.getLongitude()),
+//                    Double.parseDouble(dto.getLatitude()),
+//                    Double.parseDouble(dto.getLongitude())
+//            );
+//
+//            if (distance > 100) {
+//                throw new IllegalStateException(
+//                        "You are not within 100 meters of the doctor location"
+//                );
+//            }
+//        }
 
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
@@ -181,6 +212,42 @@ public class VisitService {
         Visit visit1 = visitRepository.save(visit);
         return mapToDto(visit1);
     }
+
+    public VisitResponseDto markStockistVisit(MarkStockistVisitRequestDto dto) {
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        Stockist stockist = stockistRepository.findById(dto.getStockistId())
+                .orElseThrow(() -> new RuntimeException("Stockist not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Visit visit = new Visit();
+        visit.setVisitType(Visit.VisitType.STOCKIST);
+        visit.setVisitDate(now.toLocalDate());
+        visit.setActualDate(now);
+        visit.setActualVisitTime(now);
+        visit.setDayOfWeek(dto.getDayOfWeek());
+        visit.setWeekNumber(dto.getWeekNumber());
+
+        visit.setFieldExecutive(fe);
+        visit.setStockist(stockist);
+        visit.setStockistType(dto.getStockistType());
+
+        visit.setStatus(
+                dto.getStatus() != null ? dto.getStatus() : Visit.VisitStatus.COMPLETED
+        );
+
+        visit.setNotes(dto.getNotes());
+        visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        visit.setOrderValue(dto.getOrderValue());
+        visit.setLocation(dto.getLocation());
+
+        Visit savedVisit = visitRepository.save(visit);
+        return mapToDto(savedVisit);
+    }
+
 
     private VisitResponseDto mapToDto(Visit visit) {
         return VisitResponseDto.builder()
@@ -437,5 +504,55 @@ public class VisitService {
                 )
                 .toList();
     }
+
+    public List<TodayScheduledVisitDto> getTodayScheduledVisits(Long feId) {
+
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(zone);
+
+        List<Visit> visits = visitRepository.findTodayScheduledVisitsByFieldExecutive(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+                Visit.VisitStatus.SCHEDULED,
+                feId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
+
+    private TodayScheduledVisitDto toTodayScheduledVisitDTO(Visit v) {
+
+        Doctor d = v.getDoctor();
+        Pharmacy p = v.getPharmacy();
+        FieldExecutive fe = v.getFieldExecutive();
+
+        return new TodayScheduledVisitDto(
+                v.getId(),
+                v.getVisitType(),
+                v.getVisitDate(),
+               String.valueOf( v.getStatus()),
+
+                d != null ? d.getId() : null,
+                d != null ? d.getName() : null,
+                d != null ? d.getDesignation() : null,
+                d != null ? String.valueOf(d.getCategory()) : null,
+                d != null ? String.valueOf(d.getPracticeType()) : null,
+                d != null ? d.getHospitalName() : "",
+
+                p != null ? p.getId() : null,
+                p != null ? p.getPharmacyName() : null,
+                p != null ? p.getContactPerson() : null,
+                p != null ? p.getContactNumber() : null,
+
+                fe.getId(),
+                fe.getName()
+        );
+    }
+
+
+
 
 }

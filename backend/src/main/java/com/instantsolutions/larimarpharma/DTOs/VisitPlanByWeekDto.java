@@ -10,8 +10,9 @@ public class VisitPlanByWeekDto {
     @NotNull
     private Long fieldExecutiveId;
 
-    @NotNull
     private Long doctorId;
+
+    private Long pharmacistId;
 
     @NotNull
     private Integer weekNumber;   // 1–5
