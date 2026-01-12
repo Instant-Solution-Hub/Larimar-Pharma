@@ -25,4 +25,6 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    List<LeaveRequest> findByFieldExecutiveIdOrderByFromDateDesc(Long fieldExecutiveId);
 }

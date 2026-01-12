@@ -94,9 +94,9 @@ public class FEController {
     }
 
     @PutMapping("/{id}")
-    public  ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> update(
+    public ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> update(
             @PathVariable Long id,
-           @Valid @RequestBody FieldExecutiveRequest request
+            @Valid @RequestBody FieldExecutiveRequest request
     ) {
         FieldExecutiveResponse response = service.update(id, request);
         return ResponseEntity.ok(
@@ -125,5 +125,47 @@ public class FEController {
                         "Doctors fetched successfully"
                 )
         );
+    }
+
+    @PutMapping("/{feId}/contact/basic")
+    public ResponseEntity<ApiResponseDto<FEContactResponseDto>> updateContactDetails(
+            @PathVariable Long feId,
+            @RequestBody FEContactUpdateRequestDto dto
+    ) {
+        FEContactResponseDto updated =
+                fieldExecutiveService.updateContactDetails(feId, dto);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        updated,
+                        "Contact details updated successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{feId}/profile-stats")
+    public ResponseEntity<FEProfileStatsResponseDto> getProfileStats(
+            @PathVariable Long feId
+    ) {
+        return ResponseEntity.ok(
+                fieldExecutiveService.getProfileStats(feId)
+        );
+    }
+
+    @GetMapping("/{feId}/contact")
+    public ResponseEntity<ApiResponseDto<FEContactResponseDto>> getContactDetails(
+            @PathVariable Long feId
+    ) {
+        FEContactResponseDto response =
+                fieldExecutiveService.getContactDetails(feId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "Contact details fetched successfully"
+                )
+        );
+
+
     }
 }

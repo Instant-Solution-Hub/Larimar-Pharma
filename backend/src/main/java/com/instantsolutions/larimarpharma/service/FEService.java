@@ -2,10 +2,7 @@ package com.instantsolutions.larimarpharma.service;
 
 
 
-import com.instantsolutions.larimarpharma.DTOs.DoctorResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.FEUpdateContactDto;
-import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveRequest;
-import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
@@ -13,6 +10,7 @@ import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.exceptions.BadRequestException;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.DoctorRepository;
+import com.instantsolutions.larimarpharma.repository.FieldExecutiveProfileRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,7 @@ public class FEService {
     private final FieldExecutiveRepository repository;
     private final ManagerRepository managerRepository;
     private final DoctorRepository doctorRepository;
+    private final FieldExecutiveProfileRepository profileRepository;
 
     // CREATE
     public FieldExecutiveResponse create(FieldExecutiveRequest request) {
@@ -69,10 +68,12 @@ public class FEService {
                 .fieldExecutive(fe)
                 .attendancePercentage(0)
                 .targetAchieved(0.0)
+                .targetSet(100.0)
                 .incentiveEarned(0.0)
-                .totalLeaves(10)
-                .casualLeaves(5)
-                .sickLeaves(5)
+                .casualLeaves(10)
+                .sickLeaves(10)
+                .approvedCasualLeaves(0)
+                .approvedSickLeaves(0)
                 .pharmacyVisitProgress(0)
                 .stockistVisitProgress(0)
                 .doctorVisitProgress(0)
@@ -190,6 +191,67 @@ public class FEService {
         fe.setEmergencyContact(dto.getEmergencyContact());
 
         return repository.save(fe);
+    }
+
+    @Transactional
+    public FEContactResponseDto updateContactDetails(
+            Long feId,
+            FEContactUpdateRequestDto dto
+    ) {
+        FieldExecutive fe = repository.findById(feId)
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        if (dto.getPhone() != null) {
+            fe.setPhone(dto.getPhone());
+        }
+        if (dto.getEmail() != null) {
+            fe.setEmail(dto.getEmail());
+        }
+        if (dto.getEmergencyContact() != null) {
+            fe.setEmergencyContact(dto.getEmergencyContact());
+        }
+
+        FieldExecutive updated = repository.save(fe);
+
+        return FEContactResponseDto.builder()
+                .feId(updated.getId())
+                .phone(updated.getPhone())
+                .email(updated.getEmail())
+                .emergencyContact(updated.getEmergencyContact())
+                .name(updated.getName())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public FEProfileStatsResponseDto getProfileStats(Long feId) {
+
+        FieldExecutiveProfile profile = profileRepository
+                .findByFieldExecutiveId(feId)
+                .orElseThrow(() ->
+                        new RuntimeException("Profile not found for FE ID: " + feId)
+                );
+
+        return FEProfileStatsResponseDto.builder()
+                .targetAchieved(profile.getTargetAchieved())
+                .casualLeaves(profile.getCasualLeaves())
+                .approvedCasualLeaves(profile.getApprovedCasualLeaves())
+                .sickLeaves(profile.getSickLeaves())
+                .approvedSickLeaves(profile.getApprovedSickLeaves())
+                .targetSet(profile.getTargetSet())
+                .build();
+    }
+
+    public FEContactResponseDto getContactDetails(Long feId) {
+
+        FieldExecutive fe = repository.findById(feId)
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        return  FEContactResponseDto.builder()
+                .email(fe.getEmail()).
+                emergencyContact(fe.getEmergencyContact()).
+                phone(fe.getPhone()).name(fe.getName()).
+                build();
+
     }
 
     public List<DoctorResponseDto> getAllocatedDoctors(Long feId) {
