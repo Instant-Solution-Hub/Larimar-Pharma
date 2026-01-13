@@ -21,10 +21,12 @@ public class FieldExecutiveProfile {
 
     private Integer attendancePercentage;
     private Double targetAchieved; // percentage
+    private Double targetSet;
     private Double incentiveEarned;
-    private Integer totalLeaves;
     private Integer casualLeaves;
     private Integer sickLeaves;
+    private Integer approvedCasualLeaves;
+    private Integer approvedSickLeaves;
 
 
     // Monthly targets
