@@ -13,6 +13,7 @@ public class PharmacyVisitSlotDto {
 
     private Long pharmacyId;
     private String pharmacyName;
+    private String contactPerson;
 
     private Integer weekNumber;
     private Integer dayOfWeek;

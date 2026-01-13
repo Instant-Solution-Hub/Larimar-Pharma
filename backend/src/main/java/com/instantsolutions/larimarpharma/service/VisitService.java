@@ -361,6 +361,7 @@ public class VisitService {
                     .visitId(v.getId())
                     .pharmacyId(pharmacyId)
                     .pharmacyName(v.getPharmacy().getPharmacyName())
+                    .contactPerson(v.getPharmacy().getContactPerson())
                     .weekNumber(v.getWeekNumber())
                     .dayOfWeek(v.getDayOfWeek())
                     .status(v.getStatus())
