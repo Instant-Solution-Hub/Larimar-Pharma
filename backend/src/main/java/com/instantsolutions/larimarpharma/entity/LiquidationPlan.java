@@ -53,6 +53,8 @@ public class LiquidationPlan {
 
     private Integer achievedUnits;
 
+    private Integer availableUnits;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

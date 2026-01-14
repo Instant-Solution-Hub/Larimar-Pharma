@@ -46,4 +46,13 @@ public class LiquidationPlanController {
                 liquidationPlanService.getByFeAndProductCurrentMonth(feId, productId)
         );
     }
+
+    @GetMapping
+    public ResponseEntity<List<LiquidationPlanResponseDto>> getCurrentMonthPlans(
+            @RequestParam Long feId
+    ) {
+        return ResponseEntity.ok(
+                liquidationPlanService.getCurrentMonthPlansByFE(feId)
+        );
+    }
 }

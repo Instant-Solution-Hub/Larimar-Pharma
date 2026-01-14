@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -33,13 +34,17 @@ public class LiquidationPlanService {
     @Autowired
     FieldExecutiveRepository fieldExecutiveRepository;
 
+    @Autowired
+    FEProductAllocationRepository allocationRepository;
+
 
     public LiquidationPlanResponseDto create(Long feId, LiquidationPlanRequestDto dto) {
 
         validateRequest(feId,dto);
 
 
-        validateStock(feId, dto.getProductId(), dto.getTargetLiquidation(), null);
+
+//        validateStock(feId, dto.getProductId(), dto.getTargetLiquidation(), null);
 
         LiquidationPlan plan = LiquidationPlan.builder()
                 .fieldExecutive(fieldExecutiveRepository.getReferenceById(feId))
@@ -51,6 +56,7 @@ public class LiquidationPlanService {
                 .deadline(dto.getDeadline())
                 .strategy(dto.getStrategy())
                 .status(LiquidationPlan.PlanStatus.ACTIVE)
+                .availableUnits(allocationRepository.findByFieldExecutiveIdAndProductId(feId,dto.getProductId()).get().getAllocatedQuantity())
                 .achievedUnits(0)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -83,15 +89,16 @@ public class LiquidationPlanService {
             throw new IllegalArgumentException("Deadline must be a future date");
         }
 
-        // 6️⃣ FE must have stockists
-        Set<Stockist> stockists = fe.getStockists();
-        if (stockists == null || stockists.isEmpty()) {
-            throw new IllegalStateException("No stockists mapped to Field Executive");
-        }
+
+
 
         // 7️⃣ Check stock availability
-        Integer availableStock =
-                stockRepository.getTotalAvailableStockForProduct(dto.getProductId(), stockists);
+      Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductId(feId,dto.getProductId());
+        if(allocation.isEmpty()) throw new IllegalStateException(
+                "No stock allocated for Executive: " + feId +
+                        ", Required: " + dto.getTargetLiquidation()
+        );
+        long availableStock = allocation.get().getAllocatedQuantity();
 
         if (availableStock < dto.getTargetLiquidation()) {
             throw new IllegalStateException(
@@ -139,8 +146,27 @@ public class LiquidationPlanService {
         existing.setDeadline(dto.getDeadline());
         existing.setStrategy(dto.getStrategy());
         existing.setMedicalShopName(dto.getMedicalShopName());
+        existing.setMarketName(dto.getMarketName());
 
         return mapToResponse(existing);
+    }
+
+    @Transactional
+    public List<LiquidationPlanResponseDto> getCurrentMonthPlansByFE(Long feId) {
+
+        LocalDateTime start = YearMonth.now()
+                .atDay(1)
+                .atStartOfDay();
+
+        LocalDateTime end = YearMonth.now()
+                .atEndOfMonth()
+                .atTime(23, 59, 59);
+
+        return liquidationPlanRepository
+                .findByFieldExecutiveIdAndCreatedAtBetween(feId, start, end)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
 
@@ -173,9 +199,13 @@ public class LiquidationPlanService {
 
         LocalDateTime start = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime end = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
+        Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductId(feId,productId);
+        if(allocation.isEmpty()) throw new IllegalStateException(
+                "No stock allocated for Executive: " + feId +
+                        ", Required: " + newUnits
+        );
+        long currentStock = allocation.get().getAllocatedQuantity();
 
-        int currentStock =
-                stockRepository.getTotalStockForFEAndProduct(feId, productId);
 
         int usedUnits =
                 liquidationPlanRepository.getUsedUnitsForMonth(
@@ -214,6 +244,8 @@ public class LiquidationPlanService {
                 .strategy(plan.getStrategy())
                 .createdAt(plan.getCreatedAt())
                 .marketName(plan.getMarketName())
+                .quantity(plan.getAvailableUnits())
+                .managerApprovalStatus(plan.getManagerApprovalStatus())
                 .build();
     }
 }

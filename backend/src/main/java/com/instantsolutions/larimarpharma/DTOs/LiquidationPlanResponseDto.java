@@ -1,5 +1,7 @@
 package com.instantsolutions.larimarpharma.DTOs;
 
+import com.instantsolutions.larimarpharma.entity.LeaveRequest;
+import com.instantsolutions.larimarpharma.entity.LiquidationPlan;
 import lombok.Builder;
 import lombok.Data;
 
@@ -23,6 +25,8 @@ public class LiquidationPlanResponseDto {
     private String medicalShopName;
     private LocalDateTime deadline;
     private String strategy;
+    private Integer quantity;
 
     private LocalDateTime createdAt;
+    private LiquidationPlan.ApprovalStatus managerApprovalStatus;
 }
