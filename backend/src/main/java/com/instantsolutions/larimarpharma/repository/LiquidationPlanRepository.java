@@ -53,5 +53,12 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
             LiquidationPlan.PlanStatus status
     ) ;
 
+    List<LiquidationPlan> findByFieldExecutiveIdAndCreatedAtBetween(
+            Long feId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+
 }
 
