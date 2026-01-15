@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -156,34 +157,61 @@ public class VisitService {
                 .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
 
         Doctor doctor = visit.getDoctor();
+        Pharmacy pharmacy = visit.getPharmacy();
 
-        // location checkins disabled for now (geolocation only works in https)
+        if (dto.getLatitude() == null || dto.getLongitude() == null) {
+            throw new IllegalArgumentException("Please allow location access to mark the visit");
+        }
 
-//        if (dto.getLatitude() == null || dto.getLongitude() == null) {
-//            throw new IllegalArgumentException("Latitude & Longitude required");
-//        }
-//
-//        // If doctor has no location → save it
-//        if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
-//
-//            doctor.setLatitude(dto.getLatitude());
-//            doctor.setLongitude(dto.getLongitude());
-//            doctorRepository.save(doctor);
-//
-//        } else {
-//            double distance = GeoUtil.distanceInMeters(
-//                    Double.parseDouble(doctor.getLatitude()),
-//                    Double.parseDouble(doctor.getLongitude()),
-//                    Double.parseDouble(dto.getLatitude()),
-//                    Double.parseDouble(dto.getLongitude())
-//            );
-//
-//            if (distance > 100) {
-//                throw new IllegalStateException(
-//                        "You are not within 100 meters of the doctor location"
-//                );
-//            }
-//        }
+        if(visit.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            // If doctor has no location → save it
+            if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
+
+                doctor.setLatitude(dto.getLatitude());
+                doctor.setLongitude(dto.getLongitude());
+                doctorRepository.save(doctor);
+
+            } else {
+                double distance = GeoUtil.distanceInMeters(
+                        Double.parseDouble(doctor.getLatitude()),
+                        Double.parseDouble(doctor.getLongitude()),
+                        Double.parseDouble(dto.getLatitude()),
+                        Double.parseDouble(dto.getLongitude())
+                );
+
+                if (distance > 100) {
+                    throw new IllegalStateException(
+                            "You are not within 100 meters of the doctor/pharmacy location"
+                    );
+                }
+            }
+        }
+
+        if(visit.getVisitType().equals(Visit.VisitType.PHARMACIST)){
+            // If pharmacist has no location → save it
+            if (pharmacy.getLatitude() == null || pharmacy.getLongitude() == null) {
+
+                pharmacy.setLatitude(dto.getLatitude());
+                pharmacy.setLongitude(dto.getLongitude());
+                pharmacyRepository.save(pharmacy);
+
+            } else {
+                double distance = GeoUtil.distanceInMeters(
+                        Double.parseDouble(pharmacy.getLatitude()),
+                        Double.parseDouble(pharmacy.getLongitude()),
+                        Double.parseDouble(dto.getLatitude()),
+                        Double.parseDouble(dto.getLongitude())
+                );
+
+                if (distance > 100) {
+                    throw new IllegalStateException(
+                            "You are not within 100 meters of the doctor/pharmacy location"
+                    );
+                }
+            }
+        }
+
+
 
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
@@ -551,6 +579,139 @@ public class VisitService {
                 fe.getId(),
                 fe.getName()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public VisitComplianceResponse getVisitCompliance(Long fieldExecutiveId, String weekFilter) {
+        LocalDate now = LocalDate.now();
+        LocalDate firstDayOfMonth = now.withDayOfMonth(1);
+        LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        LocalDateTime startOfMonth = firstDayOfMonth.atStartOfDay();
+        LocalDateTime endOfMonth = lastDayOfMonth.atTime(LocalTime.MAX);
+
+        Integer weekNumber = null;
+        if (!"all".equals(weekFilter) && weekFilter.startsWith("week")) {
+            weekNumber = Integer.parseInt(weekFilter.replace("week", ""));
+        }
+
+        // Get filtered records
+        List<Visit> visits = visitRepository.findComplianceRecords(
+                fieldExecutiveId,
+                weekNumber,
+                startOfMonth,
+                endOfMonth
+        );
+
+        // Convert to DTOs
+        List<ComplianceRecordDto> records = visits.stream()
+                .map(this::convertToComplianceRecordDto)
+                .collect(Collectors.toList());
+
+        // Calculate stats
+        ComplianceStatsDto stats = calculateComplianceStats(visits, weekNumber, fieldExecutiveId);
+
+        // Calculate total weeks in month
+        int totalWeeks = calculateWeeksInMonth(now);
+
+        return VisitComplianceResponse.builder()
+                .stats(stats)
+                .records(records)
+                .totalWeeks(totalWeeks)
+                .build();
+    }
+
+    private ComplianceRecordDto convertToComplianceRecordDto(Visit visit) {
+        String name = "";
+        String category = "";
+
+        if (visit.getVisitType() == Visit.VisitType.DOCTOR && visit.getDoctor() != null) {
+            name = visit.getDoctor().getName();
+            category = visit.getDoctor().getCategory() != null
+                    ? visit.getDoctor().getCategory().name()
+                    : "N/A";
+        } else if (visit.getVisitType() == Visit.VisitType.PHARMACIST && visit.getPharmacy() != null) {
+            name = visit.getPharmacy().getPharmacyName();
+            category = "Pharmacist";
+        }
+
+        return ComplianceRecordDto.builder()
+                .id(String.valueOf(visit.getId()))
+                .name(name)
+                .category(category)
+                .scheduledDate(visit.getScheduledDate() != null
+                        ? visit.getScheduledDate().toLocalDate()
+                        : visit.getVisitDate())
+                .status(visit.getStatus().name().toLowerCase())
+                .week(visit.getWeekNumber())
+                .visitType(visit.getVisitType().name().toLowerCase())
+                .reason(getMissedReason(visit))
+                .build();
+    }
+
+    private String getMissedReason(Visit visit) {
+        if (visit.getStatus() == Visit.VisitStatus.MISSED) {
+            if (visit.getNotes() != null && !visit.getNotes().isEmpty()) {
+                return visit.getNotes();
+            }
+            return "Not specified";
+        }
+        return null;
+    }
+
+    private ComplianceStatsDto calculateComplianceStats(List<Visit> visits, Integer weekNumber, Long fieldExecutiveId) {
+        int scheduled = visits.size();
+        int completed = (int) visits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+        int missed = (int) visits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.MISSED)
+                .count();
+
+        int doctorVisits = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.DOCTOR)
+                .count();
+        int doctorCompleted = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.DOCTOR
+                        && v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        int pharmacistVisits = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.PHARMACIST)
+                .count();
+        int pharmacistCompleted = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.PHARMACIST
+                        && v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        int complianceRate = scheduled > 0 ? Math.round((completed * 100) / scheduled) : 0;
+
+        return ComplianceStatsDto.builder()
+                .scheduled(scheduled)
+                .completed(completed)
+                .missed(missed)
+                .complianceRate(complianceRate)
+                .doctorVisits(doctorVisits)
+                .doctorCompleted(doctorCompleted)
+                .pharmacistVisits(pharmacistVisits)
+                .pharmacistCompleted(pharmacistCompleted)
+                .build();
+    }
+
+    private int calculateWeeksInMonth(LocalDate date) {
+        LocalDate firstDay = date.withDayOfMonth(1);
+        LocalDate lastDay = date.withDayOfMonth(date.lengthOfMonth());
+
+        // Calculate week numbers (assuming ISO week definition)
+        int firstWeek = firstDay.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        int lastWeek = lastDay.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+
+        if (firstWeek > lastWeek && lastDay.getYear() > firstDay.getYear()) {
+            // Cross-year case
+            lastWeek += 52;
+        }
+
+        return lastWeek - firstWeek + 1;
     }
 
 

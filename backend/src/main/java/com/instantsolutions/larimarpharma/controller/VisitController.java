@@ -114,6 +114,15 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/get-compliance-record")
+    public ResponseEntity<VisitComplianceResponse> getVisitCompliance(
+            @RequestParam("fieldExecutiveId") Long fieldExecutiveId,
+            @RequestParam(value = "week", defaultValue = "all") String week) {
+
+        VisitComplianceResponse response = visitService.getVisitCompliance(fieldExecutiveId, week);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 

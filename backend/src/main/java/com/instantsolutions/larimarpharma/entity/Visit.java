@@ -26,7 +26,7 @@ public class Visit {
     private FieldExecutive fieldExecutive;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id", nullable = true)
     private Doctor doctor;
 
     @ManyToOne(fetch = FetchType.LAZY)

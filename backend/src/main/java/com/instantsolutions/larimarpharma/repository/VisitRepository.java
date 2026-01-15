@@ -1,5 +1,5 @@
 package com.instantsolutions.larimarpharma.repository;
-
+import com.instantsolutions.larimarpharma.DTOs.ComplianceStatsProjection;
 import com.instantsolutions.larimarpharma.DTOs.TodayScheduledVisitDto;
 import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
 import com.instantsolutions.larimarpharma.entity.Visit;
@@ -246,6 +246,43 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("status") Visit.VisitStatus status,
             @Param("fieldExecutiveId") Long fieldExecutiveId
     );
+
+    @Query("""
+        SELECT 
+            COUNT(v) as total,
+            SUM(CASE WHEN v.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN v.status = 'MISSED' THEN 1 ELSE 0 END) as missed,
+            SUM(CASE WHEN v.visitType = 'DOCTOR' AND v.status = 'COMPLETED' THEN 1 ELSE 0 END) as doctorCompleted,
+            SUM(CASE WHEN v.visitType = 'PHARMACIST' AND v.status = 'COMPLETED' THEN 1 ELSE 0 END) as pharmacistCompleted
+        FROM Visit v
+        WHERE v.fieldExecutive.id = :fieldExecutiveId
+        AND v.scheduledDate BETWEEN :startDate AND :endDate
+        AND (:weekNumber IS NULL OR v.weekNumber = :weekNumber)
+        AND v.visitType IN ('DOCTOR', 'PHARMACIST')
+    """)
+    ComplianceStatsProjection getComplianceStats(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("""
+        SELECT v
+        FROM Visit v
+        WHERE v.fieldExecutive.id = :fieldExecutiveId
+        AND v.scheduledDate BETWEEN :startDate AND :endDate
+        AND (:weekNumber IS NULL OR v.weekNumber = :weekNumber)
+        AND v.visitType IN ('DOCTOR', 'PHARMACIST')
+        ORDER BY v.scheduledDate
+    """)
+    List<Visit> findComplianceRecords(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
 
 
 }
