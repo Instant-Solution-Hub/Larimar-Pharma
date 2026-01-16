@@ -50,7 +50,7 @@ public class FEMarketSalesService {
     }
 
     @Transactional
-    public void updateMarketSales(
+    public MarketSalesDto updateMarketSales(
             Long feId,
             UpdateMarketSalesRequestDto request
     ) {
@@ -74,6 +74,10 @@ public class FEMarketSalesService {
 
         sales.setSalesAmount(request.getSalesAmount());
         salesRepo.save(sales);
+        return MarketSalesDto.builder()
+                .market(sales.getMarket())
+                .salesAmount(sales.getSalesAmount())
+                .build();
     }
 
 }

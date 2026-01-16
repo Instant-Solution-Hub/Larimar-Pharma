@@ -23,10 +23,10 @@ public class FEMarketSalesController {
     }
 
     @PutMapping("/{feId}")
-    public void updateMarketSales(
+    public MarketSalesDto updateMarketSales(
             @PathVariable Long feId,
             @RequestBody UpdateMarketSalesRequestDto request
     ) {
-        service.updateMarketSales(feId, request);
+        return service.updateMarketSales(feId, request);
     }
 }
