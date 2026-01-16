@@ -4,6 +4,8 @@ package com.instantsolutions.larimarpharma.DTOs;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 public class FieldExecutiveResponse {
@@ -18,4 +20,5 @@ public class FieldExecutiveResponse {
     private String region;
 
     private Long managerId;
+    private List<String> markets;
 }
