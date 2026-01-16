@@ -29,6 +29,8 @@ public class Pharmacy {
     private String pharmacyName;
     private String contactPerson;
     private String contactNumber;
+    private String latitude;
+    private String longitude;
 
     /* ===== Audit ===== */
 

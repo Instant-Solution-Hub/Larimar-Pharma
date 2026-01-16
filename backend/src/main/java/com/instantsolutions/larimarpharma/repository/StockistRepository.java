@@ -46,4 +46,6 @@ public interface StockistRepository extends JpaRepository<Stockist, Long> {
      * Search stockists by name (case-insensitive)
      */
     List<Stockist> findByNameContainingIgnoreCase(String name);
+
+    List<Stockist> findByActiveTrue();
 }

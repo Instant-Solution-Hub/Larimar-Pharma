@@ -41,7 +41,17 @@ public class VisitController {
         ));
     }
 
-    @GetMapping("/planned-visits")
+    @PostMapping("/mark-stockist")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> markStockistVisit(
+            @Valid @RequestBody MarkStockistVisitRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.markStockistVisit(request),
+                "Visits Marked successfully"
+        ));
+    }
+
+    @GetMapping("/planned-doctor-visits")
     public ResponseEntity<List<DoctorVisitSlotDto>> getSlotVisits(
             @RequestParam Long fieldExecutiveId,
             @RequestParam Integer weekNumber,
@@ -51,6 +61,68 @@ public class VisitController {
                 visitService.getSlotVisits(fieldExecutiveId, weekNumber, dayOfWeek)
         );
     }
+
+    @GetMapping("/planned-pharmacy-visits")
+    public ResponseEntity<List<PharmacyVisitSlotDto>> getPharmacySlotVisits(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getPharmacySlotVisits(
+                        fieldExecutiveId, weekNumber, dayOfWeek
+                )
+        );
+    }
+
+    @GetMapping("/completed-visits")
+    public ResponseEntity<List<CompletedVisitDto>> getCompletedVisits(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getCompletedVisits(
+                        fieldExecutiveId
+                )
+        );
+    }
+
+    /* ===== Scheduled Doctors ===== */
+    @GetMapping("/scheduled-doctors")
+    public ResponseEntity<List<ScheduledDoctorVisitDto>> getTodayDoctors(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledDoctors(fieldExecutiveId)
+        );
+    }
+
+    /* ===== Scheduled Pharmacies ===== */
+    @GetMapping("/scheduled-pharmacies")
+    public ResponseEntity<List<ScheduledPharmacyVisitDto>> getTodayPharmacies(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledPharmacies(fieldExecutiveId)
+        );
+    }
+
+
+    @GetMapping("/today-scheduled")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisits(@RequestParam Long fieldExecutiveId) {
+        return ResponseEntity.ok(
+                visitService.getTodayScheduledVisits(fieldExecutiveId)
+        );
+    }
+
+    @GetMapping("/get-compliance-record")
+    public ResponseEntity<VisitComplianceResponse> getVisitCompliance(
+            @RequestParam("fieldExecutiveId") Long fieldExecutiveId,
+            @RequestParam(value = "week", defaultValue = "all") String week) {
+
+        VisitComplianceResponse response = visitService.getVisitCompliance(fieldExecutiveId, week);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 

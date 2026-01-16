@@ -24,6 +24,8 @@ public class DoctorVisitSlotDto {
 
     private Visit.VisitStatus status;
     private Visit.VisitType visitType;
+    private String practiceType;
+    private String category;
 
     // UI counters
     private Long completedVisitCount;   // e.g. 3

@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
-
+import com.instantsolutions.larimarpharma.DTOs.ComplianceStatsProjection;
+import com.instantsolutions.larimarpharma.DTOs.TodayScheduledVisitDto;
 import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
@@ -130,6 +131,159 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.pharmacy p
+    WHERE v.fieldExecutive.id = :feId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+""")
+    List<Visit> findPharmacyVisitsForSlot(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.pharmacy.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.status = 'COMPLETED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.pharmacy.id
+""")
+    List<Object[]> countCompletedVisitsPerPharmacy(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v.pharmacy.id, COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    GROUP BY v.pharmacy.id
+""")
+    List<Object[]> countPlannedVisitsPerPharmacy(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor d
+    LEFT JOIN FETCH v.pharmacy p
+    LEFT JOIN FETCH v.stockist s
+    WHERE v.fieldExecutive.id = :feId
+      AND v.status = 'COMPLETED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY v.actualVisitTime DESC
+""")
+    List<Visit> findAllCompletedVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.doctor d
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'DOCTOR'
+      AND v.visitDate = :today
+      AND v.status IN ('SCHEDULED', 'APPROVED')
+""")
+    List<Visit> findTodayScheduledDoctorVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("today") LocalDate today
+    );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.pharmacy p
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'PHARMACIST'
+      AND v.visitDate = :today
+      AND v.status IN ('SCHEDULED', 'APPROVED')
+""")
+    List<Visit> findTodayScheduledPharmacyVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("today") LocalDate today
+    );
+
+
+
+    @Query("""
+    SELECT DISTINCT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor
+    LEFT JOIN FETCH v.pharmacy
+    LEFT JOIN FETCH v.fieldExecutive fe
+    WHERE v.scheduledDate >= :start
+      AND v.scheduledDate < :nextDay
+      AND v.status = :status
+      AND fe.id = :fieldExecutiveId
+""")
+    List<Visit> findTodayScheduledVisitsByFieldExecutive(
+            @Param("start") LocalDateTime start,
+            @Param("nextDay") LocalDateTime nextDay,
+            @Param("status") Visit.VisitStatus status,
+            @Param("fieldExecutiveId") Long fieldExecutiveId
+    );
+
+    @Query("""
+        SELECT 
+            COUNT(v) as total,
+            SUM(CASE WHEN v.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN v.status = 'MISSED' THEN 1 ELSE 0 END) as missed,
+            SUM(CASE WHEN v.visitType = 'DOCTOR' AND v.status = 'COMPLETED' THEN 1 ELSE 0 END) as doctorCompleted,
+            SUM(CASE WHEN v.visitType = 'PHARMACIST' AND v.status = 'COMPLETED' THEN 1 ELSE 0 END) as pharmacistCompleted
+        FROM Visit v
+        WHERE v.fieldExecutive.id = :fieldExecutiveId
+        AND v.scheduledDate BETWEEN :startDate AND :endDate
+        AND (:weekNumber IS NULL OR v.weekNumber = :weekNumber)
+        AND v.visitType IN ('DOCTOR', 'PHARMACIST')
+    """)
+    ComplianceStatsProjection getComplianceStats(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("""
+        SELECT v
+        FROM Visit v
+        WHERE v.fieldExecutive.id = :fieldExecutiveId
+        AND v.scheduledDate BETWEEN :startDate AND :endDate
+        AND (:weekNumber IS NULL OR v.weekNumber = :weekNumber)
+        AND v.visitType IN ('DOCTOR', 'PHARMACIST')
+        ORDER BY v.scheduledDate
+    """)
+    List<Visit> findComplianceRecords(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
 
 }
 

@@ -26,12 +26,16 @@ public class Visit {
     private FieldExecutive fieldExecutive;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id", nullable = true)
     private Doctor doctor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pharmacy_id", nullable = true)
     private Pharmacy pharmacy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stockist_id", nullable = true)
+    private Stockist stockist;
 
     @OneToMany(
     mappedBy = "visit",
@@ -94,6 +98,7 @@ public class Visit {
 
     private LocalDateTime updatedAt;
 
+    @Column(name = "scheduled_date", nullable = true)
     private LocalDateTime scheduledDate;
 
     private LocalDateTime actualDate;

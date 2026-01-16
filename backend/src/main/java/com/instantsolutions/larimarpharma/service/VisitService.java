@@ -1,14 +1,9 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
-import com.instantsolutions.larimarpharma.entity.ConvertedProduct;
-import com.instantsolutions.larimarpharma.entity.Doctor;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
-import com.instantsolutions.larimarpharma.entity.Visit;
-import com.instantsolutions.larimarpharma.repository.DoctorRepository;
-import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
-import com.instantsolutions.larimarpharma.repository.ProductRepository;
-import com.instantsolutions.larimarpharma.repository.VisitRepository;
+import com.instantsolutions.larimarpharma.controller.MarkStockistVisitRequestDto;
+import com.instantsolutions.larimarpharma.entity.*;
+import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.utils.DateUtil;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
@@ -19,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +27,10 @@ public class VisitService {
     private final VisitRepository visitRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private final DoctorRepository doctorRepository;
+    private final PharmacyRepository pharmacyRepository;
     private final ProductRepository productRepository;
+
+    private final StockistRepository stockistRepository;
 
     public VisitDashboardResponse getDashboard(Long fieldExecutiveId) {
 
@@ -101,61 +101,117 @@ public class VisitService {
         FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
                 .orElseThrow(() -> new EntityNotFoundException("FE not found"));
 
-        Doctor doctor = doctorRepository.findById(dto.getDoctorId())
-                .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+        if(dto.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
 
-        Visit visit = Visit.builder()
-                .fieldExecutive(fe)
-                .doctor(doctor)
-                .visitType(dto.getVisitType())
-                .visitDate(visitDate)
-                .weekNumber(dto.getWeekNumber())
-                .dayOfWeek(dto.getDayOfWeek())
-                .status(Visit.VisitStatus.SCHEDULED)
-                .scheduledDate(visitDate.atStartOfDay())
-                .pharmacyName(dto.getPharmacyName())
-                .contactPerson(dto.getContactPerson())
-                .contactNumber(dto.getContactNumber())
-                .stockistType(dto.getStockistType())
-                .stockistName(dto.getStockistName())
-                .build();
-        Visit visit1 = visitRepository.save(visit);
-        return mapToDto(visit1);
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .doctor(doctor)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        if(dto.getVisitType().equals(Visit.VisitType.PHARMACIST)){
+            Pharmacy pharmacy = pharmacyRepository.findById(dto.getPharmacistId())
+                    .orElseThrow(() -> new EntityNotFoundException("Pharmacy not found"));
+
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .pharmacy(pharmacy)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        return null;
+
     }
 
     @Transactional
     public VisitResponseDto markVisit(MarkVisitRequestDto dto) {
-
         Visit visit = visitRepository.findById(dto.getVisitId())
                 .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
 
         Doctor doctor = visit.getDoctor();
+        Pharmacy pharmacy = visit.getPharmacy();
 
         if (dto.getLatitude() == null || dto.getLongitude() == null) {
-            throw new IllegalArgumentException("Latitude & Longitude required");
+            throw new IllegalArgumentException("Please allow location access to mark the visit");
         }
 
-        // If doctor has no location → save it
-        if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
+        if(visit.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            // If doctor has no location → save it
+            if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
 
-            doctor.setLatitude(dto.getLatitude());
-            doctor.setLongitude(dto.getLongitude());
-            doctorRepository.save(doctor);
+                doctor.setLatitude(dto.getLatitude());
+                doctor.setLongitude(dto.getLongitude());
+                doctorRepository.save(doctor);
 
-        } else {
-            double distance = GeoUtil.distanceInMeters(
-                    Double.parseDouble(doctor.getLatitude()),
-                    Double.parseDouble(doctor.getLongitude()),
-                    Double.parseDouble(dto.getLatitude()),
-                    Double.parseDouble(dto.getLongitude())
-            );
-
-            if (distance > 100) {
-                throw new IllegalStateException(
-                        "You are not within 100 meters of the doctor location"
+            } else {
+                double distance = GeoUtil.distanceInMeters(
+                        Double.parseDouble(doctor.getLatitude()),
+                        Double.parseDouble(doctor.getLongitude()),
+                        Double.parseDouble(dto.getLatitude()),
+                        Double.parseDouble(dto.getLongitude())
                 );
+
+                if (distance > 100) {
+                    throw new IllegalStateException(
+                            "You are not within 100 meters of the doctor/pharmacy location"
+                    );
+                }
             }
         }
+
+        if(visit.getVisitType().equals(Visit.VisitType.PHARMACIST)){
+            // If pharmacist has no location → save it
+            if (pharmacy.getLatitude() == null || pharmacy.getLongitude() == null) {
+
+                pharmacy.setLatitude(dto.getLatitude());
+                pharmacy.setLongitude(dto.getLongitude());
+                pharmacyRepository.save(pharmacy);
+
+            } else {
+                double distance = GeoUtil.distanceInMeters(
+                        Double.parseDouble(pharmacy.getLatitude()),
+                        Double.parseDouble(pharmacy.getLongitude()),
+                        Double.parseDouble(dto.getLatitude()),
+                        Double.parseDouble(dto.getLongitude())
+                );
+
+                if (distance > 100) {
+                    throw new IllegalStateException(
+                            "You are not within 100 meters of the doctor/pharmacy location"
+                    );
+                }
+            }
+        }
+
+
 
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
@@ -184,6 +240,42 @@ public class VisitService {
         Visit visit1 = visitRepository.save(visit);
         return mapToDto(visit1);
     }
+
+    public VisitResponseDto markStockistVisit(MarkStockistVisitRequestDto dto) {
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        Stockist stockist = stockistRepository.findById(dto.getStockistId())
+                .orElseThrow(() -> new RuntimeException("Stockist not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Visit visit = new Visit();
+        visit.setVisitType(Visit.VisitType.STOCKIST);
+        visit.setVisitDate(now.toLocalDate());
+        visit.setActualDate(now);
+        visit.setActualVisitTime(now);
+        visit.setDayOfWeek(dto.getDayOfWeek());
+        visit.setWeekNumber(dto.getWeekNumber());
+
+        visit.setFieldExecutive(fe);
+        visit.setStockist(stockist);
+        visit.setStockistType(dto.getStockistType());
+
+        visit.setStatus(
+                dto.getStatus() != null ? dto.getStatus() : Visit.VisitStatus.COMPLETED
+        );
+
+        visit.setNotes(dto.getNotes());
+        visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        visit.setOrderValue(dto.getOrderValue());
+        visit.setLocation(dto.getLocation());
+
+        Visit savedVisit = visitRepository.save(visit);
+        return mapToDto(savedVisit);
+    }
+
 
     private VisitResponseDto mapToDto(Visit visit) {
         return VisitResponseDto.builder()
@@ -246,6 +338,8 @@ public class VisitService {
                     .hospitalName(v.getDoctor().getHospitalName())
                     .weekNumber(v.getWeekNumber())
                     .dayOfWeek(v.getDayOfWeek())
+                    .practiceType(String.valueOf(v.getDoctor().getPracticeType()))
+                    .category(String.valueOf(v.getDoctor().getCategory()))
                     .status(v.getStatus())
                     .visitType(v.getVisitType())
                     .completedVisitCount(completedCountMap.getOrDefault(doctorId, 0L))
@@ -253,5 +347,374 @@ public class VisitService {
                     .build();
         }).toList();
     }
+
+    public List<PharmacyVisitSlotDto> getPharmacySlotVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
+                fieldExecutiveId,
+                weekNumber,
+                dayOfWeek,
+                startOfMonth,
+                endOfMonth
+        );
+
+        Map<Long, Long> completedCountMap =
+                visitRepository.countCompletedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        Map<Long, Long> plannedCountMap =
+                visitRepository.countPlannedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        return visits.stream().map(v -> {
+
+            Long pharmacyId = v.getPharmacy().getId();
+
+            return PharmacyVisitSlotDto.builder()
+                    .visitId(v.getId())
+                    .pharmacyId(pharmacyId)
+                    .pharmacyName(v.getPharmacy().getPharmacyName())
+                    .contactPerson(v.getPharmacy().getContactPerson())
+                    .weekNumber(v.getWeekNumber())
+                    .dayOfWeek(v.getDayOfWeek())
+                    .status(v.getStatus())
+                    .visitType(v.getVisitType())
+                    .completedVisitCount(
+                            completedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .plannedVisitCount(
+                            plannedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .build();
+        }).toList();
+    }
+
+    public List<CompletedVisitDto> getCompletedVisits(Long fieldExecutiveId) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return visitRepository
+                .findAllCompletedVisits(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
+    private CompletedVisitDto mapToCompletedVisitDto(Visit v) {
+
+        CompletedVisitDto.CompletedVisitDtoBuilder builder =
+                CompletedVisitDto.builder()
+                        .visitId(v.getId())
+                        .visitType(v.getVisitType())
+                        .visitDate(v.getVisitDate())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .actualVisitTime(v.getActualVisitTime())
+                        .location(v.getLocation())
+                        .notes(v.getNotes());
+
+        switch (v.getVisitType()) {
+
+            case DOCTOR -> builder.doctor(mapDoctor(v.getDoctor()));
+
+            case PHARMACIST -> builder.pharmacy(mapPharmacy(v.getPharmacy()));
+
+            case STOCKIST -> builder.stockist(mapStockist(v.getStockist()));
+        }
+
+        return builder.build();
+    }
+
+    private DoctorDetailsDto mapDoctor(Doctor d) {
+        return DoctorDetailsDto.builder()
+                .id(d.getId())
+                .name(d.getName())
+                .category(d.getCategory())
+                .practiceType(d.getPracticeType())
+                .designation(d.getDesignation())
+                .hospitalName(d.getHospitalName())
+                .location(d.getLocation())
+                .contactNumber(d.getContactNumber())
+                .doctorCode(d.getDoctorCode())
+                .latitude(d.getLatitude())
+                .longitude(d.getLongitude())
+                .active(d.isActive())
+                .build();
+    }
+
+    private PharmacyDetailsDto mapPharmacy(Pharmacy p) {
+        return PharmacyDetailsDto.builder()
+                .id(p.getId())
+                .pharmacyName(p.getPharmacyName())
+                .location(p.getLocation())
+                .contactPerson(p.getContactPerson())
+                .contactNumber(p.getContactNumber())
+                .doctorId(
+                        p.getDoctor() != null ? p.getDoctor().getId() : null
+                )
+                .doctorName(
+                        p.getDoctor() != null ? p.getDoctor().getName() : null
+                )
+                .build();
+    }
+
+    private StockistDetailsDto mapStockist(Stockist s) {
+        return StockistDetailsDto.builder()
+                .id(s.getId())
+                .name(s.getName())
+                .type(s.getType())
+                .contactPerson(s.getContactPerson())
+                .contactNumber(s.getContactNumber())
+                .location(s.getLocation())
+                .active(s.isActive())
+                .build();
+    }
+
+    /* ===== Doctors ===== */
+    public List<ScheduledDoctorVisitDto> getTodayScheduledDoctors(Long fieldExecutiveId) {
+
+        LocalDate today = LocalDate.now();
+
+        return visitRepository
+                .findTodayScheduledDoctorVisits(fieldExecutiveId, today)
+                .stream()
+                .map(v -> ScheduledDoctorVisitDto.builder()
+                        .visitId(v.getId())
+                        .doctorId(v.getDoctor().getId())
+                        .doctorName(v.getDoctor().getName())
+                        .category(v.getDoctor().getCategory())
+                        .practiceType(v.getDoctor().getPracticeType())
+                        .hospitalName(v.getDoctor().getHospitalName())
+                        .location(v.getDoctor().getLocation())
+                        .contactNumber(v.getDoctor().getContactNumber())
+                        .status(v.getStatus())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .build()
+                )
+                .toList();
+    }
+
+    /* ===== Pharmacies ===== */
+    public List<ScheduledPharmacyVisitDto> getTodayScheduledPharmacies(Long fieldExecutiveId) {
+
+        LocalDate today = LocalDate.now();
+
+        return visitRepository
+                .findTodayScheduledPharmacyVisits(fieldExecutiveId, today)
+                .stream()
+                .map(v -> ScheduledPharmacyVisitDto.builder()
+                        .visitId(v.getId())
+                        .pharmacyId(v.getPharmacy().getId())
+                        .pharmacyName(v.getPharmacy().getPharmacyName())
+                        .location(v.getPharmacy().getLocation())
+                        .contactPerson(v.getPharmacy().getContactPerson())
+                        .contactNumber(v.getPharmacy().getContactNumber())
+                        .status(v.getStatus())
+                        .weekNumber(v.getWeekNumber())
+                        .dayOfWeek(v.getDayOfWeek())
+                        .build()
+                )
+                .toList();
+    }
+
+    public List<TodayScheduledVisitDto> getTodayScheduledVisits(Long feId) {
+
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(zone);
+
+        List<Visit> visits = visitRepository.findTodayScheduledVisitsByFieldExecutive(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+                Visit.VisitStatus.SCHEDULED,
+                feId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
+
+    private TodayScheduledVisitDto toTodayScheduledVisitDTO(Visit v) {
+
+        Doctor d = v.getDoctor();
+        Pharmacy p = v.getPharmacy();
+        FieldExecutive fe = v.getFieldExecutive();
+
+        return new TodayScheduledVisitDto(
+                v.getId(),
+                v.getVisitType(),
+                v.getVisitDate(),
+               String.valueOf( v.getStatus()),
+
+                d != null ? d.getId() : null,
+                d != null ? d.getName() : null,
+                d != null ? d.getDesignation() : null,
+                d != null ? String.valueOf(d.getCategory()) : null,
+                d != null ? String.valueOf(d.getPracticeType()) : null,
+                d != null ? d.getHospitalName() : "",
+
+                p != null ? p.getId() : null,
+                p != null ? p.getPharmacyName() : null,
+                p != null ? p.getContactPerson() : null,
+                p != null ? p.getContactNumber() : null,
+
+                fe.getId(),
+                fe.getName()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public VisitComplianceResponse getVisitCompliance(Long fieldExecutiveId, String weekFilter) {
+        LocalDate now = LocalDate.now();
+        LocalDate firstDayOfMonth = now.withDayOfMonth(1);
+        LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        LocalDateTime startOfMonth = firstDayOfMonth.atStartOfDay();
+        LocalDateTime endOfMonth = lastDayOfMonth.atTime(LocalTime.MAX);
+
+        Integer weekNumber = null;
+        if (!"all".equals(weekFilter) && weekFilter.startsWith("week")) {
+            weekNumber = Integer.parseInt(weekFilter.replace("week", ""));
+        }
+
+        // Get filtered records
+        List<Visit> visits = visitRepository.findComplianceRecords(
+                fieldExecutiveId,
+                weekNumber,
+                startOfMonth,
+                endOfMonth
+        );
+
+        // Convert to DTOs
+        List<ComplianceRecordDto> records = visits.stream()
+                .map(this::convertToComplianceRecordDto)
+                .collect(Collectors.toList());
+
+        // Calculate stats
+        ComplianceStatsDto stats = calculateComplianceStats(visits, weekNumber, fieldExecutiveId);
+
+        // Calculate total weeks in month
+        int totalWeeks = calculateWeeksInMonth(now);
+
+        return VisitComplianceResponse.builder()
+                .stats(stats)
+                .records(records)
+                .totalWeeks(totalWeeks)
+                .build();
+    }
+
+    private ComplianceRecordDto convertToComplianceRecordDto(Visit visit) {
+        String name = "";
+        String category = "";
+
+        if (visit.getVisitType() == Visit.VisitType.DOCTOR && visit.getDoctor() != null) {
+            name = visit.getDoctor().getName();
+            category = visit.getDoctor().getCategory() != null
+                    ? visit.getDoctor().getCategory().name()
+                    : "N/A";
+        } else if (visit.getVisitType() == Visit.VisitType.PHARMACIST && visit.getPharmacy() != null) {
+            name = visit.getPharmacy().getPharmacyName();
+            category = "Pharmacist";
+        }
+
+        return ComplianceRecordDto.builder()
+                .id(String.valueOf(visit.getId()))
+                .name(name)
+                .category(category)
+                .scheduledDate(visit.getScheduledDate() != null
+                        ? visit.getScheduledDate().toLocalDate()
+                        : visit.getVisitDate())
+                .status(visit.getStatus().name().toLowerCase())
+                .week(visit.getWeekNumber())
+                .visitType(visit.getVisitType().name().toLowerCase())
+                .reason(getMissedReason(visit))
+                .build();
+    }
+
+    private String getMissedReason(Visit visit) {
+        if (visit.getStatus() == Visit.VisitStatus.MISSED) {
+            if (visit.getNotes() != null && !visit.getNotes().isEmpty()) {
+                return visit.getNotes();
+            }
+            return "Not specified";
+        }
+        return null;
+    }
+
+    private ComplianceStatsDto calculateComplianceStats(List<Visit> visits, Integer weekNumber, Long fieldExecutiveId) {
+        int scheduled = visits.size();
+        int completed = (int) visits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+        int missed = (int) visits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.MISSED)
+                .count();
+
+        int doctorVisits = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.DOCTOR)
+                .count();
+        int doctorCompleted = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.DOCTOR
+                        && v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        int pharmacistVisits = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.PHARMACIST)
+                .count();
+        int pharmacistCompleted = (int) visits.stream()
+                .filter(v -> v.getVisitType() == Visit.VisitType.PHARMACIST
+                        && v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        int complianceRate = scheduled > 0 ? Math.round((completed * 100) / scheduled) : 0;
+
+        return ComplianceStatsDto.builder()
+                .scheduled(scheduled)
+                .completed(completed)
+                .missed(missed)
+                .complianceRate(complianceRate)
+                .doctorVisits(doctorVisits)
+                .doctorCompleted(doctorCompleted)
+                .pharmacistVisits(pharmacistVisits)
+                .pharmacistCompleted(pharmacistCompleted)
+                .build();
+    }
+
+    private int calculateWeeksInMonth(LocalDate date) {
+        LocalDate firstDay = date.withDayOfMonth(1);
+        LocalDate lastDay = date.withDayOfMonth(date.lengthOfMonth());
+
+        // Calculate week numbers (assuming ISO week definition)
+        int firstWeek = firstDay.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        int lastWeek = lastDay.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+
+        if (firstWeek > lastWeek && lastDay.getYear() > firstDay.getYear()) {
+            // Cross-year case
+            lastWeek += 52;
+        }
+
+        return lastWeek - firstWeek + 1;
+    }
+
+
+
 
 }

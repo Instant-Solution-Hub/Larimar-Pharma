@@ -1,10 +1,7 @@
 package com.instantsolutions.larimarpharma.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -25,14 +22,19 @@ public class StockistProductStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-    private Long productId;
-
-    private String productName;
-
+    // 🔗 Stockist relation
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stockist_id", nullable = false)
     private Stockist stockist;
+
+    // 🔗 Product relation (ADDED)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @Column(name = "product_id", insertable = false, updatable = false)
+    private Long productId;
+    private String productName;
 
 
     @Column(nullable = false)
