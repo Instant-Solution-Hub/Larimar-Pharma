@@ -62,6 +62,7 @@ public class FEService {
                 .territory(request.getTerritory())
                 .region(request.getRegion())
                 .manager(manager)
+                .markets(request.getMarkets())
                 .active(true).build();
 
         FieldExecutiveProfile profile = FieldExecutiveProfile.builder()
@@ -135,6 +136,7 @@ public class FEService {
         fe.setTerritory(request.getTerritory());
         fe.setRegion(request.getRegion());
         fe.setManager(manager);
+        fe.setMarkets(request.getMarkets());
 
         return mapToResponse(repository.save(fe));
     }
@@ -160,6 +162,7 @@ public class FEService {
                 .managerId(
                         fe.getManager() != null ? fe.getManager().getId() : null
                 )
+                .markets(fe.getMarkets())
                 .build();
     }
 

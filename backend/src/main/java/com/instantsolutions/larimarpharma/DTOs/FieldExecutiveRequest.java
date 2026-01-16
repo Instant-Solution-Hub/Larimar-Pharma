@@ -1,11 +1,9 @@
 package com.instantsolutions.larimarpharma.DTOs;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class FieldExecutiveRequest {
@@ -37,6 +35,10 @@ public class FieldExecutiveRequest {
 
     @NotBlank(message = "Region is required")
     private String region;
+
+    @NotEmpty(message="market names are requires")
+    @Size(min = 1)
+    private List<String> markets;
 
     // Manager can be optional, but if provided it must be valid
     private Long managerId;

@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -32,6 +33,7 @@ public class FieldExecutive extends BaseUser {
     private String employeeCode;
     private String territory;
     private String region;
+    private List<String> markets;
 
     // Visits planned and conducted by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
