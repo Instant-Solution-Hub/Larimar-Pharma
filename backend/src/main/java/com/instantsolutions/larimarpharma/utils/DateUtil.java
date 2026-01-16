@@ -8,10 +8,13 @@ public class DateUtil {
 
     public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
 
-        LocalDate firstDayOfMonth = LocalDate.now().withDayOfMonth(1);
+        // First day of NEXT month
+        LocalDate firstDayOfNextMonth = LocalDate.now()
+//                .plusMonths(1)
+                .withDayOfMonth(1);
 
-        // Move to first Monday
-        LocalDate firstMonday = firstDayOfMonth.with(
+        // First Monday of next month
+        LocalDate firstMonday = firstDayOfNextMonth.with(
                 TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY)
         );
 
@@ -19,5 +22,6 @@ public class DateUtil {
                 .plusWeeks(week - 1)
                 .with(DayOfWeek.of(dayOfWeek));
     }
+
 
 }

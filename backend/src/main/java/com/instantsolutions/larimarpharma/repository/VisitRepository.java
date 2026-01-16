@@ -283,6 +283,52 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
+    boolean existsByDoctorIdAndVisitDateAndVisitType(
+            Long doctorId,
+            LocalDate visitDate,
+            Visit.VisitType visitType
+    );
+
+    boolean existsByPharmacyIdAndVisitDateAndVisitType(
+            Long pharmacyId,
+            LocalDate visitDate,
+            Visit.VisitType visitType
+    );
+
+    @Query("""
+    SELECT d.category, COUNT(v)
+    FROM Visit v
+    JOIN v.doctor d
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'DOCTOR'
+      AND v.status = 'COMPLETED'
+      AND v.actualDate BETWEEN :start AND :end
+    GROUP BY d.category
+""")
+    List<Object[]> countCompletedVisitsByCategory(
+            Long feId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+
+    @Query("""
+    SELECT d.category, COUNT(DISTINCT d.id)
+    FROM Visit v
+    JOIN v.doctor d
+    WHERE v.fieldExecutive.id = :feId
+      AND v.visitType = 'DOCTOR'
+      AND v.status = 'COMPLETED'
+      AND v.actualDate BETWEEN :start AND :end
+    GROUP BY d.category
+""")
+    List<Object[]> countDistinctDoctorsVisitedByCategory(
+            Long feId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+
 
 
 }

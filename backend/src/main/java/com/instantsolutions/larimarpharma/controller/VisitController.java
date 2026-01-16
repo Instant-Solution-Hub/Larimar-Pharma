@@ -123,6 +123,26 @@ public class VisitController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/monthly-doctor-progress/{feId}")
+    public MonthlyDoctorTargetProgressDto getMonthlyDoctorProgress(
+            @PathVariable Long feId
+    ) {
+        return visitService.getMonthlyDoctorTargetProgress(feId);
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<Void>> delete(
+            @PathVariable Long id
+    ) {
+        visitService.deleteVisit(id);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(null, "Visit deleted successfully")
+        );
+    }
+
+
+
 
 
 

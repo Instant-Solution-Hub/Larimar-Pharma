@@ -46,7 +46,7 @@ public class VisitService {
                 endOfMonth
         );
 
-        long doctorCompleted = counts.getDoctor();
+        long completed = counts.getDoctor() + counts.getPharmacist();
         long pharmacistCompleted = counts.getPharmacist();
         long stockistCompleted = counts.getStockist();
 
@@ -58,19 +58,31 @@ public class VisitService {
                         endOfMonth
                 );
 
+        long totalPharmacistVisitsForMonth =
+                visitRepository.countByFieldExecutiveIdAndVisitTypeAndScheduledDateBetween(
+                        fieldExecutiveId,
+                        Visit.VisitType.PHARMACIST,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        long totalTargetVisitsForMonth =
+                totalDoctorVisitsForMonth + totalPharmacistVisitsForMonth;
+
         String doctorTargetProgress = calculateProgress(
-                doctorCompleted,
-                totalDoctorVisitsForMonth
+                completed,
+                totalTargetVisitsForMonth
         );
 
         return VisitDashboardResponse.builder()
-                .doctorVisits(doctorCompleted)
+                .doctorVisits(completed)
                 .pharmacyVisits(pharmacistCompleted)
                 .stockistVisit(stockistCompleted)
-                .totalDoctorVisitsForTheCurrentMonth(totalDoctorVisitsForMonth)
+                .totalDoctorVisitsForTheCurrentMonth(totalTargetVisitsForMonth)
                 .doctorTargetProgress(doctorTargetProgress)
                 .build();
     }
+
 
     private String calculateProgress(long completed, long target) {
         if (target == 0) return "0%";
@@ -87,9 +99,9 @@ public class VisitService {
         );
 
         // Prevent past date planning
-        if (visitDate.isBefore(LocalDate.now())) {
-            throw new IllegalStateException("Cannot plan visit for past date");
-        }
+//        if (visitDate.isBefore(LocalDate.now())) {
+//            throw new IllegalStateException("Cannot plan visit for past date");
+//        }
 
 //        if (visitRepository.existsByFieldExecutiveIdAndDoctorIdAndVisitDate(
 //                dto.getFieldExecutiveId(),
@@ -104,6 +116,19 @@ public class VisitService {
         if(dto.getVisitType().equals(Visit.VisitType.DOCTOR)){
             Doctor doctor = doctorRepository.findById(dto.getDoctorId())
                     .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+
+            boolean alreadyPlanned = visitRepository
+                    .existsByDoctorIdAndVisitDateAndVisitType(
+                            dto.getDoctorId(),
+                            visitDate,
+                            Visit.VisitType.DOCTOR
+                    );
+
+            if (alreadyPlanned) {
+                throw new IllegalStateException(
+                        "Visit already planned for this doctor on the selected date"
+                );
+            }
 
             Visit visit = Visit.builder()
                     .fieldExecutive(fe)
@@ -127,6 +152,18 @@ public class VisitService {
         if(dto.getVisitType().equals(Visit.VisitType.PHARMACIST)){
             Pharmacy pharmacy = pharmacyRepository.findById(dto.getPharmacistId())
                     .orElseThrow(() -> new EntityNotFoundException("Pharmacy not found"));
+            boolean alreadyPlanned = visitRepository
+                    .existsByPharmacyIdAndVisitDateAndVisitType(
+                            dto.getPharmacistId(),
+                            visitDate,
+                            Visit.VisitType.PHARMACIST
+                    );
+
+            if (alreadyPlanned) {
+                throw new IllegalStateException(
+                        "Visit already planned for this pharmacy on the selected date"
+                );
+            }
 
             Visit visit = Visit.builder()
                     .fieldExecutive(fe)
@@ -299,7 +336,9 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate startOfMonth = LocalDate.now()
+//                .plusMonths(1)
+                .withDayOfMonth(1);
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findVisitsForSlot(
@@ -354,7 +393,9 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate startOfMonth = LocalDate.now()
+//                .plusMonths(1)
+                .withDayOfMonth(1);
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
@@ -713,6 +754,87 @@ public class VisitService {
 
         return lastWeek - firstWeek + 1;
     }
+
+
+    @Transactional(readOnly = true)
+    public MonthlyDoctorTargetProgressDto getMonthlyDoctorTargetProgress(Long feId) {
+
+        LocalDate now = LocalDate.now();
+        LocalDateTime start = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
+
+        // Fixed targets
+        Map<String, Integer> targetDoctors = Map.of(
+                "A_PLUS", 30,
+                "A", 60,
+                "B", 10
+        );
+
+        Map<String, Integer> visitsPerDoctor = Map.of(
+                "A_PLUS", 3,
+                "A", 2,
+                "B", 1
+        );
+
+        // Fetch DB data
+        Map<String, Integer> completedVisitsMap =
+                visitRepository.countCompletedVisitsByCategory(feId, start, end)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                r -> r[0].toString(),
+                                r -> ((Long) r[1]).intValue()
+                        ));
+
+        Map<String, Integer> completedDoctorsMap =
+                visitRepository.countDistinctDoctorsVisitedByCategory(feId, start, end)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                r -> r[0].toString(),
+                                r -> ((Long) r[1]).intValue()
+                        ));
+
+        List<CategoryProgressDto> categories =
+                targetDoctors.keySet().stream().map(cat -> {
+
+                    int target = targetDoctors.get(cat);
+                    int visitsEach = visitsPerDoctor.get(cat);
+
+                    return CategoryProgressDto.builder()
+                            .category(cat)
+                            .label(cat.equals("A_PLUS") ? "A+" : cat)
+                            .targetDoctors(target)
+                            .visitsPerDoctor(visitsEach)
+                            .completedDoctors(completedDoctorsMap.getOrDefault(cat, 0))
+                            .completedVisits(completedVisitsMap.getOrDefault(cat, 0))
+                            .build();
+                }).toList();
+
+        int totalTargetVisits = categories.stream()
+                .mapToInt(c -> c.getTargetDoctors() * c.getVisitsPerDoctor())
+                .sum();
+
+        int totalCompletedVisits = categories.stream()
+                .mapToInt(CategoryProgressDto::getCompletedVisits)
+                .sum();
+
+        int overallProgress =
+                totalTargetVisits == 0 ? 0 :
+                        Math.round((totalCompletedVisits * 100f) / totalTargetVisits);
+
+        return MonthlyDoctorTargetProgressDto.builder()
+                .totalTargetVisits(totalTargetVisits)
+                .totalCompletedVisits(totalCompletedVisits)
+                .overallProgress(overallProgress)
+                .categories(categories)
+                .build();
+    }
+
+
+
+    public void deleteVisit(Long id) {
+      visitRepository.deleteById(id);
+    }
+
 
 
 
