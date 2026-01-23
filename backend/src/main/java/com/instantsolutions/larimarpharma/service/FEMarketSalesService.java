@@ -4,6 +4,7 @@ import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
 import com.instantsolutions.larimarpharma.entity.FEMarketMonthlySales;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.FEMarketMonthlySalesRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import jakarta.transaction.Transactional;
@@ -22,10 +23,12 @@ public class FEMarketSalesService {
     private final FEMarketMonthlySalesRepository salesRepo;
     private final FieldExecutiveRepository fieldExecutiveRepo;
 
+    @Transactional
     public List<MarketSalesDto> getCurrentMonthMarketSales(Long feId) {
 
         FieldExecutive fe = fieldExecutiveRepo.findById(feId)
-                .orElseThrow(() -> new RuntimeException("FE not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
+        if (fe.getMarkets() == null) throw new ResourceNotFoundException("No markets allocated to the Field Executive");
 
         int year = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
@@ -39,6 +42,7 @@ public class FEMarketSalesService {
                         FEMarketMonthlySales::getMarket,
                         FEMarketMonthlySales::getSalesAmount
                 ));
+        System.out.println("Markets : " + fe.getMarkets());
 
         // Build response for ALL markets
         return fe.getMarkets().stream()

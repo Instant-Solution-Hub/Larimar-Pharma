@@ -3,12 +3,15 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.FEProductAllocationRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.FEProductAllocationResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.FEProductStockDto;
+import com.instantsolutions.larimarpharma.DTOs.UpdateFEProductStockRequestDto;
 import com.instantsolutions.larimarpharma.entity.FEProductAllocation;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.entity.LiquidationPlan;
 import com.instantsolutions.larimarpharma.entity.Product;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.FEProductAllocationRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import com.instantsolutions.larimarpharma.repository.LiquidationPlanRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ public class  FEProductAllocationService {
     private final FEProductAllocationRepository allocationRepository;
     private final ProductService productService;
     private final FieldExecutiveRepository fieldExecutiveRepository;
+    private final LiquidationPlanRepository liquidationPlanRepository;
 
 
     @Transactional
@@ -42,6 +46,8 @@ public class  FEProductAllocationService {
     }
 
 
+
+    @Transactional
     public List<FEProductStockDto> getAllAllocatedProducts(Long feId) {
 
         return allocationRepository.findByFieldExecutiveId(feId)
@@ -55,6 +61,64 @@ public class  FEProductAllocationService {
                 )
                 .toList();
     }
+
+    @Transactional
+    public FEProductAllocationResponseDto updateAllocatedProductStock(
+            UpdateFEProductStockRequestDto dto
+    ) {
+        FEProductAllocation allocation = allocationRepository
+                .findByFieldExecutiveIdAndProductId(dto.getFeId(), dto.getProductId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Product not allocated to this FE")
+                );
+
+
+
+        int alreadyUsed =
+                allocation.getAllocatedQuantity() - allocation.getRemainingQuantity();
+
+        if (dto.getNewAllocatedQuantity() < alreadyUsed) {
+            throw new IllegalStateException(
+                    "New allocation cannot be less than already utilized quantity: " + alreadyUsed
+            );
+        }
+
+        allocation.setAllocatedQuantity(dto.getNewAllocatedQuantity());
+        allocation.setRemainingQuantity(
+                dto.getNewAllocatedQuantity() - alreadyUsed
+        );
+        List<LiquidationPlan> plans =
+                liquidationPlanRepository
+                        .findByFieldExecutiveIdAndProductIdAndManagerApprovalStatusIn(
+                                dto.getFeId(),
+                                dto.getProductId(),
+                                List.of(LiquidationPlan.ApprovalStatus.PENDING, LiquidationPlan.ApprovalStatus.APPROVED)
+                        );
+
+        for (LiquidationPlan plan : plans) {
+            int achievableQty =
+                    Math.max(0, allocation.getRemainingQuantity() - plan.getAchievedUnits());
+
+            // Cap target liquidation if stock reduced
+            if (plan.getTargetLiquidation() > achievableQty) {
+                plan.setTargetLiquidation(achievableQty);
+            }
+            plan.setAvailableUnits(allocation.getAllocatedQuantity());
+        }
+
+        liquidationPlanRepository.saveAll(plans);
+
+        allocationRepository.save(allocation);
+
+        return FEProductAllocationResponseDto.builder()
+                .feId(dto.getFeId())
+                .productId(dto.getProductId())
+                .productName(allocation.getProduct().getName())
+                .allocatedQuantity(allocation.getAllocatedQuantity())
+                .remainingQuantity(allocation.getRemainingQuantity())
+                .build();
+    }
+
 
 
     @Transactional
