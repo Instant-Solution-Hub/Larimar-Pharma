@@ -54,11 +54,11 @@ public class FEService {
         }
 
         FieldExecutive fe = FieldExecutive.builder()
-                .name(request.getName())
+                .name(request.getName().toUpperCase())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .password(request.getPassword())
-                .employeeCode(request.getEmployeeCode())
+                .employeeCode(request.getEmployeeCode().toUpperCase())
                 .territory(request.getTerritory())
                 .region(request.getRegion())
                 .manager(manager)
@@ -129,7 +129,7 @@ public class FEService {
                     .orElseThrow(() -> new RuntimeException("Manager not found"));
         }
 
-        fe.setName(request.getName().trim());
+        fe.setName(request.getName().trim().toUpperCase());
         fe.setEmail(request.getEmail().toLowerCase());
         fe.setPassword(request.getPassword());
         fe.setPhone(request.getPhone());

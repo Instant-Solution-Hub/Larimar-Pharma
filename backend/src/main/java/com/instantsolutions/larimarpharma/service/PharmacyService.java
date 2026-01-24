@@ -21,7 +21,7 @@ public class PharmacyService {
     /* CREATE */
     public PharmacyResponseDto create(PharmacyRequestDto dto) {
         Pharmacy pharmacy = Pharmacy.builder()
-                .pharmacyName(dto.getPharmacyName())
+                .pharmacyName(dto.getPharmacyName().toUpperCase())
                 .location(dto.getLocation())
                 .contactPerson(dto.getContactPerson())
                 .contactNumber(dto.getContactNumber())
@@ -48,7 +48,7 @@ public class PharmacyService {
     public PharmacyResponseDto update(Long id, PharmacyRequestDto dto) {
         Pharmacy pharmacy = getPharmacy(id);
 
-        pharmacy.setPharmacyName(dto.getPharmacyName());
+        pharmacy.setPharmacyName(dto.getPharmacyName().toUpperCase());
         pharmacy.setLocation(dto.getLocation());
         pharmacy.setContactPerson(dto.getContactPerson());
         pharmacy.setContactNumber(dto.getContactNumber());

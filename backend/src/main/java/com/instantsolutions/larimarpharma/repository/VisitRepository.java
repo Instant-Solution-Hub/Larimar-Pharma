@@ -88,6 +88,13 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             LocalDate end
     );
 
+    boolean existsByDoctorIdAndVisitDateAndStatus(
+            Long doctorId,
+            LocalDate visitDate,
+            Visit.VisitStatus status
+    );
+
+
     @Query("""
         SELECT v
         FROM Visit v
@@ -201,6 +208,24 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     @Query("""
     SELECT v
     FROM Visit v
+    LEFT JOIN FETCH v.doctor d
+    LEFT JOIN FETCH v.pharmacy p
+    LEFT JOIN FETCH v.stockist s
+    WHERE v.fieldExecutive.id = :feId
+      AND v.status = 'MISSED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY v.actualVisitTime DESC
+""")
+    List<Visit> findAllMissedVisits(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
     JOIN FETCH v.doctor d
     WHERE v.fieldExecutive.id = :feId
       AND v.visitType = 'DOCTOR'
@@ -246,6 +271,24 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("status") Visit.VisitStatus status,
             @Param("fieldExecutiveId") Long fieldExecutiveId
     );
+
+    @Query("""
+    SELECT DISTINCT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor
+    LEFT JOIN FETCH v.pharmacy
+    LEFT JOIN FETCH v.fieldExecutive fe
+    WHERE v.scheduledDate >= :start
+      AND v.scheduledDate < :nextDay
+      AND v.status IN ('SCHEDULED', 'MISSED')
+      AND fe.id = :fieldExecutiveId
+""")
+    List<Visit> findTodaysVisitsByFieldExecutive(
+            @Param("start") LocalDateTime start,
+            @Param("nextDay") LocalDateTime nextDay,
+            @Param("fieldExecutiveId") Long fieldExecutiveId
+    );
+
 
     @Query("""
         SELECT 

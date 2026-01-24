@@ -278,6 +278,101 @@ public class VisitService {
         return mapToDto(visit1);
     }
 
+    @Transactional
+    public VisitResponseDto reMarkVisit(MarkVisitRequestDto dto) {
+
+        Visit visit = visitRepository.findById(dto.getVisitId())
+                .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
+
+        // 1️⃣ Only MISSED visits can be re-marked
+        if (visit.getStatus() != Visit.VisitStatus.MISSED) {
+            throw new IllegalStateException(
+                    "Only missed visits can be re-marked"
+            );
+        }
+
+        // 2️⃣ Re-marking allowed only to COMPLETED
+        if (dto.getStatus() != Visit.VisitStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Re-marked visit must be completed"
+            );
+        }
+
+        // 3️⃣ Doctor-only restriction
+        if (visit.getVisitType() == Visit.VisitType.DOCTOR) {
+
+            Doctor doctor = visit.getDoctor();
+            LocalDate visitDate = visit.getVisitDate();
+
+            boolean alreadyCompleted =
+                    visitRepository.existsByDoctorIdAndVisitDateAndStatus(
+                            doctor.getId(),
+                            visitDate,
+                            Visit.VisitStatus.COMPLETED
+                    );
+
+            if (alreadyCompleted) {
+                throw new IllegalStateException(
+                        "Doctor already has a completed visit for this day"
+                );
+            }
+
+            // 📍 Location validation (same as markVisit)
+            if (dto.getLatitude() == null || dto.getLongitude() == null) {
+                throw new IllegalArgumentException(
+                        "Please allow location access"
+                );
+            }
+
+            if (doctor.getLatitude() != null && doctor.getLongitude() != null) {
+                double distance = GeoUtil.distanceInMeters(
+                        Double.parseDouble(doctor.getLatitude()),
+                        Double.parseDouble(doctor.getLongitude()),
+                        Double.parseDouble(dto.getLatitude()),
+                        Double.parseDouble(dto.getLongitude())
+                );
+
+                if (distance > 100) {
+                    throw new IllegalStateException(
+                            "You are not within 100 meters of the doctor location"
+                    );
+                }
+            }
+        }
+
+        // 4️⃣ Update visit (same fields as markVisit)
+        visit.setStatus(Visit.VisitStatus.COMPLETED);
+        visit.setActualDate(LocalDateTime.now());
+        visit.setActualVisitTime(LocalDateTime.now());
+        visit.setNotes(dto.getNotes());
+        visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+
+        if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
+
+            List<ConvertedProduct> visitProducts =
+                    dto.getConvertedProducts().stream()
+                            .map(p -> ConvertedProduct.builder()
+                                    .visit(visit)
+                                    .product(
+                                            productRepository.getReferenceById(
+                                                    p.getProductId()
+                                            )
+                                    )
+                                    .quantity(p.getQuantity())
+                                    .value(p.getValue())
+                                    .build()
+                            )
+                            .toList();
+
+            visit.getConvertedProducts().clear();
+            visit.getConvertedProducts().addAll(visitProducts);
+        }
+
+        Visit savedVisit = visitRepository.save(visit);
+        return mapToDto(savedVisit);
+    }
+
+
     public VisitResponseDto markStockistVisit(MarkStockistVisitRequestDto dto) {
 
         FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
@@ -457,6 +552,18 @@ public class VisitService {
                 .toList();
     }
 
+    public List<CompletedVisitDto> getMissedVisits(Long fieldExecutiveId) {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return visitRepository
+                .findAllMissedVisits(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
     private CompletedVisitDto mapToCompletedVisitDto(Visit v) {
 
         CompletedVisitDto.CompletedVisitDtoBuilder builder =
@@ -584,6 +691,22 @@ public class VisitService {
                 today.atStartOfDay(),
                 today.plusDays(1).atStartOfDay(),
                 Visit.VisitStatus.SCHEDULED,
+                feId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
+    public List<TodayScheduledVisitDto> getTodaysVisits(Long feId) {
+
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(zone);
+
+        List<Visit> visits = visitRepository.findTodaysVisitsByFieldExecutive(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
                 feId
         );
 

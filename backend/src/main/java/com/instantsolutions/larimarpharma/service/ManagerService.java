@@ -20,12 +20,12 @@ public class ManagerService {
 
     public Manager createManager(ManagerRequestDto dto) {
         Manager manager = Manager.builder()
-                .name(dto.getName())
+                .name(dto.getName().toUpperCase())
                 .email(dto.getEmail())
                 .password(dto.getPassword())
                 .phone(dto.getPhone())
                 .active(dto.isActive())
-                .employeeCode(dto.getEmployeeCode())
+                .employeeCode(dto.getEmployeeCode().toUpperCase())
                 .department(dto.getDepartment())
                 .designation(dto.getDesignation())
                 .managedTerritories(dto.getManagedTerritories())
@@ -38,14 +38,14 @@ public class ManagerService {
         Manager manager = managerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Manager not found with id: " + id));
 
-        manager.setName(dto.getName());
+        manager.setName(dto.getName().toUpperCase());
         manager.setEmail(dto.getEmail());
         manager.setPassword(dto.getPassword());
         manager.setPhone(dto.getPhone());
         manager.setActive(dto.isActive());
-        manager.setEmployeeCode(dto.getEmployeeCode());
+        manager.setEmployeeCode(dto.getEmployeeCode().toUpperCase());
         manager.setDepartment(dto.getDepartment());
-        manager.setDesignation(dto.getDesignation());
+        manager.setDesignation(dto.getDesignation().toUpperCase());
         manager.setManagedTerritories(dto.getManagedTerritories());
 
         return managerRepository.save(manager);

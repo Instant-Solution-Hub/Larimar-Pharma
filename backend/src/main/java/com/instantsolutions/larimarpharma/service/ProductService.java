@@ -19,8 +19,8 @@ public class ProductService {
     public Product createProduct(ProductRequestDto dto) {
 
         Product product = Product.builder()
-                .name(dto.getName())
-                .category(dto.getCategory())
+                .name(dto.getName().toUpperCase())
+                .category(dto.getCategory().toUpperCase())
                 .description(dto.getDescription())
                 .ptr(dto.getPtr())
                 .pts(dto.getPts())
@@ -36,8 +36,8 @@ public class ProductService {
 
         Product product = getProductById(id);
 
-        product.setName(dto.getName());
-        product.setCategory(dto.getCategory());
+        product.setName(dto.getName().toUpperCase());
+        product.setCategory(dto.getCategory().toUpperCase());
         product.setDescription(dto.getDescription());
         product.setPtr(dto.getPtr());
         product.setPts(dto.getPts());
