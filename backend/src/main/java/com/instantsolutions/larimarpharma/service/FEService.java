@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -62,7 +63,9 @@ public class FEService {
                 .territory(request.getTerritory())
                 .region(request.getRegion())
                 .manager(manager)
-                .markets(request.getMarkets())
+                .markets( request.getMarkets() != null
+                        ? new ArrayList<>(request.getMarkets())
+                        : new ArrayList<>())
                 .active(true).build();
 
         FieldExecutiveProfile profile = FieldExecutiveProfile.builder()
@@ -151,7 +154,9 @@ public class FEService {
 
     // Mapper
     private FieldExecutiveResponse mapToResponse(FieldExecutive fe) {
+        System.out.println("Markets: "+fe.getMarkets());
         return FieldExecutiveResponse.builder()
+
                 .id(fe.getId())
                 .name(fe.getName())
                 .email(fe.getEmail())
@@ -164,6 +169,7 @@ public class FEService {
                 )
                 .markets(fe.getMarkets())
                 .build();
+
     }
 
     @Transactional

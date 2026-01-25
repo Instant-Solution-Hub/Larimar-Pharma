@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,16 @@ public class FieldExecutive extends BaseUser {
     private String employeeCode;
     private String territory;
     private String region;
-    private List<String> markets;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "field_executive_markets",
+            joinColumns = @JoinColumn(name = "field_executive_id")
+    )
+    @Column(name = "market")
+    @Builder.Default
+    private List<String> markets = new ArrayList<>();
+
 
     // Visits planned and conducted by this FE
     @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

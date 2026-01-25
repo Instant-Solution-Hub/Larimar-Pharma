@@ -230,6 +230,8 @@ public class LiquidationPlanService {
         }
     }
 
+
+
     private LiquidationPlanResponseDto mapToResponse(LiquidationPlan plan) {
         return LiquidationPlanResponseDto.builder()
                 .id(plan.getId())

@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.FEProductAllocationRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.FEProductAllocationResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.FEProductStockDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.FEProductAllocationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +60,19 @@ public class FEProductAllocationController {
                 )
         );
     }
+
+    @PutMapping("/update-product-stock")
+    public ResponseEntity<ApiResponseDto<FEProductAllocationResponseDto>>
+    updateProductStock(
+            @Valid @RequestBody UpdateFEProductStockRequestDto dto
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        allocationService.updateAllocatedProductStock(dto),
+                        "Product stock updated successfully"
+                )
+        );
+    }
+
 }
 
