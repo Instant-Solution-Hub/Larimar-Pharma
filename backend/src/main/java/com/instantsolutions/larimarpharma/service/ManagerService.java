@@ -3,8 +3,10 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerMonthlyFEProgressDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
+import com.instantsolutions.larimarpharma.repository.FieldExecutiveProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.List;
 public class ManagerService {
 
     private final ManagerRepository managerRepository;
+    private final FieldExecutiveProfileRepository profileRepository;
 
     public Manager createManager(ManagerRequestDto dto) {
         Manager manager = Manager.builder()
@@ -73,6 +76,37 @@ public class ManagerService {
         }
         managerRepository.deleteById(id);
     }
+
+    public ManagerMonthlyFEProgressDto
+    getMonthlyFEProgress(Long managerId, int month, int year) {
+
+        Object[] result =
+                profileRepository.getManagerMonthlyTargets(
+                        managerId, month, year
+                );
+
+        Double targetSet = (Double) result[0];
+        Double targetAchieved = (Double) result[1];
+        Integer feCount = ((Long) result[2]).intValue();
+
+        double progress = 0.0;
+        if (targetSet != null && targetSet > 0) {
+            progress = (targetAchieved / targetSet) * 100;
+        }
+
+        return ManagerMonthlyFEProgressDto.builder()
+                .managerId(managerId)
+                .month(month)
+                .year(year)
+                .totalTargetSet(targetSet)
+                .totalTargetAchieved(targetAchieved)
+                .progressPercentage(
+                        Math.round(progress * 100.0) / 100.0
+                )
+                .totalFieldExecutives(feCount)
+                .build();
+    }
+
 
     public ManagerResponseDto toManagerResponseDto(Manager m) {
         return ManagerResponseDto.builder()

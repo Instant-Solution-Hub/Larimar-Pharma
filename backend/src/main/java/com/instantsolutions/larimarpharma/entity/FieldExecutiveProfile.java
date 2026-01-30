@@ -5,7 +5,14 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "field_executive_profiles")
+@Table(
+        name = "field_executive_profiles",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {
+                        "field_executive_id", "month", "year"
+                })
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,9 +26,15 @@ public class FieldExecutiveProfile {
     @JoinColumn(name = "field_executive_id", nullable = false, unique = true)
     private FieldExecutive fieldExecutive;
 
+
+    private Integer month;
+    private Integer year;
+
     private Integer attendancePercentage;
-    private Double targetAchieved; // percentage
-    private Double targetSet;
+    private Double primaryTargetAchieved;
+    private Double secondaryTargetAchieved;
+    private Double primaryTargetSet;
+    private Double secondaryTargetSet;
     private Double incentiveEarned;
     private Integer casualLeaves;
     private Integer sickLeaves;

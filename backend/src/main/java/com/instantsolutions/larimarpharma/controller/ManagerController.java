@@ -1,11 +1,12 @@
 package com.instantsolutions.larimarpharma.controller;
 
 
-import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.Manager;
+import com.instantsolutions.larimarpharma.entity.TerritoryMonthlyTarget;
+import com.instantsolutions.larimarpharma.repository.TerritoryMonthlyTargetRepository;
 import com.instantsolutions.larimarpharma.service.ManagerService;
+import com.instantsolutions.larimarpharma.service.TerritoryMonthlyTargetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,8 @@ import java.util.List;
 public class ManagerController {
 
     private final ManagerService managerService;
+    private final TerritoryMonthlyTargetService territoryTargetService;
+    private final TerritoryMonthlyTargetRepository territoryTargetRepo;
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<Manager>> create(@Valid @RequestBody ManagerRequestDto dto) {
@@ -64,4 +67,56 @@ public class ManagerController {
                 ApiResponseDto.success(null,"Manager deleted successfully")
         );
     }
+
+    @GetMapping("/{managerId}/fe-progress/monthly")
+    public ResponseEntity<ApiResponseDto<ManagerMonthlyFEProgressDto>>
+    getMonthlyFEProgress(
+            @PathVariable Long managerId,
+            @RequestParam int month,
+            @RequestParam int year
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        managerService.getMonthlyFEProgress(
+                                managerId, month, year
+                        ),
+                        "Monthly FE progress fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{managerId}/territory-targets")
+    public ResponseEntity<ApiResponseDto<List<TerritoryMonthlyTargetResponseDto>>> getTerritoryTargets(
+            @PathVariable Long managerId,
+            @RequestParam int month,
+            @RequestParam int year
+    ) {
+
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        territoryTargetService.initializeTerritoryTargets(
+                                managerId, month, year
+                        ),
+                        "Territory targets fetched successfully"
+                )
+        );
+    }
+
+    @PutMapping("/territory-targets/{id}")
+    public ResponseEntity<ApiResponseDto<TerritoryMonthlyTargetResponseDto>> updateTerritoryTarget(
+            @PathVariable Long id,
+            @RequestBody UpdateTerritoryTargetDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        territoryTargetService.update(id, dto),
+                        "Territory targets fetched successfully"
+                )
+        );
+    }
+
+
+
 }

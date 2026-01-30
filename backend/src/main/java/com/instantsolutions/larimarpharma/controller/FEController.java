@@ -143,6 +143,36 @@ public class FEController {
         );
     }
 
+    @PutMapping("/{feId}/targets/monthly")
+    public ResponseEntity<ApiResponseDto<FETargetResponseDto>> assignMonthlyTarget(
+            @PathVariable Long feId,
+            @Valid @RequestBody AssignFETargetRequestDto dto
+    ) {
+
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        fieldExecutiveService.assignMonthlyTarget(feId,dto),
+                        "Monthly target updated successfully"
+                )
+        );
+    }
+
+
+    @GetMapping("/{managerId}/fe-targets")
+    public ResponseEntity<ApiResponseDto<List<FEMonthlyTargetResponseDto>>> getFETargets(
+            @PathVariable Long managerId,
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        fieldExecutiveService.getFEMonthlyTargets(managerId, month, year),
+                        "FE targets fetched successfully"
+                )
+        );
+    }
+
     @GetMapping("/{feId}/profile-stats")
     public ResponseEntity<FEProfileStatsResponseDto> getProfileStats(
             @PathVariable Long feId

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,8 @@ public class FEService {
 
     // CREATE
     public FieldExecutiveResponse create(FieldExecutiveRequest request) {
+
+        LocalDate now = LocalDate.now();
 
         if (request == null) {
             throw new IllegalArgumentException("Request body cannot be null");
@@ -71,8 +74,10 @@ public class FEService {
         FieldExecutiveProfile profile = FieldExecutiveProfile.builder()
                 .fieldExecutive(fe)
                 .attendancePercentage(0)
-                .targetAchieved(0.0)
-                .targetSet(100.0)
+                .primaryTargetAchieved(0.0)
+                .secondaryTargetAchieved(0.0)
+                .primaryTargetSet(100.0)
+                .secondaryTargetSet(100.0)
                 .incentiveEarned(0.0)
                 .casualLeaves(10)
                 .sickLeaves(10)
@@ -84,6 +89,8 @@ public class FEService {
                 .aPlusDoctorTarget(90)
                 .bDoctorTarget(30)
                 .aDoctorTarget(60)
+                .month(now.getMonthValue())   // 1–12
+                .year(now.getYear())
                 .build();
 
         fe.setProfile(profile); // IMPORTANT
@@ -241,12 +248,12 @@ public class FEService {
                 );
 
         return FEProfileStatsResponseDto.builder()
-                .targetAchieved(profile.getTargetAchieved())
+                .targetAchieved(profile.getPrimaryTargetAchieved())
                 .casualLeaves(profile.getCasualLeaves())
                 .approvedCasualLeaves(profile.getApprovedCasualLeaves())
                 .sickLeaves(profile.getSickLeaves())
                 .approvedSickLeaves(profile.getApprovedSickLeaves())
-                .targetSet(profile.getTargetSet())
+                .targetSet(profile.getPrimaryTargetSet())
                 .build();
     }
 
@@ -277,5 +284,96 @@ public class FEService {
                 .map(DoctorResponseDto::fromEntity)
                 .toList();
     }
+
+    @Transactional
+    public FETargetResponseDto assignMonthlyTarget(
+            Long feId,
+            AssignFETargetRequestDto dto
+    ) {
+        FieldExecutive fe = repository.findById(feId)
+                .orElseThrow(() ->
+                        new RuntimeException("Field Executive not found"));
+
+        FieldExecutiveProfile profile =
+                profileRepository
+                        .findByFieldExecutiveIdAndMonthAndYear(
+                                feId, dto.getMonth(), dto.getYear()
+                        )
+                        .orElseGet(() ->
+                                FieldExecutiveProfile.builder()
+                                        .fieldExecutive(fe)
+                                        .month(dto.getMonth())
+                                        .year(dto.getYear())
+                                        .primaryTargetSet(0.0)
+                                        .secondaryTargetSet(0.0)
+                                        .primaryTargetAchieved(0.0)
+                                        .secondaryTargetAchieved(0.0)
+                                        .build()
+                        );
+
+        profile.setPrimaryTargetSet(dto.getPrimaryTargetSet());
+        profile.setSecondaryTargetSet(dto.getSecondaryTargetSet());
+
+        profileRepository.save(profile);
+
+        return FETargetResponseDto.builder()
+                .feId(fe.getId())
+                .feName(fe.getName())
+                .territory(fe.getTerritory())
+                .primaryTarget(profile.getPrimaryTargetSet())
+                .secondaryTarget(profile.getSecondaryTargetSet())
+                .month(profile.getMonth())
+                .year(profile.getYear())
+                .build();
+    }
+
+
+    @Transactional
+    public List<FEMonthlyTargetResponseDto> getFEMonthlyTargets(
+            Long managerId,
+            Integer month,
+            Integer year
+    ) {
+        List<FieldExecutive> fes =
+                repository.findByManagerId(managerId);
+
+        for (FieldExecutive fe : fes) {
+            profileRepository
+                    .findByFieldExecutiveIdAndMonthAndYear(
+                            fe.getId(), month, year
+                    )
+                    .orElseGet(() -> {
+                        FieldExecutiveProfile profile =
+                                FieldExecutiveProfile.builder()
+                                        .fieldExecutive(fe)
+                                        .month(month)
+                                        .year(year)
+                                        .primaryTargetSet(0.0)
+                                        .secondaryTargetSet(0.0)
+                                        .primaryTargetAchieved(0.0)
+                                        .secondaryTargetAchieved(0.0)
+                                        .attendancePercentage(0)
+                                        .incentiveEarned(0.0)
+                                        .casualLeaves(10)
+                                        .sickLeaves(10)
+                                        .approvedCasualLeaves(0)
+                                        .approvedSickLeaves(0)
+                                        .pharmacyVisitProgress(0)
+                                        .stockistVisitProgress(0)
+                                        .doctorVisitProgress(0)
+                                        .aPlusDoctorTarget(0)
+                                        .aDoctorTarget(0)
+                                        .bDoctorTarget(0)
+                                        .build();
+
+                        return profileRepository.save(profile);
+
+                    });
+        }
+
+        return profileRepository.findFEMonthlyTargets(managerId, month, year);
+    }
+
+
 }
 
