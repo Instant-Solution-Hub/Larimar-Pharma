@@ -2,9 +2,11 @@ package com.instantsolutions.larimarpharma.controller;
 
 
 import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.entity.LeaveRequest;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.TerritoryMonthlyTarget;
 import com.instantsolutions.larimarpharma.repository.TerritoryMonthlyTargetRepository;
+import com.instantsolutions.larimarpharma.service.LeaveRequestService;
 import com.instantsolutions.larimarpharma.service.ManagerService;
 import com.instantsolutions.larimarpharma.service.TerritoryMonthlyTargetService;
 import jakarta.validation.Valid;
@@ -23,6 +25,7 @@ public class ManagerController {
     private final ManagerService managerService;
     private final TerritoryMonthlyTargetService territoryTargetService;
     private final TerritoryMonthlyTargetRepository territoryTargetRepo;
+    private final LeaveRequestService leaveRequestService;
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<Manager>> create(@Valid @RequestBody ManagerRequestDto dto) {
@@ -99,6 +102,22 @@ public class ManagerController {
                                 managerId, month, year
                         ),
                         "Territory targets fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{managerId}/fe-leaves")
+    public ResponseEntity<ApiResponseDto<List<LeaveRequestWithFEResponseDto>>> getTeamLeaveRequests(
+            @PathVariable Long managerId
+    ) {
+
+        List<LeaveRequestWithFEResponseDto> leaves =
+                leaveRequestService.getLeavesOfFEsUnderManager(managerId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaves,
+                        "Team leave requests fetched successfully"
                 )
         );
     }

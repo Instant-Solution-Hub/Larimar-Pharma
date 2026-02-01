@@ -45,6 +45,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("monthEnd") LocalDateTime monthEnd
     );
 
+    List<LeaveRequest>
+    findByFieldExecutive_Manager_IdOrderByFromDateDesc(Long managerId);
+
 
 
 }

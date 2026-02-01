@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
@@ -54,6 +55,7 @@ public class LeaveRequestService {
                 .toDate(dto.getToDate())
                 .reason(dto.getReason())
                 .status(LeaveRequest.ApprovalStatus.PENDING)
+                .appliedDate(LocalDateTime.now())
                 .build();
 
         return leaveRequestRepository.save(leaveRequest);
@@ -121,7 +123,7 @@ public class LeaveRequestService {
     }
 
     @Transactional
-    public LeaveRequest approveLeave(Long leaveId, Long managerId) {
+    public LeaveRequestWithFEResponseDto approveLeave(Long leaveId) {
 
         LeaveRequest leave = leaveRequestRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found"));
@@ -132,13 +134,28 @@ public class LeaveRequestService {
 
         FieldExecutiveProfile profile = leave.getFieldExecutive().getProfile();
         int days = calculateDays(leave.getFromDate(), leave.getToDate());
+        if (!hasSufficientBalance(profile, leave.getLeaveType(), days)) {
+           return rejectLeave(leaveId);
 
-        deductLeaveBalance(profile, leave.getLeaveType(), days);
+        }
+            deductLeaveBalance(profile, leave.getLeaveType(), days);
 
-        leave.setStatus(LeaveRequest.ApprovalStatus.APPROVED);
-        leave.setApprovalDate(LocalDateTime.now());
+            leave.setStatus(LeaveRequest.ApprovalStatus.APPROVED);
+            leave.setApprovalDate(LocalDateTime.now());
 
-        return leave;
+            leaveRequestRepository.save(leave);
+            return LeaveRequestWithFEResponseDto.builder()
+                    .id(leave.getId())
+                    .feCode(leave.getFieldExecutive().getEmployeeCode())
+                    .feName(leave.getFieldExecutive().getName())
+                    .leaveType(leave.getLeaveType())
+                    .status(leave.getStatus())
+                    .fromDate(leave.getFromDate())
+                    .toDate(leave.getToDate())
+                    .reason(leave.getReason())
+                    .appliedDate(leave.getAppliedDate())
+                    .build();
+
     }
 
     private void deductLeaveBalance(FieldExecutiveProfile profile,
@@ -159,7 +176,9 @@ public class LeaveRequestService {
 
     }
 
-    public LeaveRequest rejectLeave(Long leaveId, Long managerId) {
+    @Transactional
+
+    public LeaveRequestWithFEResponseDto rejectLeave(Long leaveId) {
 
         LeaveRequest leave = leaveRequestRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found"));
@@ -167,13 +186,46 @@ public class LeaveRequestService {
         leave.setStatus(LeaveRequest.ApprovalStatus.REJECTED);
         leave.setApprovalDate(LocalDateTime.now());
 
-        return leaveRequestRepository.save(leave);
+         leaveRequestRepository.save(leave);
+        return  LeaveRequestWithFEResponseDto.builder()
+                .id(leave.getId())
+                .feCode(leave.getFieldExecutive().getEmployeeCode())
+                .feName(leave.getFieldExecutive().getName())
+                .leaveType(leave.getLeaveType())
+                .status(leave.getStatus())
+                .fromDate(leave.getFromDate())
+                .toDate(leave.getToDate())
+                .reason(leave.getReason())
+                .appliedDate(leave.getAppliedDate())
+                .build();
     }
 
 
     public List<LeaveRequest> getLeavesByFieldExecutive(Long feId) {
         return leaveRequestRepository.findByFieldExecutiveIdOrderByFromDateDesc(feId);
     }
+
+
+    @Transactional
+    public List<LeaveRequestWithFEResponseDto> getLeavesOfFEsUnderManager(Long managerId) {
+        List<LeaveRequest> leaves =  leaveRequestRepository
+                .findByFieldExecutive_Manager_IdOrderByFromDateDesc(managerId);
+        return leaves.stream()
+                .map(lr -> LeaveRequestWithFEResponseDto.builder()
+                        .id(lr.getId())
+                        .feCode(lr.getFieldExecutive().getEmployeeCode())
+                        .feName(lr.getFieldExecutive().getName())
+                        .leaveType(lr.getLeaveType())
+                        .status(lr.getStatus())
+                        .fromDate(lr.getFromDate())
+                        .toDate(lr.getToDate())
+                        .reason(lr.getReason())
+                        .appliedDate(lr.getAppliedDate())
+                        .build()
+                )
+                .toList();
+    }
+
 
 
 

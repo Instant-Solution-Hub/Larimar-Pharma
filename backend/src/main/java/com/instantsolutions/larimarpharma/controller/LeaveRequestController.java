@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
 import com.instantsolutions.larimarpharma.service.LeaveRequestService;
 import jakarta.validation.Valid;
@@ -43,5 +44,28 @@ public class LeaveRequestController {
     ) {
         List<LeaveRequest> leaves = leaveRequestService.getLeavesByFieldExecutive(feId);
         return ResponseEntity.ok(leaves);
+    }
+    @PutMapping("/{leaveId}/approve-leave")
+    public ResponseEntity<ApiResponseDto<LeaveRequestWithFEResponseDto>> approveLeave(
+            @PathVariable Long leaveId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaveRequestService.approveLeave(leaveId),
+                        "Leave approved successfully"
+                )
+        );
+    }
+
+    @PutMapping("/{leaveId}/reject-leave")
+    public ResponseEntity<ApiResponseDto<LeaveRequestWithFEResponseDto>> rejectLeave(
+            @PathVariable Long leaveId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaveRequestService.rejectLeave(leaveId),
+                        "Leave has been rejected successfully"
+                )
+        );
     }
 }
