@@ -1,7 +1,12 @@
 package com.instantsolutions.larimarpharma.repository;
 
 import com.instantsolutions.larimarpharma.DTOs.FEMonthlyTargetResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerTargetStatsDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,29 +52,29 @@ WHERE fe.manager.id = :managerId
 
 
     @Query("""
-    SELECT 
-        COALESCE(SUM(
-            COALESCE(p.primaryTargetSet, 0) +
-            COALESCE(p.secondaryTargetSet, 0)
-        ), 0),
-
-        COALESCE(SUM(
-            COALESCE(p.primaryTargetAchieved, 0) +
-            COALESCE(p.secondaryTargetAchieved, 0)
-        ), 0),
-
-        COUNT(fe.id)
-    FROM FieldExecutiveProfile p
-    JOIN p.fieldExecutive fe
-    WHERE fe.manager.id = :managerId
-      AND p.month = :month
-      AND p.year = :year
+    SELECT new com.instantsolutions.larimarpharma.DTOs.ManagerTargetStatsDto(
+        COALESCE(
+            SUM(COALESCE(fp.primaryTargetSet, 0d) + COALESCE(fp.secondaryTargetSet, 0d)),
+            0d
+        ),
+        COALESCE(
+            SUM(COALESCE(fp.primaryTargetAchieved, 0d) + COALESCE(fp.secondaryTargetAchieved, 0d)),
+            0d
+        ),
+        COUNT(DISTINCT fp.fieldExecutive.id)
+    )
+    FROM FieldExecutiveProfile fp
+    WHERE fp.fieldExecutive.manager.id = :managerId
+      AND fp.month = :month
+      AND fp.year = :year
 """)
-    Object[] getManagerMonthlyTargets(
+    ManagerTargetStatsDto getManagerMonthlyTargets(
             @Param("managerId") Long managerId,
-            @Param("month") Integer month,
-            @Param("year") Integer year
+            @Param("month") int month,
+            @Param("year") int year
     );
+
+
 
     @Query("""
         SELECT COALESCE(SUM(p.primaryTargetSet), 0)

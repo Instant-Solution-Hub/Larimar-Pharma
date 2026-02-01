@@ -117,6 +117,55 @@ public class ManagerController {
         );
     }
 
+    @GetMapping("/{managerId}/contact")
+    public ResponseEntity<ApiResponseDto<ManagerContactResponseDto>> getContactDetails(
+            @PathVariable Long managerId
+    ) {
+        ManagerContactResponseDto response =
+                managerService.getContactDetails(managerId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "Contact details fetched successfully"
+                )
+        );
+
+
+    }
+
+    @PutMapping("/{managerId}/contact/basic")
+    public ResponseEntity<ApiResponseDto<ManagerContactResponseDto>> updateContactDetails(
+            @PathVariable Long managerId,
+            @RequestBody ManagerContactUpdateRequestDto dto
+    ) {
+        ManagerContactResponseDto updated =
+                managerService.updateContactDetails(managerId, dto);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        updated,
+                        "Contact details updated successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{managerId}/field-executives/contacts")
+    public ResponseEntity<ApiResponseDto<List<FEContactResponseDto>>> getFEContactsUnderManager(
+            @PathVariable Long managerId
+    ) {
+
+        List<FEContactResponseDto> response =
+                managerService.getFEContactsUnderManager(managerId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "FE contacts fetched successfully"
+                )
+        );
+    }
+
 
 
 }

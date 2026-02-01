@@ -1,10 +1,11 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
-import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerMonthlyFEProgressDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
+import com.instantsolutions.larimarpharma.entity.ManagerProfile;
+import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import com.instantsolutions.larimarpharma.repository.ManagerProfileRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +21,8 @@ public class ManagerService {
 
     private final ManagerRepository managerRepository;
     private final FieldExecutiveProfileRepository profileRepository;
+    private final ManagerProfileRepository managerProfileRepository;
+    private final FieldExecutiveRepository fieldExecutiveRepository;
 
     public Manager createManager(ManagerRequestDto dto) {
         Manager manager = Manager.builder()
@@ -34,7 +37,18 @@ public class ManagerService {
                 .managedTerritories(dto.getManagedTerritories())
                 .build();
 
-        return managerRepository.save(manager);
+         managerRepository.save(manager);
+        ManagerProfile profile = ManagerProfile.builder()
+                .manager(manager)
+                .teamSize(0)
+                .teamTargetAchieved(0.0)
+                .teamComplianceRate(0.0)
+                .totalApprovalsProcessed(0)
+                .pendingApprovals(0)
+                .build();
+        managerProfileRepository.save(profile);
+
+        return manager;
     }
 
     public Manager updateManager(Long id, ManagerRequestDto dto) {
@@ -80,14 +94,14 @@ public class ManagerService {
     public ManagerMonthlyFEProgressDto
     getMonthlyFEProgress(Long managerId, int month, int year) {
 
-        Object[] result =
+        ManagerTargetStatsDto dto =
                 profileRepository.getManagerMonthlyTargets(
                         managerId, month, year
                 );
 
-        Double targetSet = (Double) result[0];
-        Double targetAchieved = (Double) result[1];
-        Integer feCount = ((Long) result[2]).intValue();
+        Double targetSet = (Double) dto.getTargetSet();
+        Double targetAchieved = (Double) dto.getTargetAchieved();
+        Long feCount = dto.getFeCount();
 
         double progress = 0.0;
         if (targetSet != null && targetSet > 0) {
@@ -103,7 +117,7 @@ public class ManagerService {
                 .progressPercentage(
                         Math.round(progress * 100.0) / 100.0
                 )
-                .totalFieldExecutives(feCount)
+                .totalFieldExecutives(feCount.intValue())
                 .build();
     }
 
@@ -133,4 +147,60 @@ public class ManagerService {
                 .build();
     }
 
-}
+    public ManagerContactResponseDto getContactDetails(Long managerId) {
+        Manager manager = managerRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        return  ManagerContactResponseDto.builder()
+                .email(manager.getEmail()).
+                emergencyContact(manager.getEmergencyContact()).
+                phone(manager.getPhone()).name(manager.getName()).
+                build();
+    }
+
+    public ManagerContactResponseDto updateContactDetails(Long managerId, ManagerContactUpdateRequestDto dto) {
+        Manager manager = managerRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+
+        if (dto.getPhone() != null) {
+            manager.setPhone(dto.getPhone());
+        }
+        if (dto.getEmail() != null) {
+            manager.setEmail(dto.getEmail());
+        }
+        if (dto.getEmergencyContact() != null) {
+            manager.setEmergencyContact(dto.getEmergencyContact());
+        }
+
+        Manager updated = managerRepository.save(manager);
+
+        return ManagerContactResponseDto.builder()
+                .managerId(updated.getId())
+                .phone(updated.getPhone())
+                .email(updated.getEmail())
+                .emergencyContact(updated.getEmergencyContact())
+                .name(updated.getName())
+                .build();
+    }
+
+    public List<FEContactResponseDto> getFEContactsUnderManager(Long managerId) {
+
+        List<FieldExecutive> executives =
+                    fieldExecutiveRepository.findByManagerId(managerId);
+
+            return executives.stream()
+                    .map(this::mapToContactDto)
+                    .toList();
+        }
+
+    private FEContactResponseDto mapToContactDto(FieldExecutive fe) {
+        return FEContactResponseDto.builder()
+                .feId(fe.getId())
+                .name(fe.getName())
+                .phone(fe.getPhone())
+                .email(fe.getEmail())
+                .emergencyContact(fe.getEmergencyContact())
+                .build();
+    }
+    }
+

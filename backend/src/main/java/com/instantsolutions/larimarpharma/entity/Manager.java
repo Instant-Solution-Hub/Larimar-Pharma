@@ -25,6 +25,7 @@ public class Manager extends BaseUser {
     private String department;
     private String designation;
 
+
     // Field Executives under this manager
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
