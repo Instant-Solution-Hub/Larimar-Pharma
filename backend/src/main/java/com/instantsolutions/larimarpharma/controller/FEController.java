@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.service.AttendanceService;
 import com.instantsolutions.larimarpharma.service.FEVisitService;
 import jakarta.validation.Valid;
@@ -198,4 +199,22 @@ public class FEController {
 
 
     }
+
+    @GetMapping("/manager/{managerId}/a-priority-field-executives")
+    public ResponseEntity<List<FieldExecutiveResponse>> getAPriorityFEs(
+            @PathVariable Long managerId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                fieldExecutiveService.getFEsWithAPriorityVisits(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek
+                )
+        );
+    }
+
+
+
 }

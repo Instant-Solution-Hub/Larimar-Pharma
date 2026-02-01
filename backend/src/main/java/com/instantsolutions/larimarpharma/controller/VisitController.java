@@ -41,6 +41,14 @@ public class VisitController {
         ));
     }
 
+    @PostMapping("/re-mark")
+    public ResponseEntity<VisitResponseDto> reMarkVisit(
+            @RequestBody @Valid MarkVisitRequestDto dto
+    ) {
+        return ResponseEntity.ok(visitService.reMarkVisit(dto));
+    }
+
+
     @PostMapping("/mark-stockist")
     public ResponseEntity<ApiResponseDto<VisitResponseDto>> markStockistVisit(
             @Valid @RequestBody MarkStockistVisitRequestDto request
@@ -86,6 +94,17 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/missed-visits")
+    public ResponseEntity<List<CompletedVisitDto>> getMissedVisits(
+            @RequestParam Long fieldExecutiveId
+    ) {
+        return ResponseEntity.ok(
+                visitService.getMissedVisits(
+                        fieldExecutiveId
+                )
+        );
+    }
+
     /* ===== Scheduled Doctors ===== */
     @GetMapping("/scheduled-doctors")
     public ResponseEntity<List<ScheduledDoctorVisitDto>> getTodayDoctors(
@@ -110,7 +129,7 @@ public class VisitController {
     @GetMapping("/today-scheduled")
     public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisits(@RequestParam Long fieldExecutiveId) {
         return ResponseEntity.ok(
-                visitService.getTodayScheduledVisits(fieldExecutiveId)
+                visitService.getTodaysVisits(fieldExecutiveId)
         );
     }
 
@@ -140,6 +159,22 @@ public class VisitController {
                 ApiResponseDto.success(null, "Visit deleted successfully")
         );
     }
+
+    @GetMapping("/manager/{managerId}/scheduled-visits")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getScheduledVisitsForManager(
+            @PathVariable Long managerId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getScheduledVisitsForManager(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek
+                )
+        );
+    }
+
 
 
 

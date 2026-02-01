@@ -37,7 +37,7 @@ public class StockistService {
 
     public StockistResponseDto createStockist(StockistRequestDto dto) {
         Stockist stockist = Stockist.builder()
-                .name(dto.getName())
+                .name(dto.getName().toUpperCase())
                 .type(dto.getType())
                 .contactPerson(dto.getContactPerson())
                 .contactNumber(dto.getContactNumber())
@@ -51,7 +51,7 @@ public class StockistService {
     public StockistResponseDto updateStockist(Long id, StockistRequestDto dto) {
         Stockist stockist = getEntity(id);
 
-        stockist.setName(dto.getName());
+        stockist.setName(dto.getName().toUpperCase());
         stockist.setType(dto.getType());
         stockist.setContactPerson(dto.getContactPerson());
         stockist.setContactNumber(dto.getContactNumber());

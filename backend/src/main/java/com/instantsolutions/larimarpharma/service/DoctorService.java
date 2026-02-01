@@ -24,14 +24,14 @@ public class DoctorService {
     public DoctorResponseDto create(DoctorRequestDto dto) {
 
         Doctor doctor = Doctor.builder()
-                .name(dto.getName())
+                .name(dto.getName().toUpperCase())
                 .category(dto.getCategory())
                 .practiceType(dto.getPracticeType())
-                .designation(dto.getDesignation())
+                .designation(dto.getDesignation().toUpperCase())
                 .hospitalName(dto.getHospitalName())
                 .location(dto.getLocation())
                 .contactNumber(dto.getContactNumber())
-                .doctorCode(dto.getDoctorCode())
+                .doctorCode(dto.getDoctorCode().toUpperCase())
                 .active(dto.isActive())
                 .build();
 
@@ -42,14 +42,14 @@ public class DoctorService {
     public DoctorResponseDto update(Long id, DoctorRequestDto dto) {
         Doctor doctor = doctorRepository.findById(id).get();
 
-        doctor.setName(dto.getName());
+        doctor.setName(dto.getName().toUpperCase());
         doctor.setCategory(dto.getCategory());
         doctor.setPracticeType(dto.getPracticeType());
-        doctor.setDesignation(dto.getDesignation());
+        doctor.setDesignation(dto.getDesignation().toUpperCase());
         doctor.setHospitalName(dto.getHospitalName());
         doctor.setLocation(dto.getLocation());
         doctor.setContactNumber(dto.getContactNumber());
-        doctor.setDoctorCode(dto.getDoctorCode());
+        doctor.setDoctorCode(dto.getDoctorCode().toUpperCase());
         doctor.setActive(dto.isActive());
 
         Doctor savedDoctor = doctorRepository.save(doctor);

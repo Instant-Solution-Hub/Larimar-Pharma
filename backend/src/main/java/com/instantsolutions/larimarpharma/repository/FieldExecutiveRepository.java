@@ -18,6 +18,8 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
     List<FieldExecutive> findByTerritory(String territory);
     List<FieldExecutive> findByRegion(String region);
     List<FieldExecutive> findByActiveTrue();
+    @Query("SELECT COUNT(f) FROM FieldExecutive f WHERE f.manager.id = :managerId")
+    int countByManagerId(@Param("managerId") Long managerId);
 
     @Query("SELECT fe FROM FieldExecutive fe WHERE " +
             "LOWER(fe.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
@@ -32,4 +34,26 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
 
     @Query("SELECT COUNT(fe) FROM FieldExecutive fe WHERE fe.active = true")
     long countActiveExecutives();
+
+    @Query("""
+    SELECT DISTINCT fe
+    FROM Visit v
+    JOIN v.fieldExecutive fe
+    JOIN v.doctor d
+    WHERE fe.manager.id = :managerId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED
+      AND v.visitType = com.instantsolutions.larimarpharma.entity.Visit.VisitType.DOCTOR
+      AND d.category IN (
+          com.instantsolutions.larimarpharma.entity.Doctor.Category.A_PLUS,
+          com.instantsolutions.larimarpharma.entity.Doctor.Category.A
+      )
+""")
+    List<FieldExecutive> findFEsWithScheduledAPriorityDoctorVisits(
+            @Param("managerId") Long managerId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek
+    );
+
 }

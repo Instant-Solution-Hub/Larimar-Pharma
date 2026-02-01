@@ -30,7 +30,7 @@ public class PromotionService {
 
         if(!productRepository.existsByName(dto.getProduct())) throw new ResourceNotFoundException("No product found under the given name");
         Promotion promotion = Promotion.builder()
-                .name(dto.getName())
+                .name(dto.getName().toUpperCase())
                 .description(dto.getDescription())
                 .type(dto.getType())
                 .startDate(dto.getStartDate())
@@ -53,7 +53,7 @@ public class PromotionService {
         Promotion promotion = getPromotionById(id);
 
 
-        promotion.setName(dto.getName());
+        promotion.setName(dto.getName().toUpperCase());
         promotion.setDescription(dto.getDescription());
         promotion.setStartDate(dto.getStartDate());
         promotion.setEndDate(dto.getEndDate());

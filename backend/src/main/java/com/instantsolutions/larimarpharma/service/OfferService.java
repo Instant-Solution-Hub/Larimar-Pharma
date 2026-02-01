@@ -24,7 +24,7 @@ public class OfferService {
 
         Offer offer = Offer.builder()
                 .offerCategory(dto.getOfferCategory())
-                .offerName(dto.getOfferName())
+                .offerName(dto.getOfferName().toUpperCase())
                 .imageUrl(imageUrl)
                 .active(dto.isActive())
                 .build();
@@ -37,7 +37,7 @@ public class OfferService {
                 .orElseThrow(() -> new EntityNotFoundException("Offer not found"));
 
         offer.setOfferCategory(dto.getOfferCategory());
-        offer.setOfferName(dto.getOfferName());
+        offer.setOfferName(dto.getOfferName().toUpperCase());
         offer.setActive(dto.isActive());
 
         if (dto.getImage() != null && !dto.getImage().isEmpty()) {

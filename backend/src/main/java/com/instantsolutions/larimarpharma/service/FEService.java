@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -58,11 +59,11 @@ public class FEService {
         }
 
         FieldExecutive fe = FieldExecutive.builder()
-                .name(request.getName())
+                .name(request.getName().toUpperCase())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .password(request.getPassword())
-                .employeeCode(request.getEmployeeCode())
+                .employeeCode(request.getEmployeeCode().toUpperCase())
                 .territory(request.getTerritory())
                 .region(request.getRegion())
                 .manager(manager)
@@ -139,7 +140,7 @@ public class FEService {
                     .orElseThrow(() -> new RuntimeException("Manager not found"));
         }
 
-        fe.setName(request.getName().trim());
+        fe.setName(request.getName().trim().toUpperCase());
         fe.setEmail(request.getEmail().toLowerCase());
         fe.setPassword(request.getPassword());
         fe.setPhone(request.getPhone());
@@ -160,10 +161,10 @@ public class FEService {
     }
 
     // Mapper
-    private FieldExecutiveResponse mapToResponse(FieldExecutive fe) {
-        System.out.println("Markets: "+fe.getMarkets());
-        return FieldExecutiveResponse.builder()
+    public FieldExecutiveResponse mapToResponse(FieldExecutive fe) {
+        System.out.println("Markets: " + fe.getMarkets());
 
+        return FieldExecutiveResponse.builder()
                 .id(fe.getId())
                 .name(fe.getName())
                 .email(fe.getEmail())
@@ -174,10 +175,12 @@ public class FEService {
                 .managerId(
                         fe.getManager() != null ? fe.getManager().getId() : null
                 )
-                .markets(fe.getMarkets())
+                .markets(
+                        fe.getMarkets() != null ? fe.getMarkets() : Collections.emptyList()
+                )
                 .build();
-
     }
+
 
     @Transactional
     public FieldExecutive updateContactDetails(
@@ -285,6 +288,25 @@ public class FEService {
                 .toList();
     }
 
+
+
+    @Transactional(readOnly = true)
+    public List<FieldExecutiveResponse> getFEsWithAPriorityVisits(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+        List<FieldExecutive> fieldExecutives = repository
+                .findFEsWithScheduledAPriorityDoctorVisits(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek
+                );
+        return  fieldExecutives.stream().map(this::mapToResponse).toList();
+    }
+
+
+
     @Transactional
     public FETargetResponseDto assignMonthlyTarget(
             Long feId,
@@ -373,6 +395,7 @@ public class FEService {
 
         return profileRepository.findFEMonthlyTargets(managerId, month, year);
     }
+
 
 
 }
