@@ -84,13 +84,21 @@ public class ManagerController {
     }
 
 
-//    @GetMapping("stats/{id}")
-//    public ResponseEntity<ApiResponseDto<DashboardStatsDto>> getDashboardStats(@PathVariable Long id) {
-//        DashboardStatsDto manager = managerService.getDashboardStats(id);
-//        return ResponseEntity.ok(
-//                ApiResponseDto.success(manager,"Manager fetched successfully")
-//        );
-//    }
+    @GetMapping("stats/{id}")
+    public ResponseEntity<ApiResponseDto<DashboardStatsDto>> getDashboardStats(@PathVariable Long id) {
+        DashboardStatsDto manager = managerService.getDashboardStats(id);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(manager,"Manager fetched successfully")
+        );
+    }
+
+    @GetMapping("/team-performance/{id}")
+    public ResponseEntity<ApiResponseDto<List<TeamMemberPerformanceDto>>> getTeamPerformance(@PathVariable Long id) {
+
+        List<TeamMemberPerformanceDto> teamPerformance = managerService.getTeamPerformance(id);
+        return ResponseEntity.ok(ApiResponseDto.success(teamPerformance, "Team performance fetched successfully"));
+    }
+
 
     @GetMapping("/{managerId}/fe-progress/monthly")
     public ResponseEntity<ApiResponseDto<ManagerMonthlyFEProgressDto>>

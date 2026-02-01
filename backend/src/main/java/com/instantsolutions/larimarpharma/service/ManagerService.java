@@ -9,6 +9,7 @@ import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.ManagerProfile;
+import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
@@ -23,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class ManagerService {
     private final ManagerVisitRepository managerVisitRepository;
     private final FieldExecutiveProfileRepository profileRepository;
     private final ManagerProfileRepository managerProfileRepository;
+    private final FieldExecutiveProfileRepository fieldExecutiveProfileRepository;
 //    private final FieldExecutiveRepository fieldExecutiveRepository;
 
 
@@ -174,50 +178,50 @@ public class ManagerService {
     /**
      * Get dashboard stats for a manager
      */
-//    public DashboardStatsDto getDashboardStats(Long managerId) {
-//        Manager manager = managerRepository.findById(managerId)
-//                .orElseThrow(() -> new RuntimeException("Manager not found"));
-//
-//        // Get manager profile
-//        ManagerProfile profile = managerProfileRepository.findByManagerId(managerId)
-//                .orElseGet(() -> ManagerProfile.builder()
-//                        .teamSize(0)
-//                        .teamTargetAchieved(0.0)
-//                        .teamComplianceRate(0.0)
-//                        .build());
-//
-//        LocalDate today = LocalDate.now();
-//
-//        // First day of current month at 00:00
-//        LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
-//
-//        // Last day of current month at 23:59:59.999999999
-//        LocalDateTime endOfMonth = today
-//                .withDayOfMonth(today.lengthOfMonth())
-//                .atTime(LocalTime.MAX);
-//
-//        int totalVisitsThisMonth = managerVisitRepository
-//                .countByManagerIdAndScheduledDateBetween(
-//                        managerId,
-//                        startOfMonth,
-//                        endOfMonth
-//                );
-//        int teamSize = fieldExecutiveRepository.countByManagerId(managerId);
-//
-//
-//        // Calculate trend (simplified - could be enhanced with historical data)
-//        double teamTargetProgress = profile.getTeamTargetAchieved() != null ?
-//                profile.getTeamTargetAchieved() : 0.0;
-//
-//        String trend = calculateTrend(managerId);
-//
-//        return DashboardStatsDto.builder()
-//                .totalVisits(totalVisitsThisMonth)
-//                .teamTargetProgress(teamTargetProgress)
-//                .totalMembers(teamSize)
-//                .trend(trend)
-//                .build();
-//    }
+    public DashboardStatsDto getDashboardStats(Long managerId) {
+        Manager manager = managerRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        // Get manager profile
+        ManagerProfile profile = managerProfileRepository.findByManagerId(managerId)
+                .orElseGet(() -> ManagerProfile.builder()
+                        .teamSize(0)
+                        .teamTargetAchieved(0.0)
+                        .teamComplianceRate(0.0)
+                        .build());
+
+        LocalDate today = LocalDate.now();
+
+        // First day of current month at 00:00
+        LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+
+        // Last day of current month at 23:59:59.999999999
+        LocalDateTime endOfMonth = today
+                .withDayOfMonth(today.lengthOfMonth())
+                .atTime(LocalTime.MAX);
+
+        int totalVisitsThisMonth = managerVisitRepository
+                .countByManagerIdAndScheduledDateBetween(
+                        managerId,
+                        startOfMonth,
+                        endOfMonth
+                );
+        int teamSize = fieldExecutiveRepository.countByManagerId(managerId);
+
+
+        // Calculate trend (simplified - could be enhanced with historical data)
+        double teamTargetProgress = profile.getTeamTargetAchieved() != null ?
+                profile.getTeamTargetAchieved() : 0.0;
+
+        String trend = calculateTrend(managerId);
+
+        return DashboardStatsDto.builder()
+                .totalVisits(totalVisitsThisMonth)
+                .teamTargetProgress(teamTargetProgress)
+                .totalMembers(teamSize)
+                .trend(trend)
+                .build();
+    }
 
     private String calculateTrend(Long managerId) {
         // Simplified trend calculation
@@ -244,6 +248,100 @@ public class ManagerService {
 
         return String.format("%s%d%% from last week", sign, Math.round(percentageChange));
     }
+
+    /**
+     * Get today's schedule for a manager
+     */
+    @Transactional
+    public List<ManagerVisitDto> getTodaySchedule(Long managerId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
+        List<ManagerVisit> visits = managerVisitRepository
+                .findByManagerIdAndScheduledDateBetweenOrderByScheduledDateAsc(
+                        managerId, startOfDay, endOfDay);
+
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+
+        return visits.stream()
+                .map(visit -> {
+                    String type = String.valueOf(visit.getVisitType());
+                    String name = visit.getDoctorName();
+                    String time = visit.getScheduledDate().format(timeFormatter);
+
+                    return ManagerVisitDto.builder()
+                            .name(name)
+                            .time(time)
+                            .type(type)
+                            .feName(visit.getFieldExecutive().getName())
+                            .scheduledDate(visit.getScheduledDate())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get team performance data
+     */
+    public List<TeamMemberPerformanceDto> getTeamPerformance(Long managerId) {
+        // Get all FEs under this manager
+        List<FieldExecutive> fieldExecutives = fieldExecutiveRepository.findByManagerId(managerId);
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
+        return fieldExecutives.stream()
+                .map(fe -> {
+                    // Count visits for today for this FE
+                    int totalVisitsToday = managerVisitRepository
+                            .countByFieldExecutiveIdAndScheduledDateBetween(
+                                    fe.getId(), startOfDay, endOfDay);
+
+                    // Calculate target achieved (simplified - could be based on actual business logic)
+//                    double targetAchieved = calculateTargetAchieved(fe.getId());
+                    double targetAchieved = fieldExecutiveProfileRepository
+                            .findByFieldExecutiveId(fe.getId())
+                            .map(profile -> profile.getPrimaryTargetAchieved() != null
+                                    ? profile.getPrimaryTargetAchieved()
+                                    : 0.0)
+                            .orElse(0.0);
+                    return TeamMemberPerformanceDto.builder()
+                            .id(fe.getId().toString())
+                            .name(fe.getName())
+                            .totalVisitsToday(totalVisitsToday)
+                            .targetAchieved(targetAchieved)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private double calculateTargetAchieved(Long fieldExecutiveId) {
+
+        LocalDate today = LocalDate.now();
+
+        LocalDateTime startOfMonth =
+                today.withDayOfMonth(1).atStartOfDay();
+
+        LocalDateTime endOfMonth =
+                today.withDayOfMonth(today.lengthOfMonth())
+                        .atTime(LocalTime.MAX);
+
+
+        int monthlyVisits =
+                managerVisitRepository.countByFieldExecutiveIdAndScheduledDateBetween(
+                        fieldExecutiveId,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        int monthlyTarget = 20;
+
+        return Math.min((double) monthlyVisits / monthlyTarget * 100, 100);
+    }
+
+
 
     public ManagerContactResponseDto getContactDetails(Long managerId) {
         Manager manager = managerRepository.findById(managerId)
