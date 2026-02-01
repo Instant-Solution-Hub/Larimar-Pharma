@@ -13,22 +13,24 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class LeaveRequest {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "field_executive_id", nullable = false)
+    @JoinColumn(name = "field_executive_id", nullable = true)
     @JsonIgnore
     private FieldExecutive fieldExecutive;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
-    private Manager approvedBy;
+    @JoinColumn(name = "manager_id", nullable = true)
+    @JsonIgnore
+    private Manager manager;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LeaveType leaveType; // SICK, CASUAL, EARNED
+    private LeaveType leaveType;
 
     @Column(nullable = false)
     private LocalDateTime fromDate;
@@ -51,6 +53,20 @@ public class LeaveRequest {
     @PrePersist
     protected void onCreate() {
         appliedDate = LocalDateTime.now();
+        validateApplicant();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        validateApplicant();
+    }
+
+    private void validateApplicant() {
+        if (fieldExecutive == null && manager == null) {
+            throw new IllegalStateException(
+                    "Leave request must be associated with either a Field Executive or a Manager"
+            );
+        }
     }
 
     public enum LeaveType {

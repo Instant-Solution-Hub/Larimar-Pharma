@@ -27,6 +27,18 @@ public class ManagerProfile {
     private Integer totalApprovalsProcessed;
     private Integer pendingApprovals;
 
+    @Builder.Default
+    private Integer casualLeaves = 20;
+
+    @Builder.Default
+    private Integer sickLeaves = 20;
+
+    @Builder.Default
+    private Integer approvedCasualLeaves = 0;
+
+    @Builder.Default
+    private Integer approvedSickLeaves = 0;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
