@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -153,10 +154,10 @@ public class FEService {
     }
 
     // Mapper
-    private FieldExecutiveResponse mapToResponse(FieldExecutive fe) {
-        System.out.println("Markets: "+fe.getMarkets());
-        return FieldExecutiveResponse.builder()
+    public FieldExecutiveResponse mapToResponse(FieldExecutive fe) {
+        System.out.println("Markets: " + fe.getMarkets());
 
+        return FieldExecutiveResponse.builder()
                 .id(fe.getId())
                 .name(fe.getName())
                 .email(fe.getEmail())
@@ -167,10 +168,12 @@ public class FEService {
                 .managerId(
                         fe.getManager() != null ? fe.getManager().getId() : null
                 )
-                .markets(fe.getMarkets())
+                .markets(
+                        fe.getMarkets() != null ? fe.getMarkets() : Collections.emptyList()
+                )
                 .build();
-
     }
+
 
     @Transactional
     public FieldExecutive updateContactDetails(
@@ -277,5 +280,24 @@ public class FEService {
                 .map(DoctorResponseDto::fromEntity)
                 .toList();
     }
+
+
+    @Transactional(readOnly = true)
+    public List<FieldExecutiveResponse> getFEsWithAPriorityVisits(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+        List<FieldExecutive> fieldExecutives = repository
+                .findFEsWithScheduledAPriorityDoctorVisits(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek
+                );
+        return  fieldExecutives.stream().map(this::mapToResponse).toList();
+    }
+
+
+
 }
 

@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.controller;
 
 
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.DashboardStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
@@ -49,6 +50,14 @@ public class ManagerController {
         );
     }
 
+    @GetMapping("fetch-fieldexecutives/{id}")
+    public ResponseEntity<ApiResponseDto<ManagerResponseDto>> getFieldExecutivesByManagerId(@PathVariable Long id) {
+        ManagerResponseDto manager = managerService.getManagerById(id);
+        return ResponseEntity.ok(
+                ApiResponseDto.success(manager,"Manager fetched successfully")
+        );
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponseDto<List<ManagerResponseDto>>> getAll() {
         List<ManagerResponseDto> managers = managerService.getAllManagers();
@@ -64,4 +73,13 @@ public class ManagerController {
                 ApiResponseDto.success(null,"Manager deleted successfully")
         );
     }
+
+//    @GetMapping("stats/{id}")
+//    public ResponseEntity<ApiResponseDto<DashboardStatsDto>> getDashboardStats(@PathVariable Long id) {
+//        DashboardStatsDto manager = managerService.getDashboardStats(id);
+//        return ResponseEntity.ok(
+//                ApiResponseDto.success(manager,"Manager fetched successfully")
+//        );
+//    }
+
 }

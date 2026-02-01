@@ -959,6 +959,18 @@ public class VisitService {
     }
 
 
+    public List<TodayScheduledVisitDto> getScheduledVisitsForManager(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+        List<Visit> visits = visitRepository.findScheduledDoctorVisitsForManagerByWeekAndDay(
+                managerId,
+                weekNumber,
+                dayOfWeek
+        );
+        return visits.stream().map(this::toTodayScheduledVisitDTO).toList();
+    }
 
 
 

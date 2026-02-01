@@ -160,6 +160,22 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/manager/{managerId}/scheduled-visits")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getScheduledVisitsForManager(
+            @PathVariable Long managerId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getScheduledVisitsForManager(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek
+                )
+        );
+    }
+
+
 
 
 

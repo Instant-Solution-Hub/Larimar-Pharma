@@ -45,6 +45,10 @@ public class Visit {
     @Builder.Default
     private List<ConvertedProduct> convertedProducts = List.of();
 
+    @OneToOne(mappedBy = "originalVisit", fetch = FetchType.LAZY)
+    private ManagerVisit managerVisit;
+
+
 
     /* ===== Planning (Slot logic) ===== */
 

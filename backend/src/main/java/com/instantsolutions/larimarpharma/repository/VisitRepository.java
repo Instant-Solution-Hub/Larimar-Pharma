@@ -372,6 +372,43 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     );
 
 
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN FETCH v.fieldExecutive fe
+    JOIN FETCH v.doctor
+    WHERE fe.manager.id = :managerId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED
+      AND v.visitType = com.instantsolutions.larimarpharma.entity.Visit.VisitType.DOCTOR
+""")
+    List<Visit> findScheduledDoctorVisitsForManagerByWeekAndDay(
+            @Param("managerId") Long managerId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek
+    );
+
+
+    @Query("""
+    SELECT v
+    FROM Visit v
+    JOIN v.doctor d
+    WHERE v.fieldExecutive.id = :feId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.status = 'SCHEDULED'
+      AND v.visitType = 'DOCTOR'
+      AND d.category IN ('A_PLUS', 'A')
+""")
+    List<Visit> findEligibleManagerVisits(
+            Long feId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    );
+
+
+
 
 
 }
