@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse2Dto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponseDto;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,6 +88,32 @@ public class  ManagerJoiningService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+    @Transactional
+    public List<ManagerJoiningResponse2Dto> getCurrentMonthByManagerId(Long managerId) {
+
+        LocalDate now = LocalDate.now();
+
+        return repository.findCurrentMonthByManagerId(
+                        managerId,
+                        now.getMonthValue(),
+                        now.getYear()
+                )
+                .stream()
+                .map(joining -> ManagerJoiningResponse2Dto.builder()
+                        .id(joining.getId())
+                        .feName(joining.getFieldExecutive().getName())
+                        .date(joining.getCreatedAt())
+                        .scheduledTime(joining.getScheduledTime())
+                        .joiningTime(joining.getActualJoiningTime())
+                        .status(joining.getStatus().name())
+                        .feId(joining.getFieldExecutive().getId())
+                        .doctorName(joining.getDoctor().getName())
+                        .hospital(joining.getDoctor().getHospitalName())
+                        .build()
+                )
+                .toList();
+    }
+
 
 
     public void delete(Long id) {

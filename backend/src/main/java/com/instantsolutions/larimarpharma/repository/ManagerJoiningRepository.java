@@ -28,4 +28,18 @@ public interface ManagerJoiningRepository extends JpaRepository<ManagerJoining, 
             @Param("month") int month,
             @Param("year") int year
     );
+
+    @Query("""
+        SELECT mj
+        FROM ManagerJoining mj
+        WHERE mj.manager.id = :managerId
+          AND MONTH(mj.actualJoiningTime) = :month
+          AND YEAR(mj.actualJoiningTime) = :year
+        ORDER BY mj.actualJoiningTime DESC
+    """)
+    List<ManagerJoining> findCurrentMonthByManagerId(
+            @Param("managerId") Long managerId,
+            @Param("month") int month,
+            @Param("year") int year
+    );
 }

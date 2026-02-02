@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse2Dto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponseDto;
 import com.instantsolutions.larimarpharma.service.ManagerJoiningService;
 import jakarta.validation.Valid;
@@ -31,6 +32,16 @@ public class ManagerJoiningController {
     ) {
         return ResponseEntity.ok(service.update(id, dto));
     }
+
+    @GetMapping("/manager/{managerId}/current-month")
+    public ResponseEntity<List<ManagerJoiningResponse2Dto>> getCurrentMonthJoiningsForManager(
+            @PathVariable Long managerId
+    ) {
+        return ResponseEntity.ok(
+                service.getCurrentMonthByManagerId(managerId)
+        );
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ManagerJoiningResponseDto> getById(@PathVariable Long id) {
