@@ -6,16 +6,14 @@ import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.*;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
-import com.instantsolutions.larimarpharma.entity.Manager;
-import com.instantsolutions.larimarpharma.entity.ManagerProfile;
-import com.instantsolutions.larimarpharma.entity.ManagerVisit;
+import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerProfileRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveProfileRepository;
+import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -398,6 +396,10 @@ public class ManagerService {
                 .emergencyContact(fe.getEmergencyContact())
                 .build();
     }
+
+
+
+
 
 }
 

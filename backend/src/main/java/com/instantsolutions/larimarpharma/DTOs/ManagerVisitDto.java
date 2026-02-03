@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class ManagerVisitDto {
     private String name;
     private String time;
-    private String type; // "doctor", "pharmacy", "stockist"
+    private String type;
     private String feName;
     private LocalDateTime scheduledDate;
 }
