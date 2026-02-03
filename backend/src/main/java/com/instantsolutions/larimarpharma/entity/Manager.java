@@ -14,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true , callSuper = true)
 @ToString(callSuper = true, exclude = {"fieldExecutives", "approvalRequests"})
 public class Manager extends BaseUser {
 
@@ -40,6 +40,15 @@ public class Manager extends BaseUser {
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<ManagerJoining> managerJoinings = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "manager_stockists",
+            joinColumns = @JoinColumn(name = "manager_id"),
+            inverseJoinColumns = @JoinColumn(name = "stockist_id")
+    )
+    @Builder.Default
+    private Set<Stockist> stockists = new HashSet<>();
 
     // Territories managed by this manager
     @ElementCollection

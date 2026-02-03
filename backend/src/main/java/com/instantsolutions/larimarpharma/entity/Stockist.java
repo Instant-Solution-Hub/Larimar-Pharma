@@ -40,7 +40,7 @@ public class Stockist {
     // Relationships
     @ManyToMany(mappedBy = "stockists", fetch = FetchType.LAZY)
     @Builder.Default
-    private Set<FieldExecutive> fieldExecutives = new HashSet<>();
+    private Set<Manager> managers = new HashSet<>();
 
     @OneToMany(mappedBy = "stockist", cascade = CascadeType.ALL)
     private Set<StockistProductStock> productStocks = new HashSet<>();

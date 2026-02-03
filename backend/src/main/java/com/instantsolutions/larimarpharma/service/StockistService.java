@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.ManagerStockistResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.StockistRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.StockistResponseDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
@@ -60,6 +61,10 @@ public class StockistService {
         return mapToDto(stockistRepository.save(stockist));
     }
 
+    public List<ManagerStockistResponseDto> getStockistsByManager(Long managerId) {
+        return stockistRepository.findStockistsByManagerId(managerId);
+    }
+
     public StockistResponseDto getStockistById(Long id) {
         return mapToDto(getEntity(id));
     }
@@ -97,25 +102,9 @@ public class StockistService {
                 .build();
     }
 
-    public void assignFieldExecutives(Long stockistId, Set<Long> feIds) {
-        Stockist stockist = getEntity(stockistId);
 
-        Set<FieldExecutive> executives =
-                new HashSet<>(fieldExecutiveRepository.findAllById(feIds));
 
-        stockist.getFieldExecutives().addAll(executives);
 
-        stockistRepository.save(stockist);
-    }
-
-    public void removeFieldExecutive(Long stockistId, Long feId) {
-        Stockist stockist = getEntity(stockistId);
-
-        stockist.getFieldExecutives()
-                .removeIf(fe -> fe.getId().equals(feId));
-
-        stockistRepository.save(stockist);
-    }
 
     public void addOrUpdateProductStock(Long stockistId, Long productId, Integer quantity) {
 
