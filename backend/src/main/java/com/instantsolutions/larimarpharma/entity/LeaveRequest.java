@@ -28,6 +28,12 @@ public class LeaveRequest {
     @JsonIgnore
     private Manager manager;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id", nullable = true)
+    @JsonIgnore
+    private Admin admin;
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LeaveType leaveType;
@@ -62,9 +68,9 @@ public class LeaveRequest {
     }
 
     private void validateApplicant() {
-        if (fieldExecutive == null && manager == null) {
+        if (fieldExecutive == null && manager == null && admin == null) {
             throw new IllegalStateException(
-                    "Leave request must be associated with either a Field Executive or a Manager"
+                    "Leave request must be associated with either a Field Executive or a Manager or an Admin"
             );
         }
     }

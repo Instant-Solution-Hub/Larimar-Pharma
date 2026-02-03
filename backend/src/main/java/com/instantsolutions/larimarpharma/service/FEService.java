@@ -273,6 +273,22 @@ public class FEService {
 
     }
 
+
+    public List<FEContactResponseDto> getAllContactDetails() {
+
+        return repository.findAll()
+                .stream()
+                .map(fe -> FEContactResponseDto.builder()
+                        .name(fe.getName())
+                        .email(fe.getEmail())
+                        .phone(fe.getPhone())
+                        .emergencyContact(fe.getEmergencyContact())
+                        .build()
+                )
+                .toList();
+    }
+
+
     public List<DoctorResponseDto> getAllocatedDoctors(Long feId) {
 
         if (!repository.existsById(feId)) {

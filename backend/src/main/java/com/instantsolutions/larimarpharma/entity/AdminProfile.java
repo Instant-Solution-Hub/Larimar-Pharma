@@ -22,6 +22,10 @@ public class AdminProfile {
     private Integer totalUsersManaged;
     private Integer totalOrdersProcessed;
     private Integer totalProgramsUpdated;
+    private Integer casualLeaves;
+    private Integer sickLeaves;
+    private Integer approvedCasualLeaves;
+    private Integer approvedSickLeaves;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
