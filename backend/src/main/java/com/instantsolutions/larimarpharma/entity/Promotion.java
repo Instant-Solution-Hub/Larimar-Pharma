@@ -35,11 +35,6 @@ public class Promotion {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private PromotionStatus status = PromotionStatus.UPCOMING;
-
     @Builder.Default
     private boolean active = true;
 
@@ -51,23 +46,24 @@ public class Promotion {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updateStatus();
+
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        updateStatus();
+
     }
 
-    private void updateStatus() {
+    @Transient
+    public PromotionStatus getStatus() {
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(startDate)) {
-            status = PromotionStatus.UPCOMING;
+            return PromotionStatus.UPCOMING;
         } else if (now.isAfter(endDate)) {
-            status = PromotionStatus.COMPLETED;
+            return PromotionStatus.COMPLETED;
         } else {
-            status = PromotionStatus.ACTIVE;
+            return PromotionStatus.ACTIVE;
         }
     }
 
