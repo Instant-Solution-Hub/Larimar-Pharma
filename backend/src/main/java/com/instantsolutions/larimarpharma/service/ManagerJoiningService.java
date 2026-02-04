@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse2Dto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse3Dto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponseDto;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
@@ -157,5 +158,26 @@ public class  ManagerJoiningService {
                 .notes(entity.getNotes())
                 .createdAt(entity.getCreatedAt())
                 .build();
+    }
+
+    @Transactional
+    public List<ManagerJoiningResponse3Dto> getCurrentMonthJoinings() {
+        LocalDate now = LocalDate.now();
+        return repository.findCurrentMonth( now.getMonthValue() , now.getYear())
+                .stream()
+                .map(joining -> ManagerJoiningResponse3Dto.builder()
+                        .id(joining.getId())
+                        .feName(joining.getFieldExecutive().getName())
+                        .date(joining.getCreatedAt())
+                        .scheduledTime(joining.getScheduledTime())
+                        .joiningTime(joining.getActualJoiningTime())
+                        .status(joining.getStatus().name())
+                        .feId(joining.getFieldExecutive().getId())
+                        .doctorName(joining.getDoctor().getName())
+                        .hospital(joining.getDoctor().getHospitalName())
+                        .managerName(joining.getManager().getName())
+                        .build()
+                )
+                .toList();
     }
 }
