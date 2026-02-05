@@ -144,6 +144,22 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
     );
 
 
+    @Query("""
+    SELECT mv
+    FROM ManagerVisit mv
+    WHERE mv.manager.id = :managerId
+      AND mv.scheduledDate BETWEEN :startDate AND :endDate
+      AND (:weekNumber IS NULL OR mv.weekNumber = :weekNumber)
+      AND mv.visitType = 'DOCTOR'
+    ORDER BY mv.scheduledDate
+""")
+    List<ManagerVisit> findManagerComplianceRecords(
+            @Param("managerId") Long managerId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
 
 
 

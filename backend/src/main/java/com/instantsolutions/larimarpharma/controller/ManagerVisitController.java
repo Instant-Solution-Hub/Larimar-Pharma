@@ -87,4 +87,16 @@ public class ManagerVisitController {
         );
     }
 
+    @GetMapping("/get-manager-compliance-record")
+    public ResponseEntity<VisitComplianceResponse> getManagerVisitCompliance(
+            @RequestParam("managerId") Long managerId,
+            @RequestParam(value = "week", defaultValue = "all") String week) {
+
+        VisitComplianceResponse response =
+                managerVisitService.getManagerVisitCompliance(managerId, week);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }
