@@ -29,6 +29,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findByFieldExecutiveIdOrderByFromDateDesc(Long fieldExecutiveId);
 
     List<LeaveRequest> findByManagerIdOrderByFromDateDesc(Long managerId);
+    List<LeaveRequest> findByAdminIdOrderByFromDateDesc(Long managerId);
 
     @Query("""
     SELECT l FROM LeaveRequest l
@@ -44,6 +45,23 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("monthStart") LocalDateTime monthStart,
             @Param("monthEnd") LocalDateTime monthEnd
     );
+
+    @Query("""
+    SELECT l FROM LeaveRequest l
+    WHERE l.admin.id = :adminId
+      AND l.status = com.instantsolutions.larimarpharma.entity.LeaveRequest.ApprovalStatus.APPROVED
+      AND (
+           l.fromDate <= :monthEnd
+           AND l.toDate >= :monthStart
+      )
+""")
+    List<LeaveRequest>
+    findApprovedAdminLeavesForMonth(
+            @Param("adminId") Long adminId,
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("monthEnd") LocalDateTime monthEnd
+    );
+
 
     List<LeaveRequest>
     findByFieldExecutive_Manager_IdOrderByFromDateDesc(Long managerId);

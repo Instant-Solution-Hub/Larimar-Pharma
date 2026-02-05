@@ -200,6 +200,21 @@ public class FEController {
 
     }
 
+    @GetMapping("/contact")
+    public ResponseEntity<ApiResponseDto<List<FEContactResponseDto>>> getAllContactDetails() {
+
+        List<FEContactResponseDto> response =
+                fieldExecutiveService.getAllContactDetails();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "All Field Executive contact details fetched successfully"
+                )
+        );
+    }
+
+
     @GetMapping("/manager/{managerId}/a-priority-field-executives")
     public ResponseEntity<List<FieldExecutiveResponse>> getAPriorityFEs(
             @PathVariable Long managerId,

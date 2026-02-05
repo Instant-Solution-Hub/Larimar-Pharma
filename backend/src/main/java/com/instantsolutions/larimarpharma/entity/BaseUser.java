@@ -15,6 +15,7 @@ public abstract class BaseUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     protected Long id;
 
     @Column(nullable = false, unique = true)

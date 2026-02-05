@@ -7,10 +7,10 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class AdminContactResponseDto {
-    private Long id;
+    private Long adminId;
     private String name;
     private String email;
     private String phone;
-    private String emergencyNumber;
+    private String emergencyContact;
 }
 

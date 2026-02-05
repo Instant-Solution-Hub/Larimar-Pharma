@@ -37,15 +37,13 @@ public class PromotionRequestDto {
     @Future(message = "End date must be in the future")
     private LocalDateTime endDate;
 
-    private boolean active;
+    @NotNull(message = "Promotion status is required")
+    private Promotion.PromotionStatus status;
 
     @NotBlank(message = "Product is required")
     private String product;
 
-    private List<
-            @NotBlank(message = "Benefit cannot be blank")
-                    String
-            > benefits;
+    private List<String> benefits;
 
     @NotEmpty(message = "Target audience cannot be empty")
     private List<

@@ -16,27 +16,17 @@ public interface StockistProductStockRepository
     Optional<StockistProductStock> findByStockistIdAndProductId(Long stockistId, Long productId);
 
     List<StockistProductStock> findAllByStockistId(Long stockistId);
-
     @Query("""
-        SELECT COALESCE(SUM(sps.availableQuantity), 0)
-        FROM StockistProductStock sps
-        JOIN sps.stockist st
-        JOIN st.fieldExecutives fe
-        WHERE fe.id = :feId
-          AND sps.productId = :productId
+        SELECT s
+        FROM StockistProductStock s
+        JOIN FETCH s.product p
+        JOIN FETCH s.stockist st
+        JOIN st.managers m
+        WHERE m.id = :managerId
     """)
-    Integer getTotalStockForFEAndProduct(
-            @Param("feId") Long feId,
-            @Param("productId") Long productId
+    List<StockistProductStock> findAllStocksByManagerId(
+            @Param("managerId") Long managerId
     );
 
-
-    @Query("""
-        SELECT COALESCE(SUM(s.availableQuantity), 0)
-        FROM StockistProductStock s
-        WHERE s.productId = :productId
-          AND s.stockist IN :stockists
-    """)
-    Integer getTotalAvailableStockForProduct(Long productId, Set<Stockist> stockists);
 
 }

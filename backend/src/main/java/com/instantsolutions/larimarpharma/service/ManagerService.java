@@ -397,9 +397,19 @@ public class ManagerService {
                 .build();
     }
 
+    public List<ManagerContactResponseDto> getAllContactDetails() {
 
-
-
+        return managerRepository.findAll()
+                .stream()
+                .map(fe -> ManagerContactResponseDto.builder()
+                        .name(fe.getName())
+                        .email(fe.getEmail())
+                        .phone(fe.getPhone())
+                        .emergencyContact(fe.getEmergencyContact())
+                        .build()
+                )
+                .toList();
+    }
 
 }
 

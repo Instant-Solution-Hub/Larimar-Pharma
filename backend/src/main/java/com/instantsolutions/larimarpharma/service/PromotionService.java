@@ -35,7 +35,6 @@ public class PromotionService {
                 .type(dto.getType())
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
-                .active(dto.isActive())
                 .targetAudience(dto.getTargetAudience())
                 .benefits(dto.getBenefits())
                 .product(dto.getProduct())
@@ -57,7 +56,6 @@ public class PromotionService {
         promotion.setDescription(dto.getDescription());
         promotion.setStartDate(dto.getStartDate());
         promotion.setEndDate(dto.getEndDate());
-        promotion.setActive(dto.isActive());
         promotion.setBenefits(dto.getBenefits());
         promotion.setTargetAudience(dto.getTargetAudience());
         promotion.setProduct(dto.getProduct());

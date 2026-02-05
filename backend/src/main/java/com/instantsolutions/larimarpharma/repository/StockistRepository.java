@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.repository;
 
 
+import com.instantsolutions.larimarpharma.DTOs.ManagerStockistResponseDto;
 import com.instantsolutions.larimarpharma.entity.Stockist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,33 +14,12 @@ import java.util.Optional;
 @Repository
 public interface StockistRepository extends JpaRepository<Stockist, Long> {
 
-    /**
-     * Get all stockists assigned to a Field Executive
-     */
-    @Query("""
-        SELECT DISTINCT s
-        FROM Stockist s
-        JOIN s.fieldExecutives fe
-        WHERE fe.id = :feId
-    """)
-    List<Stockist> findAllByFieldExecutiveId(@Param("feId") Long feId);
-
 
     /**
      * Authorization check:
      * Verify that a stockist is mapped to a given FE
      */
-    @Query("""
-        SELECT s
-        FROM Stockist s
-        JOIN s.fieldExecutives fe
-        WHERE s.id = :stockistId
-          AND fe.id = :feId
-    """)
-    Optional<Stockist> findByIdAndFieldExecutive(
-            @Param("stockistId") Long stockistId,
-            @Param("feId") Long feId
-    );
+
 
 
     /**
@@ -48,4 +28,19 @@ public interface StockistRepository extends JpaRepository<Stockist, Long> {
     List<Stockist> findByNameContainingIgnoreCase(String name);
 
     List<Stockist> findByActiveTrue();
+
+    @Query("""
+        select new com.instantsolutions.larimarpharma.DTOs.ManagerStockistResponseDto(
+            s.id,
+            s.name,
+            s.location
+        )
+        from Stockist s
+        join s.managers m
+        where m.id = :managerId
+        and s.active = true
+    """)
+    List<ManagerStockistResponseDto> findStockistsByManagerId(
+            @Param("managerId") Long managerId
+    );
 }

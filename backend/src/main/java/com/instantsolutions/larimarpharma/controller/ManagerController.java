@@ -217,6 +217,20 @@ public class ManagerController {
         );
     }
 
+    @GetMapping("/contact")
+    public ResponseEntity<ApiResponseDto<List<ManagerContactResponseDto>>> getAllContactDetails() {
+
+        List<ManagerContactResponseDto> response =
+                managerService.getAllContactDetails();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "All Field Executive contact details fetched successfully"
+                )
+        );
+    }
+
 
 
 }

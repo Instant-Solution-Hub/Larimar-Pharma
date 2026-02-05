@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.DTOs.AdminTargetStatsDto;
 import com.instantsolutions.larimarpharma.DTOs.FEMonthlyTargetResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerTargetStatsDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
@@ -73,6 +74,28 @@ WHERE fe.manager.id = :managerId
             @Param("month") int month,
             @Param("year") int year
     );
+
+    @Query("""
+    SELECT new com.instantsolutions.larimarpharma.DTOs.AdminTargetStatsDto(
+        COALESCE(
+            SUM(COALESCE(fp.primaryTargetSet, 0d) + COALESCE(fp.secondaryTargetSet, 0d)),
+            0d
+        ),
+        COALESCE(
+            SUM(COALESCE(fp.primaryTargetAchieved, 0d) + COALESCE(fp.secondaryTargetAchieved, 0d)),
+            0d
+        ),
+        COUNT(DISTINCT fp.fieldExecutive.id)
+    )
+    FROM FieldExecutiveProfile fp
+    WHERE fp.month = :month
+      AND fp.year = :year
+""")
+    AdminTargetStatsDto getOverallMonthlyTargets(
+            @Param("month") int month,
+            @Param("year") int year
+    );
+
 
 
 

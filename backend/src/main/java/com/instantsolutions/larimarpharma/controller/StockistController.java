@@ -1,12 +1,11 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.AssignFieldExecutivesDto;
-import com.instantsolutions.larimarpharma.DTOs.AssignProductStockDto;
-import com.instantsolutions.larimarpharma.DTOs.StockistRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.StockistResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
+import com.instantsolutions.larimarpharma.service.StockistProductStockService;
 import com.instantsolutions.larimarpharma.service.StockistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +17,7 @@ import java.util.List;
 public class StockistController {
 
     private final StockistService stockistService;
+    private final StockistProductStockService stockService;
 
     @PostMapping
     public ResponseEntity<StockistResponseDto> create(@Valid @RequestBody StockistRequestDto dto) {
@@ -47,24 +47,6 @@ public class StockistController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/field-executives")
-    public ResponseEntity<Void> assignFieldExecutives(
-            @PathVariable Long id,
-            @RequestBody AssignFieldExecutivesDto dto) {
-
-        stockistService.assignFieldExecutives(id, dto.getFieldExecutiveIds());
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{id}/field-executives/{feId}")
-    public ResponseEntity<Void> removeFieldExecutive(
-            @PathVariable Long id,
-            @PathVariable Long feId) {
-
-        stockistService.removeFieldExecutive(id, feId);
-        return ResponseEntity.noContent().build();
-    }
-
     @PostMapping("/{id}/products")
     public ResponseEntity<Void> addProductStock(
             @PathVariable Long id,
@@ -83,6 +65,68 @@ public class StockistController {
 
         stockistService.removeProductFromStockist(id, productId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/add-stock")
+    public ResponseEntity<ApiResponseDto<StockistProductStockResponseDto>> addStock(
+            @RequestBody @Valid StockistProductStockRequestDto dto
+    ) {
+        return new ResponseEntity<>(
+                ApiResponseDto.success(stockService.addStock(dto), "Stock added successfully"),
+                HttpStatus.CREATED
+        );
+    }
+
+    // 🔁 Update stock
+    @PutMapping("/update-stock")
+    public ResponseEntity<ApiResponseDto<StockistProductStockResponseDto>> updateStock(
+            @RequestBody @Valid StockistProductStockRequestDto dto
+    ) {
+
+        return new ResponseEntity<>(
+                ApiResponseDto.success(stockService.updateStock(dto), "Stock updated successfully"),
+                HttpStatus.ACCEPTED
+        );
+    }
+
+    // ❌ Delete stock
+    @DeleteMapping("/delete-stock")
+    public ResponseEntity<ApiResponseDto<Void>> deleteStock(
+            @RequestParam Long managerId,
+            @RequestParam Long stockistId,
+            @RequestParam Long productId
+    ) {
+        stockService.deleteStock(managerId, stockistId, productId);
+
+        return new ResponseEntity<>(
+                ApiResponseDto.success(null, "Stock deleted successfully"),
+                HttpStatus.ACCEPTED
+        );
+    }
+
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<ApiResponseDto<List<ManagerStockistResponseDto>>>
+    getStockistsByManager(@PathVariable Long managerId) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        stockistService.getStockistsByManager(managerId),
+                        "Stockists fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/manager/{managerId}/stocks")
+    public ResponseEntity<ApiResponseDto<List<StockistProductStockResponseDto>>>
+    getAllStocksByManager(
+            @PathVariable Long managerId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        stockService.getAllStocksUnderManager(managerId),
+                        "Stocks fetched successfully"
+                )
+        );
     }
 
 

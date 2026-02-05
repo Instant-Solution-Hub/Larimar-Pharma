@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ManagerJoiningRepository extends JpaRepository<ManagerJoining, Long> {
@@ -39,6 +40,17 @@ public interface ManagerJoiningRepository extends JpaRepository<ManagerJoining, 
     """)
     List<ManagerJoining> findCurrentMonthByManagerId(
             @Param("managerId") Long managerId,
+            @Param("month") int month,
+            @Param("year") int year
+    );
+    @Query("""
+        SELECT mj
+        FROM ManagerJoining mj
+        WHERE  MONTH(mj.actualJoiningTime) = :month
+          AND YEAR(mj.actualJoiningTime) = :year
+        ORDER BY mj.actualJoiningTime DESC
+    """)
+    List<ManagerJoining> findCurrentMonth(
             @Param("month") int month,
             @Param("year") int year
     );
