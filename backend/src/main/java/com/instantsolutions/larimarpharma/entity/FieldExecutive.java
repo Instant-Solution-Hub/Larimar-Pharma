@@ -50,7 +50,10 @@ public class FieldExecutive extends BaseUser {
     @Builder.Default
     private Set<Visit> visits = new HashSet<>();
 
-
+    // Doctor Conversions marked by FE
+    @OneToMany(mappedBy = "fieldExecutive", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<DoctorConversion> doctorConversions = new HashSet<>();
 
 
     // Orders taken by this FE
