@@ -18,6 +18,7 @@ public class FieldExecutiveResponse {
     private String employeeCode;
     private String territory;
     private String region;
+    private String managerName;
 
     private Long managerId;
     private List<String> markets;

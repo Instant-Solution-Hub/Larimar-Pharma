@@ -101,6 +101,7 @@ public class FEService {
     }
 
     // READ ALL
+    @Transactional
     public List<FieldExecutiveResponse> getAll() {
         return repository.findAll()
                 .stream()
@@ -175,6 +176,7 @@ public class FEService {
                 .managerId(
                         fe.getManager() != null ? fe.getManager().getId() : null
                 )
+                .managerName( fe.getManager() != null ? fe.getManager().getName() : null)
                 .markets(
                         fe.getMarkets() != null ? fe.getMarkets() : Collections.emptyList()
                 )
