@@ -97,7 +97,7 @@ public class FEController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDto<FieldExecutiveResponse>> update(
             @PathVariable Long id,
-            @Valid @RequestBody FieldExecutiveRequest request
+            @Valid @RequestBody FieldExecutiveUpdate request
     ) {
         FieldExecutiveResponse response = service.update(id, request);
         return ResponseEntity.ok(

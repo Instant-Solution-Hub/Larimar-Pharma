@@ -35,8 +35,8 @@ public class ManagerController {
     private final LeaveRequestService leaveRequestService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Manager>> create(@Valid @RequestBody ManagerRequestDto dto) {
-        Manager saved = managerService.createManager(dto);
+    public ResponseEntity<ApiResponseDto<ManagerInfoResponseDto>> create(@Valid @RequestBody ManagerRequestDto dto) {
+        ManagerInfoResponseDto saved = managerService.createManager(dto);
         return new ResponseEntity<>(
                 ApiResponseDto.success(saved,"Manager created successfully"),
                 HttpStatus.CREATED
@@ -44,11 +44,11 @@ public class ManagerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponseDto<Manager>> update(
+    public ResponseEntity<ApiResponseDto<ManagerInfoResponseDto>> update(
             @PathVariable Long id,
-            @Valid  @RequestBody ManagerRequestDto request
+            @Valid  @RequestBody UpdateManagerRequestDto request
     ) {
-        Manager updated = managerService.updateManager(id, request);
+        ManagerInfoResponseDto updated = managerService.updateManager(id, request);
         return ResponseEntity.ok(
                 ApiResponseDto.success(updated,"Manager updated successfully" )
         );
@@ -73,6 +73,14 @@ public class ManagerController {
     @GetMapping
     public ResponseEntity<ApiResponseDto<List<ManagerResponseDto>>> getAll() {
         List<ManagerResponseDto> managers = managerService.getAllManagers();
+        return ResponseEntity.ok(
+                ApiResponseDto.success(managers,"Managers fetched successfully")
+        );
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<ApiResponseDto<List<ManagerInfoResponseDto>>> getManagerInfo() {
+        List<ManagerInfoResponseDto> managers = managerService.getAllManagersInfo();
         return ResponseEntity.ok(
                 ApiResponseDto.success(managers,"Managers fetched successfully")
         );
