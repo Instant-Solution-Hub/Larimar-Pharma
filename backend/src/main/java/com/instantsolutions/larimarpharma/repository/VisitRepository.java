@@ -407,6 +407,19 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             Integer dayOfWeek
     );
 
+    @Query("SELECT COUNT(v) FROM Visit v WHERE v.fieldExecutive.id = :fieldExecutiveId " +
+            "AND v.visitDate = :date")
+    Long countVisitsByFieldExecutiveAndDate(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("date") LocalDate date
+    );
+
+    @Query("SELECT v FROM Visit v WHERE v.fieldExecutive.id = :fieldExecutiveId " +
+            "AND v.visitDate = :date")
+    List<Visit> findByFieldExecutiveIdAndVisitDate(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("date") LocalDate date
+    );
 
 
 

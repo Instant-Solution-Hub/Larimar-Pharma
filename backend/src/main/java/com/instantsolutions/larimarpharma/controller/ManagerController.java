@@ -16,6 +16,7 @@ import com.instantsolutions.larimarpharma.repository.TerritoryMonthlyTargetRepos
 import com.instantsolutions.larimarpharma.service.LeaveRequestService;
 import com.instantsolutions.larimarpharma.service.ManagerService;
 import com.instantsolutions.larimarpharma.service.TerritoryMonthlyTargetService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -229,6 +230,29 @@ public class ManagerController {
                         "All Field Executive contact details fetched successfully"
                 )
         );
+    }
+
+    @GetMapping("/members")
+    @Operation(summary = "Get all team members with today's visits",
+            description = "Retrieve all field executives under the current manager with their today's visits")
+    public ResponseEntity<ApiResponseDto<List<TeamMemberResponse>>> getTeamMembers(@RequestParam Long managerId) {
+        List<TeamMemberResponse> members = managerService.getTeamMembers(managerId);
+        return ResponseEntity.ok(ApiResponseDto.success(
+                members,
+                "Team members retrieved successfully"
+        ));
+    }
+
+    @GetMapping("/members/{fieldExecutiveId}/today-visits")
+    @Operation(summary = "Get today's visits for a team member",
+            description = "Retrieve today's visits for a specific field executive")
+    public ResponseEntity<ApiResponseDto<List<VisitResponse>>> getTodayVisits(
+            @PathVariable Long fieldExecutiveId) {
+        List<VisitResponse> visits = managerService.getTodayVisitsForFieldExecutive(fieldExecutiveId);
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visits,
+                "Today's visits retrieved successfully"
+        ));
     }
 
 
