@@ -21,6 +21,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +40,9 @@ public class ManagerService {
     private final VisitRepository visitRepository;
 
 
-    public Manager createManager(ManagerRequestDto dto) {
+    public ManagerInfoResponseDto createManager(ManagerRequestDto dto) {
+
+        System.out.println(dto);
         Manager manager = Manager.builder()
                 .name(dto.getName().toUpperCase())
                 .email(dto.getEmail())
@@ -63,24 +66,57 @@ public class ManagerService {
                 .build();
         managerProfileRepository.save(profile);
 
-        return manager;
+        Set<String> territories = manager.getFieldExecutives()
+                .stream()
+                .map(FieldExecutive::getTerritory)
+                .filter(territory -> territory != null && !territory.isBlank())
+                .collect(Collectors.toSet());
+
+        return ManagerInfoResponseDto.builder()
+                .id(manager.getId())
+                .name(manager.getName())
+                .email(manager.getEmail())
+                .phone(manager.getPhone())
+                .employeeCode(manager.getEmployeeCode())
+                .department(manager.getDepartment())
+                .designation(manager.getDesignation())
+                .managedTerritories(territories)
+                .build();
+
+
     }
 
-    public Manager updateManager(Long id, ManagerRequestDto dto) {
+    @Transactional
+    public ManagerInfoResponseDto updateManager(Long id, UpdateManagerRequestDto dto) {
         Manager manager = managerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Manager not found with id: " + id));
 
         manager.setName(dto.getName().toUpperCase());
-        manager.setEmail(dto.getEmail());
-        manager.setPassword(dto.getPassword());
         manager.setPhone(dto.getPhone());
-        manager.setActive(dto.isActive());
         manager.setEmployeeCode(dto.getEmployeeCode().toUpperCase());
         manager.setDepartment(dto.getDepartment());
         manager.setDesignation(dto.getDesignation().toUpperCase());
-        manager.setManagedTerritories(dto.getManagedTerritories());
 
-        return managerRepository.save(manager);
+
+         managerRepository.save(manager);
+
+        Set<String> territories = manager.getFieldExecutives()
+                .stream()
+                .map(FieldExecutive::getTerritory)
+                .filter(territory -> territory != null && !territory.isBlank())
+                .collect(Collectors.toSet());
+
+        return ManagerInfoResponseDto.builder()
+                .id(manager.getId())
+                .name(manager.getName())
+                .email(manager.getEmail())
+                .phone(manager.getPhone())
+                .employeeCode(manager.getEmployeeCode())
+                .department(manager.getDepartment())
+                .designation(manager.getDesignation())
+                .managedTerritories(territories)
+                .build();
+
     }
 
 
@@ -409,6 +445,7 @@ public class ManagerService {
                 .toList();
     }
 
+
     @Transactional(readOnly = true)
     public List<TeamMemberResponse> getTeamMembers(Long managerId) {
         // Get all field executives for this manager
@@ -535,6 +572,34 @@ public class ManagerService {
                 .time(time)
                 .status(status)
                 .build();
+    }
+
+    @Transactional
+    public List<ManagerInfoResponseDto> getAllManagersInfo() {
+
+        List<Manager> managers = managerRepository.findAll();
+
+        return managers.stream().map(manager -> {
+
+            // Extract territories from FEs
+            Set<String> territories = manager.getFieldExecutives()
+                    .stream()
+                    .map(FieldExecutive::getTerritory)
+                    .filter(territory -> territory != null && !territory.isBlank())
+                    .collect(Collectors.toSet());
+
+            return ManagerInfoResponseDto.builder()
+                    .id(manager.getId())
+                    .name(manager.getName())
+                    .email(manager.getEmail())
+                    .phone(manager.getPhone())
+                    .employeeCode(manager.getEmployeeCode())
+                    .department(manager.getDepartment())
+                    .designation(manager.getDesignation())
+                    .managedTerritories(territories)
+                    .build();
+
+        }).toList();
     }
 
 }

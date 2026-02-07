@@ -118,16 +118,13 @@ public class FEService {
     }
 
     // UPDATE
-    public FieldExecutiveResponse update(Long id, FieldExecutiveRequest request) {
+    @Transactional
+    public FieldExecutiveResponse update(Long id, FieldExecutiveUpdate request) {
 
         FieldExecutive fe = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Field Executive not found"));
 
-        // Email uniqueness check
-        if (!fe.getEmail().equals(request.getEmail())
-                && repository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
-        }
+
 
         // Phone uniqueness check
         if (!fe.getPhone().equals(request.getPhone())
@@ -142,8 +139,6 @@ public class FEService {
         }
 
         fe.setName(request.getName().trim().toUpperCase());
-        fe.setEmail(request.getEmail().toLowerCase());
-        fe.setPassword(request.getPassword());
         fe.setPhone(request.getPhone());
         fe.setTerritory(request.getTerritory());
         fe.setRegion(request.getRegion());
