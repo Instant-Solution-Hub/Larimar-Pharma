@@ -210,6 +210,22 @@ public class ManagerController {
         );
     }
 
+    @GetMapping("/territories/overview")
+    public ResponseEntity<ApiResponseDto<List<TerritoryOverviewResponseDto>>>
+    getTerritoryOverview(
+            @RequestParam int month,
+            @RequestParam int year
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        territoryTargetService.getAllTerritoryOverview(month, year),
+                        "Territory overview fetched successfully"
+                )
+        );
+    }
+
+
     @GetMapping("/{managerId}/field-executives/contacts")
     public ResponseEntity<ApiResponseDto<List<FEContactResponseDto>>> getFEContactsUnderManager(
             @PathVariable Long managerId

@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.TerritoryMonthlyTargetResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.TerritoryOverviewResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateTerritoryTargetDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.TerritoryMonthlyTarget;
@@ -115,6 +116,34 @@ public class TerritoryMonthlyTargetService {
         territoryTargetRepo.save(target);
         return toDto(target);
     }
+
+
+
+    public List<TerritoryOverviewResponseDto> getAllTerritoryOverview(
+            int month,
+            int year
+    ) {
+
+        List<TerritoryMonthlyTarget> targets =
+                territoryTargetRepo.findAllWithManagerByMonthAndYear(month, year);
+
+        return targets.stream()
+                .map(target -> TerritoryOverviewResponseDto.builder()
+                        .id(target.getId())
+                        .territory(target.getTerritory())
+                        .managerName(target.getManager().getName())
+
+                        .primaryTarget(target.getPrimaryTargetSet())
+                        .secondaryTarget(target.getSecondaryTargetSet())
+
+                        .weeklyPrimarySale(target.getPrimaryTargetAchieved())
+                        .weeklySecondarySale(target.getSecondaryTargetAchieved())
+
+                        .totalSubstockistStock(target.getSubStockistStock())
+                        .build())
+                .toList();
+    }
+
 
     private TerritoryMonthlyTargetResponseDto toDto(
             TerritoryMonthlyTarget t
