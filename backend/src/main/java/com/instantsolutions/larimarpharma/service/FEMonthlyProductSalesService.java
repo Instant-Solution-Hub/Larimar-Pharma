@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.MonthlyProductSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlySalesRowDto;
 import com.instantsolutions.larimarpharma.entity.FEMonthlyProductSales;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
@@ -62,6 +63,18 @@ public class FEMonthlyProductSalesService {
                     .build();
         }).toList();
     }
+
+    @Transactional
+    public List<MonthlyProductSummaryDto> getPreviousMonthSalesSummary() {
+
+        YearMonth previousMonth = YearMonth.now().minusMonths(1);
+
+        return salesRepository.getMonthlySalesSummary(
+                previousMonth.getYear(),
+                previousMonth.getMonthValue()
+        );
+    }
+
 
     @Transactional
     public void updateQuantity(

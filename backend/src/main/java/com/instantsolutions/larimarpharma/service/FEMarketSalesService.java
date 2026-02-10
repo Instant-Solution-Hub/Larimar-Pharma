@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.FEMarketSalesDto;
 import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
 import com.instantsolutions.larimarpharma.entity.FEMarketMonthlySales;
@@ -52,6 +53,26 @@ public class FEMarketSalesService {
                         .build())
                 .toList();
     }
+
+    @Transactional
+    public List<FEMarketSalesDto> getCurrentMonthMarketSalesForAllFEs() {
+
+        int year = LocalDate.now().getYear();
+        int month = LocalDate.now().getMonthValue();
+
+        List<FEMarketMonthlySales> salesList =
+                salesRepo.findByYearAndMonth(year, month);
+
+        return salesList.stream()
+                .map(sales -> FEMarketSalesDto.builder()
+                        .fieldExecutiveId(sales.getFieldExecutive().getId())
+                        .fieldExecutiveName(sales.getFieldExecutive().getName())
+                        .market(sales.getMarket())
+                        .salesAmount(sales.getSalesAmount())
+                        .build())
+                .toList();
+    }
+
 
     @Transactional
     public MarketSalesDto updateMarketSales(
