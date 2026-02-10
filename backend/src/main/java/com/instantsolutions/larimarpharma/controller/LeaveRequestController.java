@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerLeaveResponseDto;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
 import com.instantsolutions.larimarpharma.service.LeaveRequestService;
 import jakarta.validation.Valid;
@@ -57,6 +58,18 @@ public class LeaveRequestController {
         );
     }
 
+    @PutMapping("/{leaveId}/manager/approve-leave")
+    public ResponseEntity<ApiResponseDto<ManagerLeaveResponseDto>> approveManagerLeave(
+            @PathVariable Long leaveId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaveRequestService.approveManagerLeave(leaveId),
+                        "Leave approved successfully"
+                )
+        );
+    }
+
     @PutMapping("/{leaveId}/reject-leave")
     public ResponseEntity<ApiResponseDto<LeaveRequestWithFEResponseDto>> rejectLeave(
             @PathVariable Long leaveId
@@ -68,4 +81,17 @@ public class LeaveRequestController {
                 )
         );
     }
+
+    @PutMapping("/{leaveId}/manager/reject-leave")
+    public ResponseEntity<ApiResponseDto<ManagerLeaveResponseDto>> rejectManagerLeave(
+            @PathVariable Long leaveId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaveRequestService.rejectManagerLeave(leaveId),
+                        "Leave has been rejected successfully"
+                )
+        );
+    }
+
 }
