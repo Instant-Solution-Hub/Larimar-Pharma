@@ -163,6 +163,21 @@ public class ManagerController {
         );
     }
 
+    @GetMapping("/manager-leaves")
+    public ResponseEntity<ApiResponseDto<List<ManagerLeaveResponseDto>>> getAllManagerLeaves() {
+
+        List<ManagerLeaveResponseDto> leaves =
+                leaveRequestService.getAllManagerLeaves();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaves,
+                        "Manager leave requests fetched successfully"
+                )
+        );
+    }
+
+
     @PutMapping("/territory-targets/{id}")
     public ResponseEntity<ApiResponseDto<TerritoryMonthlyTargetResponseDto>> updateTerritoryTarget(
             @PathVariable Long id,

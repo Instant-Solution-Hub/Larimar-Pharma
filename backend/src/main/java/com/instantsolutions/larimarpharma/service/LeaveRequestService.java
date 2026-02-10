@@ -2,9 +2,11 @@ package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.ManagerLeaveResponseDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
+import com.instantsolutions.larimarpharma.entity.ManagerProfile;
 import com.instantsolutions.larimarpharma.exceptions.InsufficientLeaveBalanceException;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.LeaveRequestRepository;
@@ -122,6 +124,21 @@ public class LeaveRequestService {
         };
     }
 
+    private boolean hasSufficientBalance(ManagerProfile profile,
+                                         LeaveRequest.LeaveType type,
+                                         int days) {
+
+        return switch (type) {
+            case CASUAL_LEAVE -> profile.getCasualLeaves() != null
+                    && profile.getCasualLeaves() - profile.getApprovedCasualLeaves() >= days;
+
+            case SICK_LEAVE -> profile.getSickLeaves() != null
+                    && profile.getSickLeaves() - profile.getApprovedSickLeaves() >= days;
+
+            case EARNED_LEAVE -> true; // optional rule
+        };
+    }
+
     @Transactional
     public LeaveRequestWithFEResponseDto approveLeave(Long leaveId) {
 
@@ -159,6 +176,23 @@ public class LeaveRequestService {
     }
 
     private void deductLeaveBalance(FieldExecutiveProfile profile,
+                                    LeaveRequest.LeaveType type,
+                                    int days) {
+
+        switch (type) {
+            case CASUAL_LEAVE ->
+                    profile.setApprovedCasualLeaves(profile.getApprovedCasualLeaves() + days);
+
+            case SICK_LEAVE ->
+                    profile.setApprovedSickLeaves(profile.getApprovedSickLeaves() + days);
+
+            case EARNED_LEAVE -> {
+                // optional logic
+            }
+        }
+
+    }
+    private void deductLeaveBalance(ManagerProfile profile,
                                     LeaveRequest.LeaveType type,
                                     int days) {
 
@@ -226,11 +260,91 @@ public class LeaveRequestService {
                 .toList();
     }
 
+    @Transactional
+    public List<ManagerLeaveResponseDto> getAllManagerLeaves() {
+
+        List<LeaveRequest> leaves = leaveRequestRepository.findAllManagerLeaves();
+
+        return leaves.stream().map(leave ->
+                ManagerLeaveResponseDto.builder()
+                        .id(leave.getId())
+                        .managerCode(leave.getManager().getEmployeeCode())
+                        .managerName(leave.getManager().getName())
+                        .leaveType(leave.getLeaveType())
+                        .fromDate(leave.getFromDate())
+                        .toDate(leave.getToDate())
+                        .reason(leave.getReason())
+                        .status(leave.getStatus())
+                        .appliedDate(leave.getAppliedDate())
+                        .build()
+        ).toList();
+    }
+
+
 
 
 
     private int calculateDays(LocalDateTime from, LocalDateTime to) {
         return (int) (to.toLocalDate().toEpochDay()
                 - from.toLocalDate().toEpochDay()) + 1;
+    }
+
+    @Transactional
+    public ManagerLeaveResponseDto approveManagerLeave(Long leaveId) {
+
+        LeaveRequest leave = leaveRequestRepository.findById(leaveId)
+                .orElseThrow(() -> new EntityNotFoundException("Leave not found"));
+
+        if (leave.getStatus() != LeaveRequest.ApprovalStatus.PENDING) {
+            throw new IllegalStateException("Leave already processed");
+        }
+
+        ManagerProfile profile = leave.getManager().getProfile();
+        int days = calculateDays(leave.getFromDate(), leave.getToDate());
+        if (!hasSufficientBalance(profile, leave.getLeaveType(), days)) {
+            return rejectManagerLeave(leaveId);
+
+        }
+        deductLeaveBalance(profile, leave.getLeaveType(), days);
+
+        leave.setStatus(LeaveRequest.ApprovalStatus.APPROVED);
+        leave.setApprovalDate(LocalDateTime.now());
+
+        leaveRequestRepository.save(leave);
+        return ManagerLeaveResponseDto.builder()
+                .id(leave.getId())
+                .managerCode(leave.getManager().getEmployeeCode())
+                .managerName(leave.getManager().getName())
+                .leaveType(leave.getLeaveType())
+                .status(leave.getStatus())
+                .fromDate(leave.getFromDate())
+                .toDate(leave.getToDate())
+                .reason(leave.getReason())
+                .appliedDate(leave.getAppliedDate())
+                .build();
+    }
+
+
+    @Transactional
+    public ManagerLeaveResponseDto rejectManagerLeave(Long leaveId) {
+
+        LeaveRequest leave = leaveRequestRepository.findById(leaveId)
+                .orElseThrow(() -> new EntityNotFoundException("Leave not found"));
+
+        leave.setStatus(LeaveRequest.ApprovalStatus.REJECTED);
+        leave.setApprovalDate(LocalDateTime.now());
+
+        leaveRequestRepository.save(leave);
+        return  ManagerLeaveResponseDto.builder()
+                .id(leave.getId())
+                .managerCode(leave.getManager().getEmployeeCode())
+                .managerName(leave.getManager().getName())
+                .leaveType(leave.getLeaveType())
+                .status(leave.getStatus())
+                .fromDate(leave.getFromDate())
+                .toDate(leave.getToDate())
+                .reason(leave.getReason())
+                .appliedDate(leave.getAppliedDate())
+                .build();
     }
 }

@@ -66,6 +66,15 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest>
     findByFieldExecutive_Manager_IdOrderByFromDateDesc(Long managerId);
 
+    @Query("""
+    SELECT lr
+    FROM LeaveRequest lr
+    WHERE lr.manager IS NOT NULL
+    ORDER BY lr.appliedDate DESC
+""")
+    List<LeaveRequest> findAllManagerLeaves();
+
+
 
 
 }
