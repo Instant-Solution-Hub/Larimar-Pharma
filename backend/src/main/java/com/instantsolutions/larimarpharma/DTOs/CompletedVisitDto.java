@@ -20,6 +20,8 @@ public class CompletedVisitDto {
     private Long visitId;
     private Visit.VisitType visitType;   // DOCTOR / PHARMACIST / STOCKIST
 
+    private Visit.VisitStatus status;
+
     private LocalDate visitDate;
     private Integer weekNumber;
     private Integer dayOfWeek;
@@ -27,6 +29,8 @@ public class CompletedVisitDto {
     private LocalDateTime actualVisitTime;
     private String location;
     private String notes;
+    private String feName;
+    private String feEmpCode;
 
     /* ===== Execution Details ===== */
     private List<String> activitiesPerformed;

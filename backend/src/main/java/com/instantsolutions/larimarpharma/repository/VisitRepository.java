@@ -421,6 +421,23 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("date") LocalDate date
     );
 
+    @Query("""
+    SELECT v
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.weekNumber = :weekNumber
+      AND v.dayOfWeek = :dayOfWeek
+      AND v.scheduledDate BETWEEN :startOfMonth AND :endOfMonth
+    ORDER BY v.scheduledDate ASC
+""")
+    List<Visit> findScheduledVisitsForFieldExecutiveByWeekAndDay(
+            @Param("feId") Long fieldExecutiveId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth
+    );
+
 
 
 

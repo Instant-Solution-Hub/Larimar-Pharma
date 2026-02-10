@@ -161,6 +161,22 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
     );
 
 
+    @Query("""
+        SELECT mv
+        FROM ManagerVisit mv
+        WHERE mv.manager.id = :managerId
+          AND mv.weekNumber = :weekNumber
+          AND mv.dayOfWeek = :dayOfWeek
+          AND mv.scheduledDate BETWEEN :startOfMonth AND :endOfMonth
+        ORDER BY mv.scheduledDate ASC
+    """)
+    List<ManagerVisit> findByManagerAndWeekAndDayForMonth(
+            @Param("managerId") Long managerId,
+            @Param("weekNumber") Integer weekNumber,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth
+    );
 
 
 }

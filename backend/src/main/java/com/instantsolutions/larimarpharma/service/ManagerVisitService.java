@@ -250,11 +250,14 @@ public class ManagerVisitService {
                 CompletedVisitDto.builder()
                         .visitId(v.getId())
                         .visitType(v.getVisitType())
+                        .status(v.getStatus())
                         .visitDate(v.getVisitDate())
                         .weekNumber(v.getWeekNumber())
                         .dayOfWeek(v.getDayOfWeek())
                         .actualVisitTime(v.getJoinedAt())
                         .location("")
+                        .feName(v.getFieldExecutive()!=null ? v.getFieldExecutive().getName() : "")
+                        .feEmpCode(v.getFieldExecutive()!=null ? v.getFieldExecutive().getEmployeeCode() : "")
                         .notes(v.getManagerNotes());
 
         // 🔁 Doctor mapping with fallback
@@ -477,6 +480,33 @@ public class ManagerVisitService {
         }
         return null;
     }
+
+    @Transactional(readOnly = true)
+    public List<CompletedVisitDto> getVisitsForManagerWeekAndDay(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endOfMonth =
+                now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
+
+        return managerVisitRepository
+                .findByManagerAndWeekAndDayForMonth(
+                        managerId,
+                        weekNumber,
+                        dayOfWeek,
+                        startOfMonth,
+                        endOfMonth
+                )
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
 
 
 

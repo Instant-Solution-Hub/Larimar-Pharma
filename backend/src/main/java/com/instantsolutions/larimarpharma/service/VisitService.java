@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
+
 @Service
 @RequiredArgsConstructor
 public class VisitService {
@@ -431,9 +433,7 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate startOfMonth = LocalDate.now()
-//                .plusMonths(1)
-                .withDayOfMonth(1);
+        LocalDate startOfMonth = getStartOfTheMonth();
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findVisitsForSlot(
@@ -488,9 +488,7 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate startOfMonth = LocalDate.now()
-//                .plusMonths(1)
-                .withDayOfMonth(1);
+        LocalDate startOfMonth = getStartOfTheMonth();
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
@@ -971,6 +969,36 @@ public class VisitService {
         );
         return visits.stream().map(this::toTodayScheduledVisitDTO).toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<TodayScheduledVisitDto> getVisitsForWeekAndDay(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+        LocalDate now = LocalDate.now();
+
+        LocalDateTime startOfMonth =
+                now.withDayOfMonth(1).atStartOfDay();
+
+        LocalDateTime endOfMonth =
+                now.withDayOfMonth(now.lengthOfMonth())
+                        .atTime(LocalTime.MAX);
+
+        List<Visit> visits =
+                visitRepository.findScheduledVisitsForFieldExecutiveByWeekAndDay(
+                        fieldExecutiveId,
+                        weekNumber,
+                        dayOfWeek,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
 
 
 

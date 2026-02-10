@@ -98,5 +98,17 @@ public class ManagerVisitController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/get-all-visits-by-week-day")
+    public ResponseEntity<ApiResponseDto<List<CompletedVisitDto>>> fetchVisitsByWeekAndDay(
+            @RequestParam Long managerId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.getVisitsForManagerWeekAndDay(managerId, weekNumber, dayOfWeek),
+                "Visits fetched successfully"
+        ));
+    }
+
 
 }
