@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -177,6 +178,38 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             @Param("startOfMonth") LocalDateTime startOfMonth,
             @Param("endOfMonth") LocalDateTime endOfMonth
     );
+
+
+    // Manager methods
+    @Query("""
+    SELECT CASE WHEN COUNT(mv) > 0 THEN true ELSE false END
+    FROM ManagerVisit mv
+    WHERE mv.manager = :manager
+      AND mv.scheduledDate >= :start
+      AND mv.scheduledDate < :end
+      AND mv.status IN ('SCHEDULED', 'APPROVED')
+""")
+    boolean existsScheduledManagerVisits(
+            @Param("manager") Manager manager,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+
+    @Query("""
+    SELECT CASE WHEN COUNT(mv) > 0 THEN true ELSE false END
+    FROM ManagerVisit mv
+    WHERE mv.manager = :manager
+      AND mv.joinedAt >= :start
+      AND mv.joinedAt < :end
+      AND mv.status IN ('COMPLETED', 'MISSED')
+""")
+    boolean existsCompletedManagerVisits(
+            @Param("manager") Manager manager,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
 
 
 }

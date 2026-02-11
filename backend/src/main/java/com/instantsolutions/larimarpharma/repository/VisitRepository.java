@@ -2,6 +2,8 @@ package com.instantsolutions.larimarpharma.repository;
 import com.instantsolutions.larimarpharma.DTOs.ComplianceStatsProjection;
 import com.instantsolutions.larimarpharma.DTOs.TodayScheduledVisitDto;
 import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitType;
@@ -437,6 +439,51 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("startOfMonth") LocalDateTime startOfMonth,
             @Param("endOfMonth") LocalDateTime endOfMonth
     );
+
+
+    //-----Portal Lock Methods-----------
+
+    // Field Executive methods
+    @Query("""
+    SELECT CASE WHEN COUNT(v) > 0 THEN true ELSE false END
+    FROM Visit v
+    WHERE v.fieldExecutive = :fe
+      AND v.scheduledDate >= :start
+      AND v.scheduledDate < :end
+      AND v.status IN ('SCHEDULED', 'APPROVED')
+""")
+    boolean existsByFieldExecutiveAndDate(
+            @Param("fe") FieldExecutive fe,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+
+    @Query("""
+    SELECT CASE WHEN COUNT(v) > 0 THEN true ELSE false END
+    FROM Visit v
+    WHERE v.fieldExecutive = :fe
+      AND v.actualVisitTime >= :start
+      AND v.actualVisitTime < :end
+      AND v.status IN ('COMPLETED', 'MISSED')
+""")
+    boolean existsCompletedVisitsByFieldExecutiveAndDate(
+            @Param("fe") FieldExecutive fe,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+
+    @Query("SELECT CASE WHEN COUNT(mv) > 0 THEN true ELSE false END " +
+            "FROM ManagerVisit mv " +
+            "WHERE mv.fieldExecutive = :fe " +
+            "AND DATE(mv.visitDate) = :date " +
+            "AND mv.status = 'COMPLETED'")
+    boolean existsManagerVisitForFE(
+            @Param("fe") FieldExecutive fe,
+            @Param("date") LocalDate date);
+
+
 
 
 

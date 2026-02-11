@@ -49,7 +49,7 @@ public class ManagerVisitController {
         return ResponseEntity.ok(managerVisitService.reMarkVisit(dto));
     }
 
-    @GetMapping("/today-scheduled")
+    @GetMapping("/today-scheduled/{managerId}")
     public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisits(@RequestParam Long managerId) {
         return ResponseEntity.ok(
                 managerVisitService.getTodaysVisits(managerId)

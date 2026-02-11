@@ -7,7 +7,11 @@ import com.instantsolutions.larimarpharma.repository.AdminRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.SuperAdminRepository;
+import com.instantsolutions.larimarpharma.security.AppUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -29,40 +33,65 @@ public class AuthService {
 
     public LoginResponseDto authenticate(String email, String password) {
 
+        BaseUser user = null;
+        String role = null;
+
         Optional<FieldExecutive> feOptional = fieldExecutiveRepository.findByEmail(email);
         if (feOptional.isPresent() && passwordMatches(feOptional.get(), password)) {
-            FieldExecutive fieldExecutive = feOptional.get();
-            return new LoginResponseDto(fieldExecutive.getId(),fieldExecutive.getEmail(),fieldExecutive.getName()
-            , fieldExecutive.getPhone(),"FE", fieldExecutive.isActive(), fieldExecutive.getEmergencyContact(),
-                    fieldExecutive.getCreatedAt().toString());
+            user = feOptional.get();
+            role = "FE";
         }
 
-        Optional<Manager> managerOptional = managerRepository.findByEmail(email);
-        if (managerOptional.isPresent() && passwordMatches(managerOptional.get(), password)) {
-            Manager manager = managerOptional.get();
-            return new LoginResponseDto(manager.getId(),manager.getEmail(),manager.getName()
-                    , manager.getPhone(),"Manager", manager.isActive(), manager.getEmergencyContact(),
-                    manager.getCreatedAt().toString());
+        if (user == null) {
+            Optional<Manager> managerOptional = managerRepository.findByEmail(email);
+            if (managerOptional.isPresent() && passwordMatches(managerOptional.get(), password)) {
+                user = managerOptional.get();
+                role = "Manager";
+            }
         }
 
-        Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-        if (adminOptional.isPresent() && passwordMatches(adminOptional.get(), password)) {
-            Admin admin = adminOptional.get();
-            return new LoginResponseDto(admin.getId(),admin.getEmail(),admin.getName()
-                    , admin.getPhone(),"Admin", admin.isActive(), admin.getEmergencyContact(),
-                    admin.getCreatedAt().toString());
+        if (user == null) {
+            Optional<Admin> adminOptional = adminRepository.findByEmail(email);
+            if (adminOptional.isPresent() && passwordMatches(adminOptional.get(), password)) {
+                user = adminOptional.get();
+                role = "Admin";
+            }
         }
 
-        Optional<SuperAdmin> superAdminOptional = superAdminRepository.findByEmail(email);
-        if (superAdminOptional.isPresent() && passwordMatches(superAdminOptional.get(), password)) {
-            SuperAdmin superAdmin = superAdminOptional.get();
-            return new LoginResponseDto(superAdmin.getId(),superAdmin.getEmail(),superAdmin.getName()
-                    , superAdmin.getPhone(),"SuperAdmin", superAdmin.isActive(), superAdmin.getEmergencyContact(),
-                    superAdmin.getCreatedAt().toString());
-
+        if (user == null) {
+            Optional<SuperAdmin> superAdminOptional = superAdminRepository.findByEmail(email);
+            if (superAdminOptional.isPresent() && passwordMatches(superAdminOptional.get(), password)) {
+                user = superAdminOptional.get();
+                role = "SuperAdmin";
+            }
         }
 
-        throw new AuthenticationException("Invalid credentials");
+        if (user == null) {
+            throw new AuthenticationException("Invalid credentials");
+        }
+
+        // 🔐 THIS IS THE ONLY REQUIRED SECURITY STEP
+        AppUserDetails userDetails = new AppUserDetails(user);
+
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return new LoginResponseDto(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getPhone(),
+                role,
+                user.isActive(),
+                user.getEmergencyContact(),
+                user.getCreatedAt().toString()
+        );
     }
 
     private boolean passwordMatches(BaseUser user, String rawPassword) {
