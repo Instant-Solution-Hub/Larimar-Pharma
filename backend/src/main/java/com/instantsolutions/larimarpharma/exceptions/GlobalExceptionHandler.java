@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.exceptions;
 
 import com.instantsolutions.larimarpharma.DTOs.ErrorResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.PortalLockedErrorResponseDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -167,6 +168,23 @@ public class GlobalExceptionHandler {
                         LocalDateTime.now()
                 ));
     }
+
+    @ExceptionHandler(PortalLockedException.class)
+    public ResponseEntity<PortalLockedErrorResponseDto> handlePortalLocked(
+            PortalLockedException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.LOCKED) // 423
+                .body(new PortalLockedErrorResponseDto(
+                        "PORTAL_LOCKED",
+                        ex.getMessage(),
+                        request.getRequestURI(),
+                        LocalDateTime.now(),
+                        ex.getUserIdentity()
+                ));
+    }
+
 
 
 
