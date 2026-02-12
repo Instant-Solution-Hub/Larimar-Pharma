@@ -24,5 +24,7 @@ public interface FEMarketMonthlySalesRepository
             int year,
             int month
     );
+
+    List<FEMarketMonthlySales> findByYearAndMonth(int year, int month);
 }
 
