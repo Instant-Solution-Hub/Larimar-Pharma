@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.FEMarketSalesDto;
 import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
+import com.instantsolutions.larimarpharma.DTOs.MarketSalesSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
 import com.instantsolutions.larimarpharma.entity.FEMarketMonthlySales;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +57,7 @@ public class FEMarketSalesService {
     }
 
     @Transactional
-    public List<FEMarketSalesDto> getCurrentMonthMarketSalesForAllFEs() {
+    public List<MarketSalesSummaryDto> getCurrentMonthMarketSalesForAllFEs() {
 
         int year = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
@@ -63,12 +65,21 @@ public class FEMarketSalesService {
         List<FEMarketMonthlySales> salesList =
                 salesRepo.findByYearAndMonth(year, month);
 
-        return salesList.stream()
-                .map(sales -> FEMarketSalesDto.builder()
-                        .fieldExecutiveId(sales.getFieldExecutive().getId())
-                        .fieldExecutiveName(sales.getFieldExecutive().getName())
-                        .market(sales.getMarket())
-                        .salesAmount(sales.getSalesAmount())
+        // Group by market and sum sales
+        Map<String, Double> marketSalesMap = salesList.stream()
+                .collect(Collectors.groupingBy(
+                        FEMarketMonthlySales::getMarket,
+                        Collectors.summingDouble(FEMarketMonthlySales::getSalesAmount)
+                ));
+
+        // Convert to DTO with serial numbers
+        AtomicLong counter = new AtomicLong(1);
+
+        return marketSalesMap.entrySet().stream()
+                .map(entry -> MarketSalesSummaryDto.builder()
+                        .id(counter.getAndIncrement())
+                        .marketName(entry.getKey())
+                        .secondarySales(entry.getValue())
                         .build())
                 .toList();
     }

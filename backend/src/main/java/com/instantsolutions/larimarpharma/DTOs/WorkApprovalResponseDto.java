@@ -18,7 +18,7 @@ public class WorkApprovalResponseDto {
         private String requestedByName;
         private String requestedByRole;
         private ApprovalRequest.ApprovalStatus status;
-        private String remarks;
+        private String description;
 
 
 }

@@ -12,6 +12,7 @@ public class WorkApprovalRequestDto {
         private LocalDate workDate;
         private Long fieldExecutiveId;
         private Long managerId;
+        private String description;
 
 
 }

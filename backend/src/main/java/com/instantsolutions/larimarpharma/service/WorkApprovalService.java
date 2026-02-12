@@ -12,6 +12,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class WorkApprovalService {
@@ -47,6 +50,7 @@ public class WorkApprovalService {
                 .fieldExecutive(fe)
                 .manager(manager)
                 .status(ApprovalRequest.ApprovalStatus.PENDING)
+                .decription(dto.getDescription())
                 .build();
 
         approvalRepository.save(request);
@@ -69,7 +73,7 @@ public class WorkApprovalService {
     }
 
     @Transactional
-    public WorkApprovalResponseDto rejectRequest(Long requestId, Long adminId, String remarks) {
+    public WorkApprovalResponseDto rejectRequest(Long requestId, Long adminId) {
 
         WorkApproval request = approvalRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -79,9 +83,60 @@ public class WorkApprovalService {
 
         request.setStatus(ApprovalRequest.ApprovalStatus.REJECTED);
         request.setApprovedBy(admin);
-        request.setRemarks(remarks);
+
 
         return mapToDto(request);
+    }
+
+    @Transactional
+    public List<WorkApprovalResponseDto> getCurrentMonthWorkApprovals() {
+
+        LocalDate now = LocalDate.now();
+
+        LocalDate startOfMonth = now.withDayOfMonth(1);
+        LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        List<WorkApproval> workApprovals =  approvalRepository.findByWorkDateBetween(startOfMonth, endOfMonth);
+
+        return workApprovals.stream()
+                .map(this::mapToDto)
+                .toList();
+
+    }
+
+    @Transactional
+    public List<WorkApprovalResponseDto> getCurrentMonthWorkApprovals(
+            Long fieldExecutiveId,
+            Long managerId
+    ) {
+
+        if (fieldExecutiveId == null && managerId == null) {
+            throw new IllegalArgumentException("Either fieldExecutiveId or managerId must be provided");
+        }
+
+        LocalDate now = LocalDate.now();
+        LocalDate startOfMonth = now.withDayOfMonth(1);
+        LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        List<WorkApproval> approvals;
+
+        if (fieldExecutiveId != null) {
+            approvals = approvalRepository.findByFieldExecutiveIdAndWorkDateBetween(
+                    fieldExecutiveId,
+                    startOfMonth,
+                    endOfMonth
+            );
+        } else {
+            approvals = approvalRepository.findByManagerIdAndWorkDateBetween(
+                    managerId,
+                    startOfMonth,
+                    endOfMonth
+            );
+        }
+
+        return approvals.stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     private WorkApprovalResponseDto mapToDto(WorkApproval request) {
@@ -103,7 +158,7 @@ public class WorkApprovalService {
                 .requestedByName(requestedByName)
                 .requestedByRole(requestedByRole)
                 .status(request.getStatus())
-                .remarks(request.getRemarks())
+                .description(request.getDecription())
                 .build();
     }
 
