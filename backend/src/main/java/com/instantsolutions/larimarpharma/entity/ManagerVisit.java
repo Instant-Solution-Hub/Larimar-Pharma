@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(
@@ -31,16 +32,31 @@ public class ManagerVisit {
     private Manager manager;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "field_executive_id", nullable = false)
+    @JoinColumn(name = "field_executive_id", nullable = true)
     private FieldExecutive fieldExecutive;
 
     /* ===== LINK TO ORIGINAL VISIT ===== */
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "original_visit_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(
+            name = "original_visit_id",
+            unique = true,
+            nullable = true
+    )
     private Visit originalVisit;
 
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean unscheduled = false;
+
     /* ===== REPLICATED VISIT DATA ===== */
+
+    @ElementCollection
+    @CollectionTable(name = "manager_visit_activities", joinColumns = @JoinColumn(name = "visit_id"))
+    @Column(name = "activity")
+    @Builder.Default
+    private List<String> activitiesPerformed = List.of();
 
     private LocalDate visitDate;
     private Integer weekNumber;
@@ -65,6 +81,8 @@ public class ManagerVisit {
     /* ===== MANAGER-SPECIFIC DATA ===== */
 
     private LocalDateTime joinedAt;
+//    private LocalDateTime assignedAt;
+
     private String managerNotes;
 
     @Column(updatable = false)

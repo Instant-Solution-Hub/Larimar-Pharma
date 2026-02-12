@@ -23,5 +23,11 @@ public class DateUtil {
                 .with(DayOfWeek.of(dayOfWeek));
     }
 
+    public static LocalDate getStartOfTheMonth(){
+        return LocalDate.now()
+//                .plusMonths(1)
+                .withDayOfMonth(1);
+    }
+
 
 }

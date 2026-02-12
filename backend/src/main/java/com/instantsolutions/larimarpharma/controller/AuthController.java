@@ -20,27 +20,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(
-            @RequestParam String userEmail , @RequestParam String userPassword) {
+            @RequestParam String userEmail,
+            @RequestParam String userPassword) {
 
         log.info("Login request received for email: {}", userEmail);
 
-        try {
-            LoginResponseDto response = authService.authenticate(userEmail , userPassword);
+        LoginResponseDto response = authService.authenticate(userEmail, userPassword);
 
-            log.info("Login successful for user: {}", response.getEmail());
+        log.info("Login successful for user: {}", response.getEmail());
 
-            return ResponseEntity.ok(
-                    ApiResponseDto.success(response, "Login successful")
-            );
-
-        } catch (Exception e) {
-            log.error("Login failed for email: {}. Error: {}",
-                    userEmail, e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponseDto.error("Invalid credentials", HttpStatus.UNAUTHORIZED.value()));
-        }
+        return ResponseEntity.ok(
+                ApiResponseDto.success(response, "Login successful")
+        );
     }
+
 
 //    @PostMapping("/refresh")
 //    public ResponseEntity<ApiResponseDto<LoginResponseDto>> refreshToken(

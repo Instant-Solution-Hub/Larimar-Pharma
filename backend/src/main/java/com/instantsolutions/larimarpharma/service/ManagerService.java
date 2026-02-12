@@ -6,16 +6,10 @@ import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
 import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.*;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
-import com.instantsolutions.larimarpharma.entity.Manager;
-import com.instantsolutions.larimarpharma.entity.ManagerProfile;
-import com.instantsolutions.larimarpharma.entity.ManagerVisit;
-import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import com.instantsolutions.larimarpharma.entity.*;
+import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
-import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
-import com.instantsolutions.larimarpharma.repository.ManagerProfileRepository;
-import com.instantsolutions.larimarpharma.repository.ManagerRepository;
-import com.instantsolutions.larimarpharma.repository.FieldExecutiveProfileRepository;
+import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +37,7 @@ public class ManagerService {
     private final ManagerProfileRepository managerProfileRepository;
     private final FieldExecutiveProfileRepository fieldExecutiveProfileRepository;
 //    private final FieldExecutiveRepository fieldExecutiveRepository;
+    private final VisitRepository visitRepository;
 
 
     public ManagerInfoResponseDto createManager(ManagerRequestDto dto) {
@@ -449,6 +445,134 @@ public class ManagerService {
                 .toList();
     }
 
+
+    @Transactional(readOnly = true)
+    public List<TeamMemberResponse> getTeamMembers(Long managerId) {
+        // Get all field executives for this manager
+        List<FieldExecutive> fieldExecutives = fieldExecutiveRepository.findByManagerId(managerId);
+
+        List<TeamMemberResponse> teamMembers = new ArrayList<>();
+
+        for (FieldExecutive fe : fieldExecutives) {
+            TeamMemberResponse member = mapToTeamMemberResponse(fe);
+            teamMembers.add(member);
+        }
+
+        return teamMembers;
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitResponse> getTodayVisitsForFieldExecutive(Long fieldExecutiveId) {
+        LocalDate today = LocalDate.now();
+        List<Visit> visits = visitRepository.findByFieldExecutiveIdAndVisitDate(fieldExecutiveId, today);
+
+        return visits.stream()
+                .map(this::mapToVisitResponse)
+                .collect(Collectors.toList());
+    }
+
+    private TeamMemberResponse mapToTeamMemberResponse(FieldExecutive fieldExecutive) {
+        LocalDate today = LocalDate.now();
+
+        // Get today's visits for this field executive
+        List<Visit> todayVisits = visitRepository.findByFieldExecutiveIdAndVisitDate(
+                fieldExecutive.getId(), today
+        );
+
+        // Count completed visits
+        long completedVisits = todayVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        // Calculate target progress (assume 8 visits target per day)
+        int target = 8;
+        int targetProgress = target == 0 ? 0 : (int) ((completedVisits * 100) / target);
+
+        // Get market (use first market if available)
+        String market = fieldExecutive.getMarkets().isEmpty() ?
+                "N/A" : fieldExecutive.getMarkets().get(0);
+
+        // Map visits to VisitResponse
+        List<VisitResponse> visitResponses = todayVisits.stream()
+                .map(this::mapToVisitResponse)
+                .collect(Collectors.toList());
+
+        return TeamMemberResponse.builder()
+                .id(fieldExecutive.getId())
+                .name(fieldExecutive.getName())
+                .email(fieldExecutive.getEmail())
+                .market(market)
+                .headquarters(fieldExecutive.getTerritory() != null ?
+                        fieldExecutive.getTerritory() : "N/A")
+                .todayVisitCount((int) completedVisits)
+                .targetProgress(targetProgress)
+                .visits(visitResponses)
+                .build();
+    }
+
+    private VisitResponse mapToVisitResponse(Visit visit) {
+        String doctorName = "N/A";
+        String specialization = "N/A";
+        String location = "N/A";
+
+        // Extract doctor information
+        if (visit.getDoctor() != null) {
+            doctorName = visit.getDoctor().getName();
+            specialization = visit.getDoctor().getDesignation() != null ?
+                    visit.getDoctor().getDesignation() : "N/A";
+        } else if (visit.getPharmacy() != null) {
+            doctorName = visit.getPharmacy().getPharmacyName();
+            specialization = "Pharmacy";
+        } else if (visit.getStockist() != null) {
+            doctorName = visit.getStockist().getName();
+            specialization = "Stockist";
+        }
+
+        // Get location
+        if (visit.getLocation() != null) {
+            location = visit.getLocation();
+        } else if (visit.getDoctor() != null && visit.getDoctor().getLocation() != null) {
+            location = visit.getDoctor().getLocation();
+        }
+
+        // Format time
+        String time = "N/A";
+        if (visit.getScheduledDate() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+            time = visit.getScheduledDate().toLocalTime().format(formatter);
+        } else if (visit.getActualVisitTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+            time = visit.getActualVisitTime().toLocalTime().format(formatter);
+        }
+
+        // Map status to frontend format
+        String status;
+        switch (visit.getStatus()) {
+            case COMPLETED:
+                status = "completed";
+                break;
+            case SCHEDULED:
+            case APPROVED:
+                status = "pending";
+                break;
+            case MISSED:
+                status = "missed";
+                break;
+            case REJECTED:
+            default:
+                status = "pending";
+                break;
+        }
+
+        return VisitResponse.builder()
+                .id(visit.getId())
+                .doctorName(doctorName)
+                .specialization(specialization)
+                .location(location)
+                .time(time)
+                .status(status)
+                .build();
+    }
 
     @Transactional
     public List<ManagerInfoResponseDto> getAllManagersInfo() {

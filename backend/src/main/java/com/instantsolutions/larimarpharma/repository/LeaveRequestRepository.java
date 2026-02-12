@@ -1,12 +1,15 @@
 package com.instantsolutions.larimarpharma.repository;
 
 
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
+import com.instantsolutions.larimarpharma.entity.Manager;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -73,6 +76,24 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     ORDER BY lr.appliedDate DESC
 """)
     List<LeaveRequest> findAllManagerLeaves();
+
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END " +
+            "FROM LeaveRequest l " +
+            "WHERE l.fieldExecutive = :fe " +
+            "AND l.status = 'APPROVED' " +
+            "AND :date BETWEEN DATE(l.fromDate) AND DATE(l.toDate)")
+    boolean existsApprovedLeaveForFieldExecutiveOnDate(
+            @Param("fe") FieldExecutive fe,
+            @Param("date") LocalDate date);
+
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END " +
+            "FROM LeaveRequest l " +
+            "WHERE l.manager = :manager " +
+            "AND l.status = 'APPROVED' " +
+            "AND :date BETWEEN DATE(l.fromDate) AND DATE(l.toDate)")
+    boolean existsApprovedLeaveForManagerOnDate(
+            @Param("manager") Manager manager,
+            @Param("date") LocalDate date);
 
 
 

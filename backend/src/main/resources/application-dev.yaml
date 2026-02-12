@@ -1,8 +1,10 @@
 spring:
   datasource:
+
     url: ${DATASOURCE_URL}
     username: ${DATASOURCE_USER}
     password: ${DATASOURCE_PASSWORD}
+
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       validationTimeout: 600000

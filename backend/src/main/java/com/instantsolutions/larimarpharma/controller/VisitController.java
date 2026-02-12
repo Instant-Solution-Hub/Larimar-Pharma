@@ -175,6 +175,18 @@ public class VisitController {
         );
     }
 
+    @PostMapping("/get-all-visits-by-week-day")
+    public ResponseEntity<ApiResponseDto<List<TodayScheduledVisitDto>>> fetchVisitsByWeekAndDay(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.getVisitsForWeekAndDay(fieldExecutiveId, weekNumber, dayOfWeek),
+                "Visits fetched successfully"
+        ));
+    }
+
 
 
 
