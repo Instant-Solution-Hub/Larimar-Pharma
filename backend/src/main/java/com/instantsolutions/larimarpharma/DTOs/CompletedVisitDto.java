@@ -32,6 +32,11 @@ public class CompletedVisitDto {
     private String feName;
     private String feEmpCode;
 
+    private String managerName;
+    private String managerEmpCode;
+
+    private String userRole;
+
     /* ===== Execution Details ===== */
     private List<String> activitiesPerformed;
     private Double orderValue;

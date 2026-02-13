@@ -244,6 +244,19 @@ public class ManagerVisitService {
     }
 
 
+    public List<CompletedVisitDto> getAllMissedVisits() {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return managerVisitRepository
+                .findAllMissedManagerVisits(startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
+
     private CompletedVisitDto mapToCompletedVisitDto(ManagerVisit v) {
 
         CompletedVisitDto.CompletedVisitDtoBuilder builder =
@@ -258,6 +271,9 @@ public class ManagerVisitService {
                         .location("")
                         .feName(v.getFieldExecutive()!=null ? v.getFieldExecutive().getName() : "")
                         .feEmpCode(v.getFieldExecutive()!=null ? v.getFieldExecutive().getEmployeeCode() : "")
+                        .managerName(v.getManager().getName())
+                        .managerEmpCode(v.getManager().getEmployeeCode())
+                        .userRole("MANAGER")
                         .notes(v.getManagerNotes());
 
         // 🔁 Doctor mapping with fallback
@@ -505,6 +521,30 @@ public class ManagerVisitService {
                 .stream()
                 .map(this::mapToCompletedVisitDto)
                 .toList();
+    }
+
+    // Services for admin
+
+    @Transactional
+    public CompletedVisitDto markManagerVisitAsCompleted(Long managerVisitId) {
+
+        ManagerVisit managerVisit = managerVisitRepository.findById(managerVisitId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "ManagerVisit not found with id: " + managerVisitId
+                ));
+
+        if (managerVisit.getStatus() == Visit.VisitStatus.COMPLETED) {
+            throw new IllegalStateException("Manager visit already completed");
+        }
+
+        if (managerVisit.getStatus() == Visit.VisitStatus.REJECTED) {
+            throw new IllegalStateException("Rejected visit cannot be completed");
+        }
+
+        managerVisit.setStatus(Visit.VisitStatus.COMPLETED);
+        managerVisit.setManagerNotes("Visit marked as completed by admin");
+        ManagerVisit updatedVisit = managerVisitRepository.save(managerVisit);
+        return mapToCompletedVisitDto(updatedVisit);
     }
 
 

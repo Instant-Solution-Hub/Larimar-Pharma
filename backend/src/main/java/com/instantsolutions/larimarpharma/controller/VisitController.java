@@ -105,6 +105,13 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/get-all-missed-visits")
+    public ResponseEntity<List<CompletedVisitDto>> getAllMissedVisits() {
+        return ResponseEntity.ok(
+                visitService.getAllMissedVisits()
+        );
+    }
+
     /* ===== Scheduled Doctors ===== */
     @GetMapping("/scheduled-doctors")
     public ResponseEntity<List<ScheduledDoctorVisitDto>> getTodayDoctors(
@@ -185,6 +192,15 @@ public class VisitController {
                 visitService.getVisitsForWeekAndDay(fieldExecutiveId, weekNumber, dayOfWeek),
                 "Visits fetched successfully"
         ));
+    }
+
+
+    // Admin endpoints
+
+    @PostMapping("/admin/mark-visit-as-completed/{visitId}")
+    public ResponseEntity<ApiResponseDto<CompletedVisitDto>> markVisitAsCompleted(@PathVariable Long visitId) {
+        CompletedVisitDto  updatedVisit = visitService.markVisitAsCompleted(visitId);
+        return ResponseEntity.ok(ApiResponseDto.success(updatedVisit, "Visit Marked as Completed"));
     }
 
 

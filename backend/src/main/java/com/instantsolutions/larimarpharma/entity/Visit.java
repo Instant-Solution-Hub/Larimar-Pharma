@@ -45,7 +45,7 @@ public class Visit {
     @Builder.Default
     private List<ConvertedProduct> convertedProducts = List.of();
 
-    @OneToOne(mappedBy = "originalVisit", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "originalVisit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private ManagerVisit managerVisit;
 
 

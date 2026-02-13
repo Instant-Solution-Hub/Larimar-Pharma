@@ -136,6 +136,19 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             @Param("endDate") LocalDate endDate
     );
 
+    @Query("""
+    SELECT mv
+    FROM ManagerVisit mv
+    WHERE mv.status = com.instantsolutions.larimarpharma.entity.Visit$VisitStatus.MISSED
+      AND mv.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY mv.scheduledDate DESC
+""")
+    List<ManagerVisit> findAllMissedManagerVisits(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
 
     boolean existsByManagerIdAndDoctorIdAndVisitDateAndStatus(
             Long managerId,

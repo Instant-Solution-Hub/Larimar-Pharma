@@ -224,6 +224,22 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("endDate") LocalDate endDate
     );
 
+    @Query("""
+    SELECT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor d
+    LEFT JOIN FETCH v.pharmacy p
+    LEFT JOIN FETCH v.stockist s
+    WHERE v.status = 'MISSED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY v.actualVisitTime DESC
+""")
+    List<Visit> findAllMissedVisits(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
 
     @Query("""
     SELECT v
