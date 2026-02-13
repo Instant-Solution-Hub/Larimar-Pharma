@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/approval-requests")
 @RequiredArgsConstructor
@@ -30,9 +32,27 @@ public class ApprovalRequestController {
     @PutMapping("/{id}/reject")
     public ResponseEntity<WorkApprovalResponseDto> reject(
             @PathVariable Long id,
-            @RequestParam Long adminId,
-            @RequestParam String remarks) {
-        return ResponseEntity.ok(service.rejectRequest(id, adminId, remarks));
+            @RequestParam Long adminId
+            ) {
+        return ResponseEntity.ok(service.rejectRequest(id, adminId));
     }
+
+    @GetMapping("/total/current-month")
+    public ResponseEntity<?> getCurrentMonthWorkApprovals() {
+        return ResponseEntity.ok(service.getCurrentMonthWorkApprovals());
+    }
+
+    @GetMapping("/current-month")
+    public ResponseEntity<List<WorkApprovalResponseDto>> getCurrentMonthApprovals(
+            @RequestParam(required = false) Long fieldExecutiveId,
+            @RequestParam(required = false) Long managerId
+    ) {
+
+        List<WorkApprovalResponseDto> response =
+                service.getCurrentMonthWorkApprovals(fieldExecutiveId, managerId);
+
+        return ResponseEntity.ok(response);
+    }
+
 }
 

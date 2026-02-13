@@ -24,7 +24,7 @@ public class WorkApproval {
     @Enumerated(EnumType.STRING)
     private ApprovalRequest.ApprovalStatus status;
 
-    private String remarks;
+    private String decription;
 
     // Raised by FE
     @ManyToOne(fetch = FetchType.LAZY)

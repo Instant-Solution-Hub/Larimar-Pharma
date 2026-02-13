@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.FEMarketSalesDto;
 import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
+import com.instantsolutions.larimarpharma.DTOs.MarketSalesSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
 import com.instantsolutions.larimarpharma.service.FEMarketSalesService;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class FEMarketSalesController {
 
 
       @GetMapping("/current-month/all")
-        public ResponseEntity<List<FEMarketSalesDto>> getCurrentMonthSalesForAllFEs() {
+        public ResponseEntity<List<MarketSalesSummaryDto>> getCurrentMonthSalesForAllFEs() {
             return ResponseEntity.ok(
                     service.getCurrentMonthMarketSalesForAllFEs()
             );
