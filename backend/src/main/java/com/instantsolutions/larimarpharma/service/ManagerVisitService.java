@@ -80,6 +80,7 @@ public class ManagerVisitService {
 
                     .doctorId(visit.getDoctor().getId())
                     .doctorName(visit.getDoctor().getName())
+                    .doctorDesignation(visit.getDoctor().getDesignation())
                     .doctorCategory(visit.getDoctor().getCategory())
                     .hospitalName(visit.getDoctor().getHospitalName())
 
@@ -203,7 +204,7 @@ public class ManagerVisitService {
                 // Doctor snapshot (no entity join)
                 mv.getDoctorId(),
                 mv.getDoctorName(),
-                null, // designation not stored in ManagerVisit
+                mv.getDoctorDesignation(), // designation not stored in ManagerVisit
                 mv.getDoctorCategory() != null ? mv.getDoctorCategory().name() : null,
                 null, // practiceType not stored
                 mv.getHospitalName(),

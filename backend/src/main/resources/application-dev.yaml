@@ -1,9 +1,9 @@
 spring:
   datasource:
 
-    url: ${DATASOURCE_URL}
-    username: ${DATASOURCE_USER}
-    password: ${DATASOURCE_PASSWORD}
+    url: ${DATASOURCE_URL:jdbc:mysql://localhost:3306/larimar_db}
+    username: ${DATASOURCE_USER:root}
+    password: ${DATASOURCE_PASSWORD:root}
 
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
@@ -29,7 +29,7 @@ spring:
     locations: classpath:db/migration
 
 server:
-  port: ${SERVER_PORT}
+  port: ${SERVER_PORT:8085}
 
 logging:
   level:
@@ -37,4 +37,4 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
 
 frontend:
-  url: ${FRONTEND_URL}
+  url: ${FRONTEND_URL:http://localhost:8080}

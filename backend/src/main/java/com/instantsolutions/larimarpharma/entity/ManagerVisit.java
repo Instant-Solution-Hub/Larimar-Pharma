@@ -82,6 +82,7 @@ public class ManagerVisit {
     /* Doctor snapshot */
     private Long doctorId;
     private String doctorName;
+    private String doctorDesignation;
 
     @Enumerated(EnumType.STRING)
     private Doctor.Category doctorCategory;
