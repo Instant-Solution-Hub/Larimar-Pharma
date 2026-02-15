@@ -223,6 +223,16 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             @Param("end") LocalDateTime end
     );
 
+    List<ManagerVisit> findByVisitDateBetween(LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT mv.visitDate, COUNT(mv) FROM ManagerVisit mv " +
+            "WHERE mv.visitDate BETWEEN :startDate AND :endDate " +
+            "AND mv.status = :status " +
+            "GROUP BY mv.visitDate")
+    List<Object[]> countByDateAndStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("status") Visit.VisitStatus status);
 
 
 }

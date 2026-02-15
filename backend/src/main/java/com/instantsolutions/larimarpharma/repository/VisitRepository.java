@@ -500,6 +500,16 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("date") LocalDate date);
 
 
+    List<Visit> findByVisitDateBetween(LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT v.visitDate, COUNT(v) FROM Visit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate " +
+            "AND v.status = :status " +
+            "GROUP BY v.visitDate")
+    List<Object[]> countByDateAndStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("status") Visit.VisitStatus status);
 
 
 
