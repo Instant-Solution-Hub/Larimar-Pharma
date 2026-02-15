@@ -91,6 +91,32 @@ public class TerritoryMonthlyTargetService {
                 .toList();
     }
 
+    @Transactional()
+    public double getTotalAchievedForManager(
+            Long managerId,
+            int month,
+            int year
+    ) {
+        Double total = territoryTargetRepo
+                .getTotalAchievedForManager(managerId, month, year);
+
+        return total != null ? total : 0.0;
+    }
+
+    @Transactional
+    public double getTotalAchievedForAllTerritories(
+            int month,
+            int year
+    ) {
+        Double total = territoryTargetRepo
+                .getTotalAchievedForAllTerritories(month, year);
+
+        return total != null ? total : 0.0;
+    }
+
+
+
+
     @Transactional
     public TerritoryMonthlyTargetResponseDto update(
             Long territoryTargetId,

@@ -16,7 +16,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,10 +35,14 @@ public class  FEProductAllocationService {
     @Transactional
     public FEProductStockDto getProductStockForFE(Long feId, Long productId) {
 
+        int month = getCurrentMonth();
+        int year = getCurrentYear();
+
         FEProductAllocation allocation = allocationRepository
-                .findByFieldExecutiveIdAndProductId(feId, productId)
+                .findByFieldExecutiveIdAndProductIdAndMonthAndYear(
+                        feId, productId, month, year)
                 .orElseThrow(() ->
-                        new RuntimeException("Product not allocated to this FE")
+                        new RuntimeException("Product not allocated to this FE for this month")
                 );
 
         return FEProductStockDto.builder()
@@ -50,28 +58,83 @@ public class  FEProductAllocationService {
     @Transactional
     public List<FEProductStockDto> getAllAllocatedProducts(Long feId) {
 
-        return allocationRepository.findByFieldExecutiveId(feId)
-                .stream()
+        int month = getCurrentMonth();
+        int year = getCurrentYear();
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(feId)
+                .orElseThrow(() -> new ResourceNotFoundException("FE not found"));
+
+        // 1. Get all products
+        List<Product> allProducts = productService.getAllProducts();
+
+        // 2. Get existing allocations for this FE + month + year
+        List<FEProductAllocation> existingAllocations =
+                allocationRepository.findByFieldExecutiveIdAndMonthAndYear(feId, month, year);
+
+        // Convert to map for quick lookup
+        Map<Long, FEProductAllocation> allocationMap =
+                existingAllocations.stream()
+                        .collect(Collectors.toMap(
+                                a -> a.getProduct().getId(),
+                                a -> a
+                        ));
+
+        List<FEProductAllocation> newAllocations = new ArrayList<>();
+
+        // 3. Ensure allocation exists for every product
+        for (Product product : allProducts) {
+
+            if (!allocationMap.containsKey(product.getId())) {
+
+                FEProductAllocation zeroAllocation = FEProductAllocation.builder()
+                        .fieldExecutive(fe)
+                        .product(product)
+                        .month(month)
+                        .year(year)
+                        .allocatedQuantity(0)
+                        .remainingQuantity(0)
+                        .build();
+
+                newAllocations.add(zeroAllocation);
+                allocationMap.put(product.getId(), zeroAllocation);
+            }
+        }
+
+        // 4. Persist new zero allocations
+        if (!newAllocations.isEmpty()) {
+            allocationRepository.saveAll(newAllocations);
+        }
+
+        // 5. Return DTO list
+        return allocationMap.values().stream()
                 .map(a -> FEProductStockDto.builder()
                         .productId(a.getProduct().getId())
                         .productName(a.getProduct().getName())
                         .allocatedQuantity(a.getAllocatedQuantity())
                         .remainingQuantity(a.getRemainingQuantity())
-                        .build()
-                )
+                        .build())
                 .toList();
     }
+
+
 
     @Transactional
     public FEProductAllocationResponseDto updateAllocatedProductStock(
             UpdateFEProductStockRequestDto dto
     ) {
+        int month = getCurrentMonth();
+        int year = getCurrentYear();
+
         FEProductAllocation allocation = allocationRepository
-                .findByFieldExecutiveIdAndProductId(dto.getFeId(), dto.getProductId())
+                .findByFieldExecutiveIdAndProductIdAndMonthAndYear(
+                        dto.getFeId(),
+                        dto.getProductId(),
+                        month,
+                        year
+                )
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product not allocated to this FE")
                 );
-
 
 
         int alreadyUsed =
@@ -120,45 +183,41 @@ public class  FEProductAllocationService {
     }
 
 
-
     @Transactional
     public FEProductAllocationResponseDto allocateProductToFE(
             FEProductAllocationRequestDto dto
     ) {
-        if (dto.getQuantity() == null || dto.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Allocation quantity must be greater than zero");
-        }
+
+        int month = getCurrentMonth();
+        int year = getCurrentYear();
 
         FieldExecutive fe = fieldExecutiveRepository
                 .findById(dto.getFeId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Field Executive not found with id: " + dto.getFeId()
-                        )
+                        new ResourceNotFoundException("Field Executive not found")
                 );
 
-        Product product = productService
-                .getProductById(dto.getProductId());
-
-               if(product == null) throw new ResourceNotFoundException("Product not found for the given product id");
+        Product product = productService.getProductById(dto.getProductId());
 
         FEProductAllocation allocation = allocationRepository
-                .findByFieldExecutiveIdAndProductId(
+                .findByFieldExecutiveIdAndProductIdAndMonthAndYear(
                         dto.getFeId(),
-                        dto.getProductId()
+                        dto.getProductId(),
+                        month,
+                        year
                 )
                 .orElse(null);
 
         if (allocation == null) {
-            // First-time allocation
             allocation = FEProductAllocation.builder()
                     .fieldExecutive(fe)
                     .product(product)
+                    .month(month)
+                    .year(year)
                     .allocatedQuantity(dto.getQuantity())
                     .remainingQuantity(dto.getQuantity())
                     .build();
         } else {
-            // Re-allocation
             allocation.setAllocatedQuantity(
                     allocation.getAllocatedQuantity() + dto.getQuantity()
             );
@@ -177,6 +236,16 @@ public class  FEProductAllocationService {
                 .remainingQuantity(saved.getRemainingQuantity())
                 .build();
     }
+
+
+    private int getCurrentMonth() {
+        return LocalDate.now().getMonthValue();
+    }
+
+    private int getCurrentYear() {
+        return LocalDate.now().getYear();
+    }
+
 
 
 

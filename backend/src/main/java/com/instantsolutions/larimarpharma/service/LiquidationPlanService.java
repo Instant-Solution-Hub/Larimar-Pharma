@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -56,7 +57,7 @@ public class LiquidationPlanService {
                 .deadline(dto.getDeadline())
                 .strategy(dto.getStrategy())
                 .status(LiquidationPlan.PlanStatus.ACTIVE)
-                .availableUnits(allocationRepository.findByFieldExecutiveIdAndProductId(feId,dto.getProductId()).get().getAllocatedQuantity())
+                .availableUnits(allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,dto.getProductId(),getCurrentMonth(),getCurrentYear()).get().getAllocatedQuantity())
                 .achievedUnits(0)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -93,7 +94,7 @@ public class LiquidationPlanService {
 
 
         // 7️⃣ Check stock availability
-      Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductId(feId,dto.getProductId());
+      Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,dto.getProductId(),getCurrentMonth(),getCurrentYear());
         if(allocation.isEmpty()) throw new IllegalStateException(
                 "No stock allocated for Executive: " + feId +
                         ", Required: " + dto.getTargetLiquidation()
@@ -199,7 +200,7 @@ public class LiquidationPlanService {
 
         LocalDateTime start = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime end = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
-        Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductId(feId,productId);
+        Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,productId,getCurrentMonth(),getCurrentYear());
         if(allocation.isEmpty()) throw new IllegalStateException(
                 "No stock allocated for Executive: " + feId +
                         ", Required: " + newUnits
@@ -249,5 +250,13 @@ public class LiquidationPlanService {
                 .quantity(plan.getAvailableUnits())
                 .managerApprovalStatus(plan.getManagerApprovalStatus())
                 .build();
+    }
+
+    private int getCurrentMonth() {
+        return LocalDate.now().getMonthValue();
+    }
+
+    private int getCurrentYear() {
+        return LocalDate.now().getYear();
     }
 }
