@@ -38,7 +38,7 @@ public class VisitAutoUpdateService {
 
         for (Visit visit : overdueVisits) {
             visit.setStatus(VisitStatus.MISSED);
-            visit.setNotes("OWNER DID NOT UPDATE THE STATUS");
+            visit.setNotes("USER DID NOT UPDATE THE STATUS");
             visit.setActualDate(visit.getScheduledDate());
         }
 

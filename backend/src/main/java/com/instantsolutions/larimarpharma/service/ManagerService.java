@@ -249,11 +249,32 @@ public class ManagerService {
 
         return DashboardStatsDto.builder()
                 .totalVisits(totalVisitsThisMonth)
-                .teamTargetProgress(teamTargetProgress)
+                .teamTargetProgress(getCurrentMonthTeamProgress(managerId))
                 .totalMembers(teamSize)
                 .trend(trend)
                 .build();
     }
+
+    public double getCurrentMonthTeamProgress(Long managerId) {
+
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = now.withDayOfMonth(1);
+        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+
+        Object result = visitRepository
+                .getMonthlyVisitStatsByManager(managerId, startDate, endDate);
+
+        Object[] stats = (Object[]) result;
+
+        Long totalVisits = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
+        Long completedVisits = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
+
+        return totalVisits == 0
+                ? 0.0
+                : (completedVisits * 100.0) / totalVisits;
+    }
+
+
 
     private String calculateTrend(Long managerId) {
         // Simplified trend calculation

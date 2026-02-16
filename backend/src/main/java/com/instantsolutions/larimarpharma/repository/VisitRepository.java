@@ -513,6 +513,22 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
 
 
 
+    @Query("""
+    SELECT 
+        COUNT(v),
+        SUM(CASE WHEN v.status = 'COMPLETED' THEN 1 ELSE 0 END)
+    FROM Visit v
+    WHERE v.fieldExecutive.manager.id = :managerId
+      AND v.visitDate BETWEEN :startDate AND :endDate
+""")
+    Object getMonthlyVisitStatsByManager(
+            Long managerId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+
+
 
 }
 

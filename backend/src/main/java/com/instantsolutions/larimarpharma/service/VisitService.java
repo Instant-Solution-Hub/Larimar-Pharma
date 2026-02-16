@@ -538,6 +538,7 @@ public class VisitService {
         }).toList();
     }
 
+    @Transactional
     public List<CompletedVisitDto> getCompletedVisits(Long fieldExecutiveId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
@@ -550,6 +551,8 @@ public class VisitService {
                 .toList();
     }
 
+
+    @Transactional
     public List<CompletedVisitDto> getMissedVisits(Long fieldExecutiveId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);

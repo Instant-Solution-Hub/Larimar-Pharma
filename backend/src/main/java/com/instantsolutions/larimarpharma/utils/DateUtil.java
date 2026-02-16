@@ -6,22 +6,28 @@ import java.time.temporal.TemporalAdjusters;
 
 public class DateUtil {
 
-    public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
+public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
 
-        // First day of NEXT month
-        LocalDate firstDayOfNextMonth = LocalDate.now()
-//                .plusMonths(1)
-                .withDayOfMonth(1);
+    LocalDate firstDayOfMonth = LocalDate.now()
+            .withDayOfMonth(1);
 
-        // First Monday of next month
-        LocalDate firstMonday = firstDayOfNextMonth.with(
-                TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY)
-        );
+    int totalDaysToAdd = (week - 1) * 7 + (dayOfWeek - 1);
 
-        return firstMonday
-                .plusWeeks(week - 1)
-                .with(DayOfWeek.of(dayOfWeek));
-    }
+    return firstDayOfMonth.plusDays(totalDaysToAdd);
+}
+
+// Production Date calculation code
+//public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
+//
+//    LocalDate firstDayOfNextMonth = LocalDate.now()
+//            .plusMonths(1)
+//            .withDayOfMonth(1);
+//
+//    int totalDaysToAdd = (week - 1) * 7 + (dayOfWeek - 1);
+//
+//    return firstDayOfNextMonth.plusDays(totalDaysToAdd);
+//}
+
 
     public static LocalDate getStartOfTheMonth(){
         return LocalDate.now()

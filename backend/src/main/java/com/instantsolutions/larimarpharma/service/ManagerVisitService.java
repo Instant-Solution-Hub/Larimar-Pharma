@@ -191,6 +191,23 @@ public class ManagerVisitService {
                 .toList();
     }
 
+    public List<TodayScheduledVisitDto> getTodaysVisitsScheduledOnly(Long managerId) {
+
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(zone);
+
+        List<ManagerVisit> visits = managerVisitRepository.findTodayScheduledVisitsByManager(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+                Visit.VisitStatus.SCHEDULED,
+                managerId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
     private TodayScheduledVisitDto toTodayScheduledVisitDTO(ManagerVisit mv) {
 
         FieldExecutive fe = mv.getFieldExecutive();
@@ -272,6 +289,7 @@ public class ManagerVisitService {
                         .location("")
                         .feName(v.getFieldExecutive()!=null ? v.getFieldExecutive().getName() : "")
                         .feEmpCode(v.getFieldExecutive()!=null ? v.getFieldExecutive().getEmployeeCode() : "")
+                        .feId(v.getFieldExecutive()!=null ? v.getFieldExecutive().getId() : 0)
                         .managerName(v.getManager().getName())
                         .managerEmpCode(v.getManager().getEmployeeCode())
                         .userRole("MANAGER")
