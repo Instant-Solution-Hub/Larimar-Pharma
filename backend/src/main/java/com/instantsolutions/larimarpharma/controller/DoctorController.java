@@ -31,6 +31,7 @@ public class DoctorController {
     public ApiResponseDto<DoctorResponseDto> updateDoctor(
             @PathVariable Long id,
             @Valid @RequestBody DoctorRequestDto dto
+
     ) {
         DoctorResponseDto doctor = doctorService.update(id, dto);
         return ApiResponseDto.success(doctor, "Doctor updated successfully");

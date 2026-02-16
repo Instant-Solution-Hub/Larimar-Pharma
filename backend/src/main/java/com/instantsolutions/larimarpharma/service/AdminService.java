@@ -21,6 +21,7 @@ public class AdminService {
     private final ManagerVisitRepository managerVisitRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private  final ManagerRepository managerRepository;
+    private final TerritoryMonthlyTargetService territoryMonthlyTargetService;
 
     public AdminContactResponseDto getAdminContact() {
         Admin admin = adminRepository.findAll()
@@ -53,9 +54,11 @@ public class AdminService {
                 .findByAdminId(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin profile not found"));
 
+        Double totalAchieved = territoryMonthlyTargetService.getTotalAchievedForAllTerritories(today.getMonthValue(), today.getYear());
+
         return AdminDashboardStatsDto.builder()
                 .targetSet(targetStats.getTargetSet())
-                .targetAchieved(targetStats.getTargetAchieved())
+                .targetAchieved(totalAchieved)
                 .casualLeaves(adminProfile.getCasualLeaves())
                 .approvedCasualLeaves(adminProfile.getApprovedCasualLeaves())
                 .sickLeaves(adminProfile.getSickLeaves())

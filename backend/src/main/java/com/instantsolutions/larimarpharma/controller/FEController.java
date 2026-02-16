@@ -1,7 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.service.AttendanceService;
 import com.instantsolutions.larimarpharma.service.FEVisitService;
 import jakarta.validation.Valid;

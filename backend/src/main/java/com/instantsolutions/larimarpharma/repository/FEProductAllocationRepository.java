@@ -11,12 +11,19 @@ import java.util.Optional;
 public interface FEProductAllocationRepository
         extends JpaRepository<FEProductAllocation, Long> {
 
-    Optional<FEProductAllocation> findByFieldExecutiveIdAndProductId(
+    Optional<FEProductAllocation> findByFieldExecutiveIdAndProductIdAndMonthAndYear(
             Long feId,
-            Long productId
+            Long productId,
+            int month,
+            int year
     );
 
-    List<FEProductAllocation> findByFieldExecutiveId(Long feId);
+    List<FEProductAllocation> findByFieldExecutiveIdAndMonthAndYear(
+            Long feId,
+            int month,
+            int year
+    );
+
 
 
 

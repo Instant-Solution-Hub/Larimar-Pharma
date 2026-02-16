@@ -17,6 +17,7 @@ public class ManagerProfileService {
 
     private final ManagerProfileRepository managerProfileRepository;
     private final FieldExecutiveProfileRepository feProfileRepository;
+    private final TerritoryMonthlyTargetService territoryMonthlyTargetService;
 
     public ManagerProfileStatsDto getManagerProfileStats(Long managerId) {
 
@@ -32,12 +33,13 @@ public class ManagerProfileService {
                 today.getMonthValue(),
                 today.getYear()
         );
+        Double getTotal = territoryMonthlyTargetService.getTotalAchievedForManager(managerId, today.getMonthValue(), today.getYear());
 
 
 
         return ManagerProfileStatsDto.builder()
                 .targetSet(dto.getTargetSet())
-                .targetAchieved(dto.getTargetAchieved())
+                .targetAchieved(getTotal)
                 .casualLeaves(profile.getCasualLeaves())
                 .approvedCasualLeaves(profile.getApprovedCasualLeaves())
                 .sickLeaves(profile.getSickLeaves())

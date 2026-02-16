@@ -19,6 +19,34 @@ public interface TerritoryMonthlyTargetRepository
             Integer month,
             Integer year
     );
+    @Query("""
+    SELECT 
+        COALESCE(SUM(t.primaryTargetAchieved), 0) +
+        COALESCE(SUM(t.secondaryTargetAchieved), 0)
+    FROM TerritoryMonthlyTarget t
+    WHERE t.manager.id = :managerId
+      AND t.month = :month
+      AND t.year = :year
+""")
+    Double getTotalAchievedForManager(
+            Long managerId,
+            int month,
+            int year
+    );
+
+    @Query("""
+    SELECT 
+        COALESCE(SUM(t.primaryTargetAchieved), 0) +
+        COALESCE(SUM(t.secondaryTargetAchieved), 0)
+    FROM TerritoryMonthlyTarget t
+    WHERE t.month = :month
+      AND t.year = :year
+""")
+    Double getTotalAchievedForAllTerritories(
+            int month,
+            int year
+    );
+
 
     Optional<TerritoryMonthlyTarget>
     findByManagerIdAndTerritoryAndMonthAndYear(
