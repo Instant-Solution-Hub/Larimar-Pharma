@@ -26,11 +26,6 @@ public class ManagerVisitController {
         return ResponseEntity.ok(ApiResponseDto.success(null,"Visits assigned successfully"));
     }
 
-//    @GetMapping("/today-schedule/{id}")
-//    public ResponseEntity<ApiResponseDto<List<ManagerVisitDto>>> getTodaySchedule(@PathVariable Long id) {
-//        List<ManagerVisitDto> schedule = managerService.getTodaySchedule(id);
-//        return ResponseEntity.ok(ApiResponseDto.success(schedule, "Schedules fetched successfully"));
-//    }
 
     @PostMapping("/mark")
     public ResponseEntity<ApiResponseDto<ManagerVisitDto>> markVisit(
@@ -49,7 +44,7 @@ public class ManagerVisitController {
         return ResponseEntity.ok(managerVisitService.reMarkVisit(dto));
     }
 
-    @GetMapping("/today-scheduled/{managerId}")
+    @GetMapping("/today-scheduled/")
     public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisits(@RequestParam Long managerId) {
         return ResponseEntity.ok(
                 managerVisitService.getTodaysVisits(managerId)
@@ -75,6 +70,13 @@ public class ManagerVisitController {
                 managerVisitService.getMissedVisits(
                         managerId
                 )
+        );
+    }
+
+    @GetMapping("/get-all-missed-visits")
+    public ResponseEntity<List<CompletedVisitDto>> getAllMissedVisits() {
+        return ResponseEntity.ok(
+                managerVisitService.getAllMissedVisits()
         );
     }
 
@@ -108,6 +110,13 @@ public class ManagerVisitController {
                 managerVisitService.getVisitsForManagerWeekAndDay(managerId, weekNumber, dayOfWeek),
                 "Visits fetched successfully"
         ));
+    }
+
+
+    @PostMapping("/admin/mark-visit-as-completed/{visitId}")
+    public ResponseEntity<ApiResponseDto<CompletedVisitDto>> markVisitAsCompleted(@PathVariable Long visitId) {
+        CompletedVisitDto  updatedVisit = managerVisitService.markManagerVisitAsCompleted(visitId);
+        return ResponseEntity.ok(ApiResponseDto.success(updatedVisit, "Visit Marked as Completed"));
     }
 
 

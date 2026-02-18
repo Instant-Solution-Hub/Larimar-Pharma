@@ -224,6 +224,22 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("endDate") LocalDate endDate
     );
 
+    @Query("""
+    SELECT v
+    FROM Visit v
+    LEFT JOIN FETCH v.doctor d
+    LEFT JOIN FETCH v.pharmacy p
+    LEFT JOIN FETCH v.stockist s
+    WHERE v.status = 'MISSED'
+      AND v.visitDate BETWEEN :startDate AND :endDate
+    ORDER BY v.actualVisitTime DESC
+""")
+    List<Visit> findAllMissedVisits(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
 
     @Query("""
     SELECT v
@@ -484,6 +500,16 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("date") LocalDate date);
 
 
+    List<Visit> findByVisitDateBetween(LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT v.visitDate, COUNT(v) FROM Visit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate " +
+            "AND v.status = :status " +
+            "GROUP BY v.visitDate")
+    List<Object[]> countByDateAndStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("status") Visit.VisitStatus status);
 
 
 

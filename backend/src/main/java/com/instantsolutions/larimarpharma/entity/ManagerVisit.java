@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -45,6 +46,15 @@ public class ManagerVisit {
     )
     private Visit originalVisit;
 
+    @OneToMany(
+            mappedBy = "managerVisit",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<SlotChangeRequest> slotChangeRequests = new ArrayList<>();
+
+
 
     @Column(nullable = false)
     @Builder.Default
@@ -72,6 +82,7 @@ public class ManagerVisit {
     /* Doctor snapshot */
     private Long doctorId;
     private String doctorName;
+    private String doctorDesignation;
 
     @Enumerated(EnumType.STRING)
     private Doctor.Category doctorCategory;

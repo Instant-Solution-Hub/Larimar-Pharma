@@ -3,8 +3,13 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.YearMonth;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -49,6 +54,66 @@ public class AdminController {
                         updated,
                         "Contact details updated successfully"
                 )
+        );
+    }
+
+//    @GetMapping("/daily-stats/all")
+//    public ResponseEntity<AllRolesDailyStatsResponse> getAllRolesDailyStats(
+//            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+//
+//        if (month == null) {
+//            month = YearMonth.now();
+//        }
+
+//        List<DailyVisitStatsDto> feStats = adminService.getDailyVisitStatsForFieldExecutive(
+//                month.getMonthValue(),
+//                month.getYear()
+//        );
+
+//        List<DailyVisitStatsDto> managerStats = adminService.getDailyVisitStatsForManager(
+//                month.getMonthValue(),
+//                month.getYear()
+//        );
+//
+//        return ResponseEntity.ok(new AllRolesDailyStatsResponse(
+//                month.getMonthValue(),
+//                month.getYear(),
+//                feStats,
+//                managerStats
+//        ));
+//  }
+
+    @GetMapping("/weekly-stats/all")
+    public ResponseEntity<?> getAllRolesWeeklyStats(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+            if (month == null) {
+                month = YearMonth.now();
+            }
+
+            List<WeeklyVisitStatsDto> feStats = adminService.getWeeklyVisitStatsForFieldExecutive(
+                    month.getMonthValue(),
+                    month.getYear()
+            );
+
+            List<WeeklyVisitStatsDto> managerStats = adminService.getWeeklyVisitStatsForManager(
+                    month.getMonthValue(),
+                    month.getYear()
+            );
+
+            return ResponseEntity.ok(new AllRolesWeeklyStatsResponse(
+
+                    month.getMonthValue(),
+                    month.getYear(),
+                    feStats,
+                    managerStats
+            ));
+    }
+
+
+    @GetMapping("/counts")
+    public ResponseEntity<AdminDashboardCounts> usersCount() {
+        return ResponseEntity.ok(
+                adminService.getCounts()
         );
     }
 

@@ -562,11 +562,28 @@ public class VisitService {
                 .toList();
     }
 
+    @Transactional
+    public List<CompletedVisitDto> getAllMissedVisits() {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return visitRepository
+                .findAllMissedVisits(startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
     private CompletedVisitDto mapToCompletedVisitDto(Visit v) {
 
         CompletedVisitDto.CompletedVisitDtoBuilder builder =
                 CompletedVisitDto.builder()
                         .visitId(v.getId())
+                        .feEmpCode(v.getFieldExecutive().getEmployeeCode())
+                        .feName(v.getFieldExecutive().getName())
+                        .userRole("FIELD_EXECUTIVE")
+                        .status(v.getStatus())
                         .visitType(v.getVisitType())
                         .visitDate(v.getVisitDate())
                         .weekNumber(v.getWeekNumber())
@@ -997,6 +1014,27 @@ public class VisitService {
         return visits.stream()
                 .map(this::toTodayScheduledVisitDTO)
                 .toList();
+    }
+
+
+    // Services for admin
+    @Transactional
+    public CompletedVisitDto markVisitAsCompleted(Long visitId) {
+
+        Visit visit = visitRepository.findById(visitId)
+                .orElseThrow(() -> new EntityNotFoundException("Visit not found with id: " + visitId));
+
+        // Prevent re-completing
+        if (visit.getStatus() == Visit.VisitStatus.COMPLETED) {
+            throw new IllegalStateException("Visit is already completed");
+        }
+
+        visit.setStatus(Visit.VisitStatus.COMPLETED);
+        visit.setNotes("Visit marked as completed by admin");
+//        visit.setActualVisitTime(LocalDateTime.now());
+//        visit.setActualDate(LocalDateTime.now());
+        Visit updatedVisit = visitRepository.save(visit);
+        return mapToCompletedVisitDto(updatedVisit);
     }
 
 

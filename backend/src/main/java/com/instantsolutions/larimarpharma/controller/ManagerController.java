@@ -294,6 +294,38 @@ public class ManagerController {
         ));
     }
 
+    @GetMapping("/{managerId}/field-executives/basic")
+    public ResponseEntity<ApiResponseDto<List<FEBasicInfoDto>>>
+    getFEBasicInfoUnderManager(@PathVariable Long managerId) {
+
+        List<FEBasicInfoDto> response =
+                managerService.getFEBasicInfoUnderManager(managerId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "Field executives fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{managerId}/liquidation-plans/current-month")
+    public ResponseEntity<ApiResponseDto<List<ManagerLiquidationPlanDto>>>
+    getCurrentMonthLiquidationPlansUnderManager(
+            @PathVariable Long managerId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        managerService
+                                .getCurrentMonthLiquidationPlansUnderManager(managerId),
+                        "Current month liquidation plans fetched successfully"
+                )
+        );
+    }
+
+
+
 
 
 }

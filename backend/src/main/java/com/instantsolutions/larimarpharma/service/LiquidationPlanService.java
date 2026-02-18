@@ -170,6 +170,25 @@ public class LiquidationPlanService {
                 .toList();
     }
 
+    @Transactional
+    public LiquidationPlanResponseDto updateApprovalStatus(
+            Long planId,
+            LiquidationPlan.ApprovalStatus status
+    ) {
+        LiquidationPlan plan = liquidationPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Liquidation plan not found"));
+
+        plan.setManagerApprovalStatus(status);
+        if (status == LiquidationPlan.ApprovalStatus.APPROVED) {
+            plan.setAchievedUnits(plan.getTargetLiquidation());
+        }
+
+        liquidationPlanRepository.save(plan);
+
+        return mapToResponse(plan);
+    }
+
+
 
     @Transactional
     public List<LiquidationPlanResponseDto> getByFeAndProductCurrentMonth(
