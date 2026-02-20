@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -122,8 +121,8 @@ public class AdminService {
                 .forEach(day -> {
                     LocalDate date = startDate.withDayOfMonth(day);
                     statsMap.put(date, new DailyVisitStatsDto(
-                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-                            0L, 0L, 0L
+                            date.getDayOfWeek().name().substring(0, 3),
+                    0L, 0L, 0L
                     ));
                 });
 
@@ -162,8 +161,8 @@ public class AdminService {
                 .forEach(day -> {
                     LocalDate date = startDate.withDayOfMonth(day);
                     statsMap.put(date, new DailyVisitStatsDto(
-                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-                            0L, 0L, 0L
+                            date.getDayOfWeek().name().substring(0, 3),
+                    0L, 0L, 0L
                     ));
                 });
 
