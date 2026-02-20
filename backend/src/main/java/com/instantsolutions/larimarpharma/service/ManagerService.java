@@ -39,6 +39,7 @@ public class ManagerService {
     private final FieldExecutiveProfileRepository fieldExecutiveProfileRepository;
 //    private final FieldExecutiveRepository fieldExecutiveRepository;
     private final VisitRepository visitRepository;
+    private final LiquidationPlanRepository liquidationPlanRepository;
 
 
     public ManagerInfoResponseDto createManager(ManagerRequestDto dto) {
@@ -483,6 +484,62 @@ public class ManagerService {
 
         return teamMembers;
     }
+
+    public List<FEBasicInfoDto> getFEBasicInfoUnderManager(Long managerId) {
+
+        List<FieldExecutive> executives =
+                fieldExecutiveRepository.findByManagerId(managerId);
+
+        return executives.stream()
+                .map(fe -> FEBasicInfoDto.builder()
+                        .id(fe.getId())
+                        .name(fe.getName())
+                        .employeeCode(fe.getEmployeeCode())
+                        .territory(
+                                fe.getTerritory() != null
+                                        ? fe.getTerritory()
+                                        : null
+                        )
+                        .build())
+                .toList();
+    }
+
+    @Transactional
+    public List<ManagerLiquidationPlanDto>
+    getCurrentMonthLiquidationPlansUnderManager(Long managerId) {
+
+        LocalDate now = LocalDate.now();
+
+        int month = now.getMonthValue();
+        int year = now.getYear();
+
+        List<LiquidationPlan> plans =
+                liquidationPlanRepository
+                        .findAllByManagerIdAndMonthAndYear(
+                                managerId,
+                                month,
+                                year
+                        );
+
+        return plans.stream()
+                .map(plan -> ManagerLiquidationPlanDto.builder()
+                        .id(plan.getId())
+                        .product(plan.getProduct().getName())
+                        .quantity(plan.getAvailableUnits())
+                        .doctor(plan.getDoctor().getName())
+                        .targetLiquidation(plan.getTargetLiquidation())
+                        .achievedUnits(plan.getAchievedUnits())
+                        .marketName(plan.getMarketName())
+                        .medicalShopName(plan.getMedicalShopName())
+                        .status(plan.getManagerApprovalStatus().name())
+                        .createdAt(plan.getCreatedAt())
+                        .employeeId(plan.getFieldExecutive().getId())
+                        .build()
+                )
+                .toList();
+    }
+
+
 
     @Transactional(readOnly = true)
     public List<VisitResponse> getTodayVisitsForFieldExecutive(Long fieldExecutiveId) {

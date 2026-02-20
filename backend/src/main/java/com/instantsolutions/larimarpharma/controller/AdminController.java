@@ -57,31 +57,31 @@ public class AdminController {
         );
     }
 
-    @GetMapping("/daily-stats/all")
-    public ResponseEntity<AllRolesDailyStatsResponse> getAllRolesDailyStats(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+//    @GetMapping("/daily-stats/all")
+//    public ResponseEntity<AllRolesDailyStatsResponse> getAllRolesDailyStats(
+//            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+//
+//        if (month == null) {
+//            month = YearMonth.now();
+//        }
 
-        if (month == null) {
-            month = YearMonth.now();
-        }
+//        List<DailyVisitStatsDto> feStats = adminService.getDailyVisitStatsForFieldExecutive(
+//                month.getMonthValue(),
+//                month.getYear()
+//        );
 
-        List<DailyVisitStatsDto> feStats = adminService.getDailyVisitStatsForFieldExecutive(
-                month.getMonthValue(),
-                month.getYear()
-        );
-
-        List<DailyVisitStatsDto> managerStats = adminService.getDailyVisitStatsForManager(
-                month.getMonthValue(),
-                month.getYear()
-        );
-
-        return ResponseEntity.ok(new AllRolesDailyStatsResponse(
-                month.getMonthValue(),
-                month.getYear(),
-                feStats,
-                managerStats
-        ));
-    }
+//        List<DailyVisitStatsDto> managerStats = adminService.getDailyVisitStatsForManager(
+//                month.getMonthValue(),
+//                month.getYear()
+//        );
+//
+//        return ResponseEntity.ok(new AllRolesDailyStatsResponse(
+//                month.getMonthValue(),
+//                month.getYear(),
+//                feStats,
+//                managerStats
+//        ));
+//  }
 
     @GetMapping("/weekly-stats/all")
     public ResponseEntity<?> getAllRolesWeeklyStats(

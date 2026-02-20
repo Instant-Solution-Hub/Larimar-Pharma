@@ -33,6 +33,20 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
     );
 
     @Query("""
+    SELECT lp FROM LiquidationPlan lp
+    WHERE lp.fieldExecutive.manager.id = :managerId
+      AND FUNCTION('MONTH', lp.createdAt) = :month
+      AND FUNCTION('YEAR', lp.createdAt) = :year
+    ORDER BY lp.createdAt DESC
+""")
+    List<LiquidationPlan> findAllByManagerIdAndMonthAndYear(
+            Long managerId,
+            int month,
+            int year
+    );
+
+
+    @Query("""
         SELECT COALESCE(SUM(lp.targetLiquidation), 0)
         FROM LiquidationPlan lp
         WHERE lp.fieldExecutive.id = :feId

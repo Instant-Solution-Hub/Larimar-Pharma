@@ -11,17 +11,22 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 @Service
+
 @RequiredArgsConstructor
 public class AdminService {
 
     private final AdminRepository adminRepository;
     private final FieldExecutiveProfileRepository feProfileRepository;
     private final AdminProfileRepository adminProfileRepository;
+
+//    private final TerritoryMonthlyTargetService territoryMonthlyTargetService;
+
     private final VisitRepository visitRepository;
     private final ManagerVisitRepository managerVisitRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private  final ManagerRepository managerRepository;
     private final TerritoryMonthlyTargetService territoryMonthlyTargetService;
+
 
     public AdminContactResponseDto getAdminContact() {
         Admin admin = adminRepository.findAll()

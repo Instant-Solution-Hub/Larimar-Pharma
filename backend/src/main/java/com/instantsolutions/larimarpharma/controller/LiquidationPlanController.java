@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.UpdateLiquidationApprovalDto;
 import com.instantsolutions.larimarpharma.service.LiquidationPlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -55,4 +56,15 @@ public class LiquidationPlanController {
                 liquidationPlanService.getCurrentMonthPlansByFE(feId)
         );
     }
+
+    @PutMapping("/{planId}/approval")
+    public ResponseEntity<LiquidationPlanResponseDto> updateApprovalStatus(
+            @PathVariable Long planId,
+            @RequestBody UpdateLiquidationApprovalDto dto
+    ) {
+        return ResponseEntity.ok(
+                liquidationPlanService.updateApprovalStatus(planId, dto.getStatus())
+        );
+    }
+
 }
