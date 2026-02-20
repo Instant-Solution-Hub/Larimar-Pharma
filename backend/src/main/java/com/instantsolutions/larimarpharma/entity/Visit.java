@@ -48,6 +48,10 @@ public class Visit {
     @OneToOne(mappedBy = "originalVisit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private ManagerVisit managerVisit;
 
+    @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SlotChangeRequest> slotChangeRequests;
+
+
 
 
     /* ===== Planning (Slot logic) ===== */

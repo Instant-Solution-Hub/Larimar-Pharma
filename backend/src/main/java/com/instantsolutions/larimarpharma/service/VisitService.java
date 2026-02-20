@@ -198,11 +198,12 @@ public class VisitService {
         Doctor doctor = visit.getDoctor();
         Pharmacy pharmacy = visit.getPharmacy();
 
-        if (dto.getLatitude() == null || dto.getLongitude() == null) {
-            throw new IllegalArgumentException("Please allow location access to mark the visit");
-        }
+
 
         if(visit.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            if (dto.getLatitude() == null || dto.getLongitude() == null) {
+                throw new IllegalArgumentException("Please allow location access to mark the visit");
+            }
             // If doctor has no location → save it
             if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
 
@@ -225,32 +226,6 @@ public class VisitService {
                 }
             }
         }
-
-        if(visit.getVisitType().equals(Visit.VisitType.PHARMACIST)){
-            // If pharmacist has no location → save it
-            if (pharmacy.getLatitude() == null || pharmacy.getLongitude() == null) {
-
-                pharmacy.setLatitude(dto.getLatitude());
-                pharmacy.setLongitude(dto.getLongitude());
-                pharmacyRepository.save(pharmacy);
-
-            } else {
-                double distance = GeoUtil.distanceInMeters(
-                        Double.parseDouble(pharmacy.getLatitude()),
-                        Double.parseDouble(pharmacy.getLongitude()),
-                        Double.parseDouble(dto.getLatitude()),
-                        Double.parseDouble(dto.getLongitude())
-                );
-
-                if (distance > 100) {
-                    throw new IllegalStateException(
-                            "You are not within 100 meters of the doctor/pharmacy location"
-                    );
-                }
-            }
-        }
-
-
 
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
@@ -342,7 +317,7 @@ public class VisitService {
             }
         }
 
-        // 4️⃣ Update visit (same fields as markVisit)
+        // Update visit (same fields as markVisit)
         visit.setStatus(Visit.VisitStatus.COMPLETED);
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
@@ -538,6 +513,7 @@ public class VisitService {
         }).toList();
     }
 
+    @Transactional
     public List<CompletedVisitDto> getCompletedVisits(Long fieldExecutiveId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
@@ -550,6 +526,8 @@ public class VisitService {
                 .toList();
     }
 
+
+    @Transactional
     public List<CompletedVisitDto> getMissedVisits(Long fieldExecutiveId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
@@ -1035,6 +1013,77 @@ public class VisitService {
 //        visit.setActualDate(LocalDateTime.now());
         Visit updatedVisit = visitRepository.save(visit);
         return mapToCompletedVisitDto(updatedVisit);
+    }
+
+    @Transactional(readOnly = true)
+    public DoctorVisitProgressDto getDoctorVisitTracking(
+            Long feId,
+            Long doctorId
+    ) {
+        LocalDate startDate = getStartOfTheMonth();
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+
+
+        long plannedVisits = visitRepository.countDoctorVisitsForDateRange(
+                feId,
+                doctorId,
+                startDate.atStartOfDay(),
+                endDate.atStartOfDay()
+        );
+
+        int requiredVisits = switch (doctor.getCategory()) {
+            case A_PLUS -> 3;
+            case A -> 2;
+            case B -> 1;
+        };
+
+        return DoctorVisitProgressDto.builder()
+                .doctorId(doctor.getId())
+                .doctorName(doctor.getName())
+                .category(doctor.getCategory().name())
+                .requiredVisits(requiredVisits)
+                .plannedVisits((int) plannedVisits)
+                .progress(plannedVisits + "/" + requiredVisits)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public DoctorVisitProgressDto getDoctorVisitCompletionTracking(
+            Long feId,
+            Long doctorId
+    ) {
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate startDate = LocalDate.now(zone);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+
+
+        long plannedVisits = visitRepository.countDoctorCompletedVisitsForDateRange(
+                feId,
+                doctorId,
+                startDate.atStartOfDay(),
+                endDate.atStartOfDay()
+        );
+
+        int requiredVisits = switch (doctor.getCategory()) {
+            case A_PLUS -> 3;
+            case A -> 2;
+            case B -> 1;
+        };
+
+        return DoctorVisitProgressDto.builder()
+                .doctorId(doctor.getId())
+                .doctorName(doctor.getName())
+                .category(doctor.getCategory().name())
+                .requiredVisits(requiredVisits)
+                .plannedVisits((int) plannedVisits)
+                .progress(plannedVisits + "/" + requiredVisits)
+                .build();
     }
 
 

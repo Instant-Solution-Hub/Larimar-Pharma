@@ -18,6 +18,18 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             Long originalVisitId
     );
 
+    List<ManagerVisit> findByManagerIdAndWeekNumberAndDayOfWeek(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    );
+
+    void deleteByManagerIdAndWeekNumberAndDayOfWeek(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    );
+
     boolean existsByManagerIdAndWeekNumberAndDayOfWeek(
             Long managerId,
             Integer weekNumber,
@@ -200,7 +212,7 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
     WHERE mv.manager = :manager
       AND mv.scheduledDate >= :start
       AND mv.scheduledDate < :end
-      AND mv.status IN ('SCHEDULED', 'APPROVED')
+      AND mv.status IN ('SCHEDULED')
 """)
     boolean existsScheduledManagerVisits(
             @Param("manager") Manager manager,
@@ -234,5 +246,11 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             @Param("endDate") LocalDate endDate,
             @Param("status") Visit.VisitStatus status);
 
+
+    List<ManagerVisit> findByFieldExecutiveIdAndWeekNumberAndDayOfWeek(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    );
 
 }

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-//import java.time.format.TextStyle;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -98,100 +98,100 @@ public class AdminService {
     }
 
 
-//    public List<DailyVisitStatsDto> getDailyVisitStatsForFieldExecutive(int month, int year) {
-//        LocalDate startDate = LocalDate.of(year, month, 1);
-//        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-//
-//        List<Visit> visits = visitRepository.findByVisitDateBetween(startDate, endDate);
-//        return aggregateDailyStats(visits, startDate);
-//    }
+    public List<DailyVisitStatsDto> getDailyVisitStatsForFieldExecutive(int month, int year) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-//    public List<DailyVisitStatsDto> getDailyVisitStatsForManager(int month, int year) {
-//        LocalDate startDate = LocalDate.of(year, month, 1);
-//        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-//
-//        List<ManagerVisit> managerVisits = managerVisitRepository.findByVisitDateBetween(startDate, endDate);
-//        return aggregateManagerDailyStats(managerVisits, startDate);
-//    }
+        List<Visit> visits = visitRepository.findByVisitDateBetween(startDate, endDate);
+        return aggregateDailyStats(visits, startDate);
+    }
 
-//    private List<DailyVisitStatsDto> aggregateDailyStats(List<Visit> visits, LocalDate startDate) {
-//        Map<LocalDate, DailyVisitStatsDto> statsMap = new LinkedHashMap<>();
-//
-//        // Initialize all days of the month
-//        IntStream.rangeClosed(1, startDate.lengthOfMonth())
-//                .forEach(day -> {
-//                    LocalDate date = startDate.withDayOfMonth(day);
-//                    statsMap.put(date, new DailyVisitStatsDto(
-//                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-//                            0L, 0L, 0L
-//                    ));
-//                });
-//
-//        // Aggregate actual visit data
-//        visits.forEach(visit -> {
-//            LocalDate date = visit.getVisitDate();
-//            DailyVisitStatsDto stats = statsMap.get(date);
-//
-//            if (stats != null) {
-//                switch (visit.getStatus()) {
-//                    case COMPLETED:
-//                        stats.setCompleted(stats.getCompleted() + 1);
-//                        break;
-//                    case MISSED:
-//                        stats.setMissed(stats.getMissed() + 1);
-//                        break;
-//                    case SCHEDULED:
-//                    case APPROVED:
-//                        stats.setPending(stats.getPending() + 1);
-//                        break;
-//                    default:
-//                        // REJECTED and others don't count
-//                        break;
-//                }
-//            }
-//        });
-//
-//        return new ArrayList<>(statsMap.values());
-//    }
+    public List<DailyVisitStatsDto> getDailyVisitStatsForManager(int month, int year) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-//    private List<DailyVisitStatsDto> aggregateManagerDailyStats(List<ManagerVisit> managerVisits, LocalDate startDate) {
-//        Map<LocalDate, DailyVisitStatsDto> statsMap = new LinkedHashMap<>();
-//
-//        // Initialize all days of the month
-//        IntStream.rangeClosed(1, startDate.lengthOfMonth())
-//                .forEach(day -> {
-//                    LocalDate date = startDate.withDayOfMonth(day);
-//                    statsMap.put(date, new DailyVisitStatsDto(
-//                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-//                            0L, 0L, 0L
-//                    ));
-//                });
-//
-//        // Aggregate actual visit data
-//        managerVisits.forEach(visit -> {
-//            LocalDate date = visit.getVisitDate();
-//            DailyVisitStatsDto stats = statsMap.get(date);
-//
-//            if (stats != null) {
-//                switch (visit.getStatus()) {
-//                    case COMPLETED:
-//                        stats.setCompleted(stats.getCompleted() + 1);
-//                        break;
-//                    case MISSED:
-//                        stats.setMissed(stats.getMissed() + 1);
-//                        break;
-//                    case SCHEDULED:
-//                    case APPROVED:
-//                        stats.setPending(stats.getPending() + 1);
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        });
-//
-//        return new ArrayList<>(statsMap.values());
-//    }
+        List<ManagerVisit> managerVisits = managerVisitRepository.findByVisitDateBetween(startDate, endDate);
+        return aggregateManagerDailyStats(managerVisits, startDate);
+    }
+
+    private List<DailyVisitStatsDto> aggregateDailyStats(List<Visit> visits, LocalDate startDate) {
+        Map<LocalDate, DailyVisitStatsDto> statsMap = new LinkedHashMap<>();
+
+        // Initialize all days of the month
+        IntStream.rangeClosed(1, startDate.lengthOfMonth())
+                .forEach(day -> {
+                    LocalDate date = startDate.withDayOfMonth(day);
+                    statsMap.put(date, new DailyVisitStatsDto(
+                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                            0L, 0L, 0L
+                    ));
+                });
+
+        // Aggregate actual visit data
+        visits.forEach(visit -> {
+            LocalDate date = visit.getVisitDate();
+            DailyVisitStatsDto stats = statsMap.get(date);
+
+            if (stats != null) {
+                switch (visit.getStatus()) {
+                    case COMPLETED:
+                        stats.setCompleted(stats.getCompleted() + 1);
+                        break;
+                    case MISSED:
+                        stats.setMissed(stats.getMissed() + 1);
+                        break;
+                    case SCHEDULED:
+                    case APPROVED:
+                        stats.setPending(stats.getPending() + 1);
+                        break;
+                    default:
+                        // REJECTED and others don't count
+                        break;
+                }
+            }
+        });
+
+        return new ArrayList<>(statsMap.values());
+    }
+
+    private List<DailyVisitStatsDto> aggregateManagerDailyStats(List<ManagerVisit> managerVisits, LocalDate startDate) {
+        Map<LocalDate, DailyVisitStatsDto> statsMap = new LinkedHashMap<>();
+
+        // Initialize all days of the month
+        IntStream.rangeClosed(1, startDate.lengthOfMonth())
+                .forEach(day -> {
+                    LocalDate date = startDate.withDayOfMonth(day);
+                    statsMap.put(date, new DailyVisitStatsDto(
+                            date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                            0L, 0L, 0L
+                    ));
+                });
+
+        // Aggregate actual visit data
+        managerVisits.forEach(visit -> {
+            LocalDate date = visit.getVisitDate();
+            DailyVisitStatsDto stats = statsMap.get(date);
+
+            if (stats != null) {
+                switch (visit.getStatus()) {
+                    case COMPLETED:
+                        stats.setCompleted(stats.getCompleted() + 1);
+                        break;
+                    case MISSED:
+                        stats.setMissed(stats.getMissed() + 1);
+                        break;
+                    case SCHEDULED:
+                    case APPROVED:
+                        stats.setPending(stats.getPending() + 1);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        return new ArrayList<>(statsMap.values());
+    }
 
     public List<WeeklyVisitStatsDto> getWeeklyVisitStatsForFieldExecutive(int month, int year) {
         LocalDate startDate = LocalDate.of(year, month, 1);

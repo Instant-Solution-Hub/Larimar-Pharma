@@ -31,6 +31,7 @@ public class CompletedVisitDto {
     private String notes;
     private String feName;
     private String feEmpCode;
+    private Long feId;
 
     private String managerName;
     private String managerEmpCode;

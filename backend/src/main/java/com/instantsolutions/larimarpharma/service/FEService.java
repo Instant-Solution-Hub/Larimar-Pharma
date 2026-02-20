@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
+
 @Service
 @RequiredArgsConstructor
 public class FEService {
@@ -309,11 +311,14 @@ public class FEService {
             Integer weekNumber,
             Integer dayOfWeek
     ) {
+
+        LocalDate startOfMonth = getStartOfTheMonth();
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
         List<FieldExecutive> fieldExecutives = repository
                 .findFEsWithScheduledAPriorityDoctorVisits(
                         managerId,
-                        weekNumber,
-                        dayOfWeek
+                        startOfMonth,
+                        endOfMonth
                 );
         return  fieldExecutives.stream().map(this::mapToResponse).toList();
     }

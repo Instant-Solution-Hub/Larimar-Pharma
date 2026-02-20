@@ -432,12 +432,18 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("date") LocalDate date
     );
 
-    @Query("SELECT v FROM Visit v WHERE v.fieldExecutive.id = :fieldExecutiveId " +
-            "AND v.visitDate = :date")
-    List<Visit> findByFieldExecutiveIdAndVisitDate(
+    @Query("""
+       SELECT v FROM Visit v
+       WHERE v.fieldExecutive.id = :fieldExecutiveId
+       AND v.scheduledDate >= :start
+       AND v.scheduledDate < :end
+       """)
+    List<Visit> findTodaysVisits(
             @Param("fieldExecutiveId") Long fieldExecutiveId,
-            @Param("date") LocalDate date
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
+
 
     @Query("""
     SELECT v
@@ -466,7 +472,7 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     WHERE v.fieldExecutive = :fe
       AND v.scheduledDate >= :start
       AND v.scheduledDate < :end
-      AND v.status IN ('SCHEDULED', 'APPROVED')
+      AND v.status IN ('SCHEDULED')
 """)
     boolean existsByFieldExecutiveAndDate(
             @Param("fe") FieldExecutive fe,
@@ -510,6 +516,56 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("status") Visit.VisitStatus status);
+
+
+
+    @Query("""
+    SELECT 
+        COUNT(v),
+        SUM(CASE WHEN v.status = 'COMPLETED' THEN 1 ELSE 0 END)
+    FROM Visit v
+    WHERE v.fieldExecutive.manager.id = :managerId
+      AND v.visitDate BETWEEN :startDate AND :endDate
+""")
+    Object getMonthlyVisitStatsByManager(
+            Long managerId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+
+    @Query("""
+    SELECT COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.doctor.id = :doctorId
+      AND v.visitType = 'DOCTOR'
+      AND v.status = 'SCHEDULED'
+      AND v.scheduledDate BETWEEN :startDate AND :endDate
+""")
+    long countDoctorVisitsForDateRange(
+            @Param("feId") Long feId,
+            @Param("doctorId") Long doctorId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+    @Query("""
+    SELECT COUNT(v)
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :feId
+      AND v.doctor.id = :doctorId
+      AND v.visitType = 'DOCTOR'
+      AND v.status = 'COMPLETED'
+      AND v.scheduledDate BETWEEN :startDate AND :endDate
+""")
+    long countDoctorCompletedVisitsForDateRange(
+            @Param("feId") Long feId,
+            @Param("doctorId") Long doctorId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
 
 
