@@ -324,6 +324,16 @@ public class ManagerController {
         );
     }
 
+    @PutMapping("/{managerId}/stockists/{stockistId}")
+    public ResponseEntity<String> assignStockist(
+            @PathVariable Long managerId,
+            @PathVariable Long stockistId
+    ) {
+        managerService.assignStockistToManager(managerId, stockistId);
+        return ResponseEntity.ok("Stockist assigned to manager successfully");
+    }
+
+
 
 
 

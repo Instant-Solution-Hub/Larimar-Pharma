@@ -96,9 +96,11 @@ public class PortalLockService {
         }
 
         // Check if FE marked any visit for that day
-        boolean hasCompletedVisits = visitRepository.existsCompletedVisitsByFieldExecutiveAndDate(fe, start, end);
+//        boolean hasCompletedVisits = visitRepository.existsCompletedVisitsByFieldExecutiveAndDate(fe, start, end);
+//
+//        return !hasCompletedVisits;
 
-        return !hasCompletedVisits;
+        return false;
     }
 
     private boolean shouldLockManagerPortal(Manager manager, LocalDate date) {
