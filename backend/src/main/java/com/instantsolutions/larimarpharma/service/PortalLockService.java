@@ -77,11 +77,15 @@ public class PortalLockService {
 //    }
 
     private boolean shouldLockFieldExecutivePortal(FieldExecutive fe, LocalDate date) {
-        boolean isAdminUnlocked = portalLockStatusRepository.existsByFieldExecutiveAndIsUnlocked(fe, true);
-        if(isAdminUnlocked){
+
+        boolean isAdminUnlocked =
+                portalLockStatusRepository.existsByFieldExecutiveAndIsUnlocked(fe, true);
+
+        if (isAdminUnlocked) {
             return false;
         }
-        // Check if it's a weekend
+
+        // Skip weekends
         if (isWeekend(date)) {
             return false;
         }
@@ -89,56 +93,74 @@ public class PortalLockService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
-        // Check if FE was on approved leave
+        // Skip if on approved leave
         if (isFieldExecutiveOnLeave(fe, date)) {
             log.debug("FE {} was on approved leave on {}, skipping lock", fe.getId(), date);
             return false;
         }
 
-        // Check if FE marked any visit for that day
-        boolean hasCompletedVisits = visitRepository.existsCompletedVisitsByFieldExecutiveAndDate(fe, start, end);
+        // Check if FE has any scheduled visits for that day
+        boolean hasScheduledVisits =
+                visitRepository.existsByFieldExecutiveAndDate(fe, start, end);
 
+        if (!hasScheduledVisits) {
+            log.debug("FE {} has no scheduled visits on {}, skipping lock", fe.getId(), date);
+            return false;
+        }
+
+        // Check if FE completed any visit
+        boolean hasCompletedVisits =
+                visitRepository.existsCompletedVisitsByFieldExecutiveAndDate(fe, start, end);
+
+        // Lock only if scheduled exists but none completed
         return !hasCompletedVisits;
     }
 
-    private boolean shouldLockManagerPortal(Manager manager, LocalDate date) {
-        boolean isAdminUnlocked = portalLockStatusRepository.existsByManagerAndIsUnlocked(manager, true);
 
-        // Check if the admin unlocked
-        if(isAdminUnlocked){
-            return  false;
-        }
-        // Check if it's a weekend
-        if (isWeekend(date)) {
+    private boolean shouldLockManagerPortal(Manager manager, LocalDate yesterday) {
+
+        boolean isAdminUnlocked =
+                portalLockStatusRepository.existsByManagerAndIsUnlocked(manager, true);
+
+        if (isAdminUnlocked) {
             return false;
         }
 
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end   = date.plusDays(1).atStartOfDay();
-
-        // Check if manager was on approved leave
-        if (isManagerOnLeave(manager, date)) {
-            log.debug("Manager {} was on approved leave on {}, skipping lock", manager.getId(), date);
+        if (isWeekend(yesterday)) {
             return false;
         }
 
-        // Check if manager has scheduled manager visits
-        boolean hasScheduledManagerVisits = managerVisitRepository.existsScheduledManagerVisits(manager, start, end);
+        if (isManagerOnLeave(manager, yesterday)) {
+            log.debug("Manager {} was on approved leave on {}, skipping lock",
+                    manager.getId(), yesterday);
+            return false;
+        }
 
-        // If manager has no scheduled activities, don't lock
+        LocalDate today = LocalDate.now();
+        LocalDate fromDate = today.minusDays(2);
+
+        LocalDateTime start = fromDate.atStartOfDay();
+        LocalDateTime end   = today.plusDays(1).atStartOfDay();
+
+        // Check if manager has scheduled visits
+        boolean hasScheduledManagerVisits =
+                managerVisitRepository.existsScheduledManagerVisits(manager, start, end);
+
         if (!hasScheduledManagerVisits) {
-            log.debug("Manager {} has no scheduled activities on {}", manager.getId(), date);
+            log.debug("Manager {} has no scheduled visits on {}, skipping lock",
+                    manager.getId(), yesterday);
             return false;
         }
 
-        // Check if manager completed any scheduled activities
-        boolean completedActivities = hasCompletedManagerActivities(manager, date);
+        //  Check if manager completed or marked any visit
+        boolean hasCompletedManagerVisits =
+                managerVisitRepository.existsCompletedManagerVisits(manager, start, end);
 
-        return !completedActivities;
+        return !hasCompletedManagerVisits;
     }
 
     private boolean isWeekend(LocalDate date) {
-        return date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY;
+        return date.getDayOfWeek() == DayOfWeek.SUNDAY;
     }
 
     private boolean isFieldExecutiveOnLeave(FieldExecutive fe, LocalDate date) {

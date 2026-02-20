@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -479,13 +480,16 @@ public class ManagerService {
             teamMembers.add(member);
         }
 
+
         return teamMembers;
     }
 
     @Transactional(readOnly = true)
     public List<VisitResponse> getTodayVisitsForFieldExecutive(Long fieldExecutiveId) {
         LocalDate today = LocalDate.now();
-        List<Visit> visits = visitRepository.findByFieldExecutiveIdAndVisitDate(fieldExecutiveId, today);
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+        List<Visit> visits = visitRepository.findTodaysVisits(fieldExecutiveId, startOfDay, endOfDay);
 
         return visits.stream()
                 .map(this::mapToVisitResponse)
@@ -493,11 +497,17 @@ public class ManagerService {
     }
 
     private TeamMemberResponse mapToTeamMemberResponse(FieldExecutive fieldExecutive) {
-        LocalDate today = LocalDate.now();
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(zone);
+
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
 
         // Get today's visits for this field executive
-        List<Visit> todayVisits = visitRepository.findByFieldExecutiveIdAndVisitDate(
-                fieldExecutive.getId(), today
+        List<Visit> todayVisits = visitRepository.findTodaysVisits(
+                fieldExecutive.getId(),
+                startOfDay,
+                endOfDay
         );
 
         // Count completed visits
@@ -505,8 +515,12 @@ public class ManagerService {
                 .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
                 .count();
 
+        long scheduledVisits = todayVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.SCHEDULED)
+                .count();
+
         // Calculate target progress (assume 8 visits target per day)
-        int target = 8;
+        int target = Math.toIntExact(scheduledVisits);
         int targetProgress = target == 0 ? 0 : (int) ((completedVisits * 100) / target);
 
         // Get market (use first market if available)
@@ -525,7 +539,7 @@ public class ManagerService {
                 .market(market)
                 .headquarters(fieldExecutive.getTerritory() != null ?
                         fieldExecutive.getTerritory() : "N/A")
-                .todayVisitCount((int) completedVisits)
+                .todayVisitCount((int) scheduledVisits)
                 .targetProgress(targetProgress)
                 .visits(visitResponses)
                 .build();

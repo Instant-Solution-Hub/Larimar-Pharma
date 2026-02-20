@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,8 +42,7 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
     JOIN v.fieldExecutive fe
     JOIN v.doctor d
     WHERE fe.manager.id = :managerId
-      AND v.weekNumber = :weekNumber
-      AND v.dayOfWeek = :dayOfWeek
+      AND v.visitDate BETWEEN :startOfMonth AND :endOfMonth
       AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED
       AND v.visitType = com.instantsolutions.larimarpharma.entity.Visit.VisitType.DOCTOR
       AND d.category IN (
@@ -52,8 +52,9 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
 """)
     List<FieldExecutive> findFEsWithScheduledAPriorityDoctorVisits(
             @Param("managerId") Long managerId,
-            @Param("weekNumber") Integer weekNumber,
-            @Param("dayOfWeek") Integer dayOfWeek
+            @Param("startOfMonth") LocalDate startOfMonth,
+            @Param("endOfMonth") LocalDate endOfMonth
     );
+
 
 }

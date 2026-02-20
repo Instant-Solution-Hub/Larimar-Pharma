@@ -26,6 +26,16 @@ public class ManagerVisitController {
         return ResponseEntity.ok(ApiResponseDto.success(null,"Visits assigned successfully"));
     }
 
+    @PostMapping("/unassign")
+    public ResponseEntity<ApiResponseDto<String>> unAssignManager(
+            @RequestBody @Valid AssignManagerVisitRequest request
+    ) {
+        managerVisitService.unassignFieldExecutiveVisits(request.getFieldExecutiveId(),
+                request.getWeekNumber(),
+                request.getDayOfWeek());
+        return ResponseEntity.ok(ApiResponseDto.success(null,"Visits un-assigned successfully"));
+    }
+
 
     @PostMapping("/mark")
     public ResponseEntity<ApiResponseDto<ManagerVisitDto>> markVisit(

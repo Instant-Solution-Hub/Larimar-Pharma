@@ -194,6 +194,24 @@ public class VisitController {
         ));
     }
 
+    @GetMapping("/doctor-track")
+    public ResponseEntity<DoctorVisitProgressDto> getDoctorVisitTrack(
+            @RequestParam("fieldExecutiveId") Long fieldExecutiveId,
+            @RequestParam("doctorId") Long doctorId) {
+
+        DoctorVisitProgressDto response = visitService.getDoctorVisitTracking(fieldExecutiveId, doctorId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/doctor-completed-track")
+    public ResponseEntity<DoctorVisitProgressDto> getDoctorCompletedVisitTrack(
+            @RequestParam("fieldExecutiveId") Long fieldExecutiveId,
+            @RequestParam("doctorId") Long doctorId) {
+
+        DoctorVisitProgressDto response = visitService.getDoctorVisitCompletionTracking(fieldExecutiveId, doctorId);
+        return ResponseEntity.ok(response);
+    }
+
 
     // Admin endpoints
 

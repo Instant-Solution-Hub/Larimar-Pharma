@@ -17,6 +17,8 @@ import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.Optional;
 
+import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,17 +33,25 @@ public class ManagerVisitService {
     @Transactional
     public void assignManagerToVisit(AssignManagerVisitRequest request) {
 
-        // Rule: Manager can't select multiple FEs for same day
-        if (managerVisitRepository.existsByManagerIdAndWeekNumberAndDayOfWeek(
-                request.getManagerId(),
-                request.getWeekNumber(),
-                request.getDayOfWeek()
-        )) {
-            throw new IllegalStateException(
-                    "Manager already assigned for this week and day"
-            );
+        // Remove existing assignments (if any)
+        List<ManagerVisit> existingAssignments =
+                managerVisitRepository.findByManagerIdAndWeekNumberAndDayOfWeek(
+                        request.getManagerId(),
+                        request.getWeekNumber(),
+                        request.getDayOfWeek()
+                );
+
+        for (ManagerVisit mv : existingAssignments) {
+            Visit originalVisit = mv.getOriginalVisit();
+
+            if (originalVisit != null) {
+                originalVisit.setManagerVisit(null);
+            }
+
+            managerVisitRepository.delete(mv);
         }
 
+        // Fetch new FE visits
         List<Visit> visits = visitRepository.findEligibleManagerVisits(
                 request.getFieldExecutiveId(),
                 request.getWeekNumber(),
@@ -58,9 +68,9 @@ public class ManagerVisitService {
         FieldExecutive fe = fieldExecutiveRepository.findById(request.getFieldExecutiveId())
                 .orElseThrow(() -> new EntityNotFoundException("FE not found"));
 
+        //  Assign new visits
         for (Visit visit : visits) {
 
-            // Safety: one manager visit per visit
             if (visit.getManagerVisit() != null) {
                 continue;
             }
@@ -83,13 +93,44 @@ public class ManagerVisitService {
                     .doctorDesignation(visit.getDoctor().getDesignation())
                     .doctorCategory(visit.getDoctor().getCategory())
                     .hospitalName(visit.getDoctor().getHospitalName())
-
                     .build();
 
             managerVisitRepository.save(mv);
             visit.setManagerVisit(mv);
         }
     }
+
+    @Transactional
+    public void unassignFieldExecutiveVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        List<ManagerVisit> managerVisits =
+                managerVisitRepository
+                        .findByFieldExecutiveIdAndWeekNumberAndDayOfWeek(
+                                fieldExecutiveId,
+                                weekNumber,
+                                dayOfWeek
+                        );
+
+        if (managerVisits.isEmpty()) {
+            return;
+        }
+
+        for (ManagerVisit mv : managerVisits) {
+            Visit originalVisit = mv.getOriginalVisit();
+
+            if (originalVisit != null) {
+                originalVisit.setManagerVisit(null);
+            }
+        }
+
+        managerVisitRepository.deleteAll(managerVisits);
+    }
+
+
 
     @Transactional
     public ManagerVisitDto markVisit(MarkVisitRequestDto dto) {
@@ -180,9 +221,12 @@ public class ManagerVisitService {
         ZoneId zone = ZoneId.of("Asia/Kolkata");
         LocalDate today = LocalDate.now(zone);
 
+        LocalDateTime start = today.minusDays(2).atStartOfDay();   // Feb 17 00:00
+        LocalDateTime end   = today.plusDays(1).atStartOfDay();    // Feb 20 00:00
+
         List<ManagerVisit> visits = managerVisitRepository.findTodaysVisitsByManager(
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay(),
+                start,
+                end,
                 feId
         );
 
@@ -190,6 +234,7 @@ public class ManagerVisitService {
                 .map(this::toTodayScheduledVisitDTO)
                 .toList();
     }
+
 
     public List<TodayScheduledVisitDto> getTodaysVisitsScheduledOnly(Long managerId) {
 
@@ -523,9 +568,9 @@ public class ManagerVisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate now = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        LocalDate now = getStartOfTheMonth();
 
-        LocalDateTime startOfMonth = now.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime startOfMonth = now.atStartOfDay();
         LocalDateTime endOfMonth =
                 now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
 

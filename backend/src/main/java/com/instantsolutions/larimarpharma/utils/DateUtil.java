@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.utils;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 
 public class DateUtil {
@@ -30,7 +31,8 @@ public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
 
 
     public static LocalDate getStartOfTheMonth(){
-        return LocalDate.now()
+        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        return LocalDate.now(zone)
 //                .plusMonths(1)
                 .withDayOfMonth(1);
     }
