@@ -93,6 +93,13 @@ public class DoctorService {
                 .toList();
     }
 
+    public List<DoctorResponseDto> getDoctorAssignedForFe(Long feId) {
+        return doctorRepository.findByFieldExecutiveId(feId)
+                .stream()
+                .map(DoctorResponseDto::fromEntity)
+                .toList();
+    }
+
     public List<Doctor> getInactive() {
         return doctorRepository.findByActiveFalse();
     }

@@ -53,6 +53,14 @@ public class DoctorController {
         );
     }
 
+    @GetMapping("/fe/{feId}")
+    public ApiResponseDto<List<DoctorResponseDto>> getDoctorsAssignedForFe(@PathVariable Long feId) {
+        return ApiResponseDto.success(
+                doctorService.getDoctorAssignedForFe(feId),
+                "Assigned doctors fetched successfully"
+        );
+    }
+
     // GET ALL FOR ADMIN (INACTIVE AND ACTIVE)
     @GetMapping("/all")
     public ApiResponseDto<List<DoctorResponseDto>> getAllDoctorsAdmin() {
