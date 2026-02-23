@@ -28,10 +28,10 @@ public class ManagerProfile {
     private Integer pendingApprovals;
 
     @Builder.Default
-    private Integer casualLeaves = 20;
+    private Integer casualLeaves = 12;
 
     @Builder.Default
-    private Integer sickLeaves = 20;
+    private Integer sickLeaves = 18;
 
     @Builder.Default
     private Integer approvedCasualLeaves = 0;
