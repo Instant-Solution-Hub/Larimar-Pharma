@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.FEMarketSalesDto;
-import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
-import com.instantsolutions.larimarpharma.DTOs.MarketSalesSummaryDto;
-import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.FEMarketSalesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +22,16 @@ public class FEMarketSalesController {
         return service.getCurrentMonthMarketSales(feId);
     }
 
+
+    @GetMapping("/all-details")
+    public ResponseEntity<List<MarketSalesDetailDto>> getSalesDetailForAllFEs(
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return ResponseEntity.ok(
+                service.getMarketSalesDetail(year, month)
+        );
+    }
     @PutMapping("/{feId}")
     public MarketSalesDto updateMarketSales(
             @PathVariable Long feId,

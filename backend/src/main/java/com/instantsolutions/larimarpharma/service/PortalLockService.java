@@ -99,6 +99,7 @@ public class PortalLockService {
             return false;
         }
 
+
         // Check if FE has any scheduled visits for that day
         boolean hasScheduledVisits =
                 visitRepository.existsByFieldExecutiveAndDate(fe, start, end);

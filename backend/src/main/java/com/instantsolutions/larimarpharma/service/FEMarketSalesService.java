@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.FEMarketSalesDto;
-import com.instantsolutions.larimarpharma.DTOs.MarketSalesDto;
-import com.instantsolutions.larimarpharma.DTOs.MarketSalesSummaryDto;
-import com.instantsolutions.larimarpharma.DTOs.UpdateMarketSalesRequestDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.FEMarketMonthlySales;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
@@ -54,6 +51,12 @@ public class FEMarketSalesService {
                         .salesAmount(salesMap.getOrDefault(market, 0.0))
                         .build())
                 .toList();
+    }
+    @Transactional
+    public List<MarketSalesDetailDto> getMarketSalesDetail(int year, int month) {
+
+        return salesRepo
+                .findCurrentMonthMarketSalesDetail(year, month);
     }
 
     @Transactional

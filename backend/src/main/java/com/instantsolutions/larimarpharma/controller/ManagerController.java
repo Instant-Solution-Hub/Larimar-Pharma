@@ -147,21 +147,7 @@ public class ManagerController {
         );
     }
 
-    @GetMapping("/{managerId}/fe-leaves")
-    public ResponseEntity<ApiResponseDto<List<LeaveRequestWithFEResponseDto>>> getTeamLeaveRequests(
-            @PathVariable Long managerId
-    ) {
 
-        List<LeaveRequestWithFEResponseDto> leaves =
-                leaveRequestService.getLeavesOfFEsUnderManager(managerId);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.success(
-                        leaves,
-                        "Team leave requests fetched successfully"
-                )
-        );
-    }
 
     @GetMapping("/manager-leaves")
     public ResponseEntity<ApiResponseDto<List<ManagerLeaveResponseDto>>> getAllManagerLeaves() {
@@ -231,6 +217,8 @@ public class ManagerController {
             @RequestParam int month,
             @RequestParam int year
     ) {
+        System.out.println("Year :" + year);
+        System.out.println("Month :" + month);
 
         return ResponseEntity.ok(
                 ApiResponseDto.success(
@@ -323,6 +311,16 @@ public class ManagerController {
                 )
         );
     }
+
+    @PutMapping("/{managerId}/stockists/{stockistId}")
+    public ResponseEntity<String> assignStockist(
+            @PathVariable Long managerId,
+            @PathVariable Long stockistId
+    ) {
+        managerService.assignStockistToManager(managerId, stockistId);
+        return ResponseEntity.ok("Stockist assigned to manager successfully");
+    }
+
 
 
 

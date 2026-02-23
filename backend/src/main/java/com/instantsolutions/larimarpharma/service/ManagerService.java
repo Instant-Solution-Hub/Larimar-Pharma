@@ -7,6 +7,7 @@ import com.instantsolutions.larimarpharma.DTOs.ManagerRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.*;
+import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
@@ -32,6 +33,7 @@ public class ManagerService {
     private final ManagerRepository managerRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private final FEService feService;
+    private final StockistRepository stockistRepository;
 //    private final ManagerProfileRepository managerProfileRepository;
     private final ManagerVisitRepository managerVisitRepository;
     private final FieldExecutiveProfileRepository profileRepository;
@@ -539,6 +541,23 @@ public class ManagerService {
                 .toList();
     }
 
+    @Transactional
+    public void assignStockistToManager(Long managerId, Long stockistId) {
+
+        Manager manager = managerRepository.findById(managerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
+
+        Stockist stockist = stockistRepository.findById(stockistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stockist not found"));
+
+        // avoid duplicate mapping
+        if (!manager.getStockists().contains(stockist)) {
+            manager.getStockists().add(stockist);
+            stockist.getManagers().add(manager);
+        }
+
+        managerRepository.save(manager);
+    }
 
 
     @Transactional(readOnly = true)

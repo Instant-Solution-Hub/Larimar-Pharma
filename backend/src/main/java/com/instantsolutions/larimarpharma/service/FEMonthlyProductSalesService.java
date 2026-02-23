@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.MonthlyProductSalesSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlyProductSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlySalesRowDto;
 import com.instantsolutions.larimarpharma.entity.FEMonthlyProductSales;
@@ -62,6 +63,15 @@ public class FEMonthlyProductSalesService {
                     .sales(row != null ? row.getSales() : 0)
                     .build();
         }).toList();
+    }
+
+    @Transactional
+    public List<MonthlyProductSalesSummaryDto> getAllFESalesSummary(
+            int year,
+            int month
+    ) {
+        return salesRepository
+                .findAllSummaryByMonthAndYear(year, month);
     }
 
     @Transactional

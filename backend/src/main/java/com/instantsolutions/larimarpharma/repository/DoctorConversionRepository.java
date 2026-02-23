@@ -16,5 +16,10 @@ public interface DoctorConversionRepository extends JpaRepository<DoctorConversi
     );
 
     Optional<DoctorConversion> findByIdAndFieldExecutiveId(Long id, Long fieldExecutiveId);
+
+    List<DoctorConversion> findByCreatedAtBetween(
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
 }
 

@@ -39,6 +39,22 @@ public class LeaveRequestController {
         );
     }
 
+    @GetMapping("/fe-leaves")
+    public ResponseEntity<ApiResponseDto<List<LeaveRequestWithFEResponseDto>>> getTeamLeaveRequests(
+
+    ) {
+
+        List<LeaveRequestWithFEResponseDto> leaves =
+                leaveRequestService.getLeavesOfFEs();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        leaves,
+                        "Team leave requests fetched successfully"
+                )
+        );
+    }
+
     @GetMapping("/{feId}")
     public ResponseEntity<List<LeaveRequest>> getLeavesByFieldExecutive(
             @PathVariable Long feId

@@ -347,4 +347,31 @@ public class LeaveRequestService {
                 .appliedDate(leave.getAppliedDate())
                 .build();
     }
+
+
+    @Transactional
+    public List<LeaveRequestWithFEResponseDto> getLeavesOfFEs() {
+        List<LeaveRequest> leaves =  leaveRequestRepository.findAllFELeaves();
+        return leaves.stream()
+                .map(lr -> LeaveRequestWithFEResponseDto.builder()
+                        .id(lr.getId()).feCode(
+                                lr.getFieldExecutive() != null
+                                        ? lr.getFieldExecutive().getEmployeeCode()
+                                        : null
+                        )
+                        .feName(
+                                lr.getFieldExecutive() != null
+                                        ? lr.getFieldExecutive().getName()
+                                        : null
+                        )
+                        .leaveType(lr.getLeaveType())
+                        .status(lr.getStatus())
+                        .fromDate(lr.getFromDate())
+                        .toDate(lr.getToDate())
+                        .reason(lr.getReason())
+                        .appliedDate(lr.getAppliedDate())
+                        .build()
+                )
+                .toList();
+    }
 }

@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
+import com.instantsolutions.larimarpharma.DTOs.MonthlyProductSalesSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlyProductSummaryDto;
 import com.instantsolutions.larimarpharma.DTOs.MonthlySalesRowDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateSalesQtyDto;
@@ -45,6 +46,16 @@ public class FEMonthlyProductSalesController {
                     service.getPreviousMonthSalesSummary()
             );
         }
+
+    @GetMapping("/all/summary")
+    public ResponseEntity<List<MonthlyProductSalesSummaryDto>> getAllFESalesSummary(
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return ResponseEntity.ok(
+                service.getAllFESalesSummary(year, month)
+        );
+    }
 
 }
 
