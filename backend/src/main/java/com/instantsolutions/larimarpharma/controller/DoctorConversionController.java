@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -36,6 +37,24 @@ public class DoctorConversionController {
                 ApiResponseDto.success(
                         conversions,
                         "Doctor conversions for current month fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponseDto<List<DoctorConversionResponseDto>>>
+    getDoctorConversionsBetweenDates(
+            @RequestParam LocalDate fromDate,
+            @RequestParam LocalDate toDate
+    ) {
+
+        List<DoctorConversionResponseDto> conversions =
+                doctorConversionService.getConversionsBetweenDates(fromDate, toDate);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        conversions,
+                        "Doctor conversions fetched successfully"
                 )
         );
     }

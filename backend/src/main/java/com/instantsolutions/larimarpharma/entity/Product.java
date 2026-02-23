@@ -35,6 +35,9 @@ public class Product {
 
     @Column(nullable = false)
     private Double pts;
+
+    @Column(nullable = false)
+    private Double newPts;
     private Double ptr;
 
     @Builder.Default

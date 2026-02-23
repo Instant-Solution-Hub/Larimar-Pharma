@@ -30,5 +30,8 @@ public class ProductRequestDto {
     @NotNull(message = "Product ptr is required")
     private Double ptr;
 
+    @NotNull(message = "Product new pts is required")
+    private Double newPts;
+
     private boolean active;
 }

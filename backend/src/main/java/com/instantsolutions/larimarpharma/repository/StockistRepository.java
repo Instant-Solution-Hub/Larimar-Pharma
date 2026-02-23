@@ -2,6 +2,7 @@ package com.instantsolutions.larimarpharma.repository;
 
 
 import com.instantsolutions.larimarpharma.DTOs.ManagerStockistResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.MonthlyStockistSalesSummaryDto;
 import com.instantsolutions.larimarpharma.entity.Stockist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,6 +29,7 @@ public interface StockistRepository extends JpaRepository<Stockist, Long> {
     List<Stockist> findByNameContainingIgnoreCase(String name);
 
     List<Stockist> findByActiveTrue();
+
 
     @Query("""
         select new com.instantsolutions.larimarpharma.DTOs.ManagerStockistResponseDto(

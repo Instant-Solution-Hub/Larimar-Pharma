@@ -60,7 +60,30 @@ public class DoctorConversionService {
         LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
         List<DoctorConversion> conversions =
-                doctorConversionRepository.findAll();
+                doctorConversionRepository.findByCreatedAtBetween(
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        return conversions.stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DoctorConversionResponseDto> getConversionsBetweenDates(
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+
+        LocalDateTime startDateTime = fromDate.atStartOfDay();
+        LocalDateTime endDateTime = toDate.atTime(23, 59, 59);
+
+        List<DoctorConversion> conversions =
+                doctorConversionRepository.findByCreatedAtBetween(
+                        startDateTime,
+                        endDateTime
+                );
 
         return conversions.stream()
                 .map(this::mapToDto)

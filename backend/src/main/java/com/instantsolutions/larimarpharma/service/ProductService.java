@@ -27,6 +27,7 @@ public class ProductService {
                 .price(dto.getPrice())
                 .active(dto.isActive())
                 .pts(dto.getPts())
+                .newPts(dto.getNewPts())
                 .build();
 
         return productRepository.save(product);
@@ -43,6 +44,7 @@ public class ProductService {
         product.setPts(dto.getPts());
         product.setPrice(dto.getPrice());
         product.setActive(dto.isActive());
+        product.setNewPts(dto.getNewPts());
 
         return productRepository.save(product);
     }
