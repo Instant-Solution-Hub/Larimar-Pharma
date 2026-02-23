@@ -5,9 +5,11 @@ import com.instantsolutions.larimarpharma.service.ManagerService;
 import com.instantsolutions.larimarpharma.service.ManagerVisitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -134,6 +136,17 @@ public class ManagerVisitController {
     public ResponseEntity<ApiResponseDto<CompletedVisitDto>> markVisitAsCompleted(@PathVariable Long visitId) {
         CompletedVisitDto  updatedVisit = managerVisitService.markManagerVisitAsCompleted(visitId);
         return ResponseEntity.ok(ApiResponseDto.success(updatedVisit, "Visit Marked as Completed"));
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<ManagerVisitSummaryResponseDto> getManagerVisitSummary(
+            @RequestParam Long managerId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(
+                managerVisitService.getManagerVisitSummary(managerId, from, to)
+        );
     }
 
 

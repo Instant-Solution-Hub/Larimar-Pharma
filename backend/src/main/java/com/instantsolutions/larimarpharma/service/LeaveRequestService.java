@@ -3,13 +3,12 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerLeaveResponseDto;
-import com.instantsolutions.larimarpharma.entity.FieldExecutive;
-import com.instantsolutions.larimarpharma.entity.FieldExecutiveProfile;
-import com.instantsolutions.larimarpharma.entity.LeaveRequest;
-import com.instantsolutions.larimarpharma.entity.ManagerProfile;
+import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.InsufficientLeaveBalanceException;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
 import com.instantsolutions.larimarpharma.repository.LeaveRequestRepository;
+import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
+import com.instantsolutions.larimarpharma.repository.VisitRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,10 @@ public class LeaveRequestService {
 
     @Autowired
     private FieldExecutiveRepository fieldExecutiveRepository;
+    @Autowired
+    private VisitRepository visitRepository;
+    @Autowired
+    private ManagerVisitRepository managerVisitRepository;
 
     public LeaveRequest applyLeave(LeaveRequestDto dto) {
 
@@ -159,6 +162,21 @@ public class LeaveRequestService {
 
             leave.setStatus(LeaveRequest.ApprovalStatus.APPROVED);
             leave.setApprovalDate(LocalDateTime.now());
+        // Only apply for FieldExecutive leave
+        if (leave.getFieldExecutive() != null) {
+
+            Long fieldExecutiveId = leave.getFieldExecutive().getId();
+
+            visitRepository.markVisitsAsMissedForLeave(
+                    fieldExecutiveId,
+                    leave.getFromDate(),
+                    leave.getToDate(),
+                    "Marked as MISSED due to approved leave from "
+                            + leave.getFromDate().toLocalDate()
+                            + " to "
+                            + leave.getToDate().toLocalDate()
+            );
+        }
 
             leaveRequestRepository.save(leave);
             return LeaveRequestWithFEResponseDto.builder()
@@ -300,6 +318,7 @@ public class LeaveRequestService {
         }
 
         ManagerProfile profile = leave.getManager().getProfile();
+        Manager manager = leave.getManager();
         int days = calculateDays(leave.getFromDate(), leave.getToDate());
         if (!hasSufficientBalance(profile, leave.getLeaveType(), days)) {
             return rejectManagerLeave(leaveId);
@@ -309,6 +328,20 @@ public class LeaveRequestService {
 
         leave.setStatus(LeaveRequest.ApprovalStatus.APPROVED);
         leave.setApprovalDate(LocalDateTime.now());
+
+        // AUTO-MARK MANAGER VISITS AS MISSED
+        String autoNote = "Marked as MISSED due to approved leave from "
+                + leave.getFromDate().toLocalDate()
+                + " to "
+                + leave.getToDate().toLocalDate();
+
+        managerVisitRepository.markManagerVisitsAsMissedForLeave(
+                manager.getId(),
+                leave.getFromDate(),
+                leave.getToDate(),
+                autoNote
+        );
+
 
         leaveRequestRepository.save(leave);
         return ManagerLeaveResponseDto.builder()

@@ -611,6 +611,29 @@ public class ManagerVisitService {
         return mapToCompletedVisitDto(updatedVisit);
     }
 
+    public ManagerVisitSummaryResponseDto getManagerVisitSummary(
+            Long managerId,
+            LocalDate from,
+            LocalDate to
+    ) {
+
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(23, 59, 59);
+
+        ManagerVisitSummaryResponseDto response =
+                managerVisitRepository.getManagerVisitSummary(
+                        managerId,
+                        fromDateTime,
+                        toDateTime
+                );
+
+        if (response == null) {
+            return new ManagerVisitSummaryResponseDto(0,0,0,0,0,0);
+        }
+
+        return response;
+    }
+
 
 
 

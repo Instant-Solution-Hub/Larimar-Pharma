@@ -2,12 +2,14 @@ package com.instantsolutions.larimarpharma.repository;
 import com.instantsolutions.larimarpharma.DTOs.ComplianceStatsProjection;
 import com.instantsolutions.larimarpharma.DTOs.TodayScheduledVisitDto;
 import com.instantsolutions.larimarpharma.DTOs.VisitCountProjection;
+import com.instantsolutions.larimarpharma.DTOs.VisitSummaryResponseDto;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -567,6 +569,46 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    UPDATE Visit v
+    SET v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.MISSED,
+        v.notes = :note,
+        v.updatedAt = CURRENT_TIMESTAMP
+    WHERE v.fieldExecutive.id = :fieldExecutiveId
+    AND v.scheduledDate BETWEEN :fromDate AND :toDate
+    AND v.status IN (
+        com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED,
+        com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.APPROVED
+    )
+""")
+    int markVisitsAsMissedForLeave(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            @Param("note") String note
+    );
+
+    @Query("""
+    SELECT new com.instantsolutions.larimarpharma.DTOs.VisitSummaryResponseDto(
+        COALESCE(SUM(CASE WHEN v.status = 'COMPLETED' THEN 1 ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN v.status = 'MISSED' THEN 1 ELSE 0 END),0),
+
+        COALESCE(SUM(CASE WHEN v.status = 'COMPLETED' AND v.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN v.status = 'COMPLETED' AND v.visitType = 'PHARMACIST' THEN 1 ELSE 0 END),0),
+
+        COALESCE(SUM(CASE WHEN v.status = 'MISSED' AND v.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN v.status = 'MISSED' AND v.visitType = 'PHARMACIST' THEN 1 ELSE 0 END),0)
+    )
+    FROM Visit v
+    WHERE v.fieldExecutive.id = :fieldExecutiveId
+    AND v.scheduledDate BETWEEN :fromDate AND :toDate
+""")
+    VisitSummaryResponseDto getVisitSummary(
+            @Param("fieldExecutiveId") Long fieldExecutiveId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
 
 
 

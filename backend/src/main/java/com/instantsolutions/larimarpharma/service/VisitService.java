@@ -200,7 +200,8 @@ public class VisitService {
 
 
 
-        if(visit.getVisitType().equals(Visit.VisitType.DOCTOR)){
+        if(visit.getVisitType().equals(Visit.VisitType.DOCTOR) &&
+                !dto.getStatus().equals(Visit.VisitStatus.MISSED)){
             if (dto.getLatitude() == null || dto.getLongitude() == null) {
                 throw new IllegalArgumentException("Please allow location access to mark the visit");
             }
@@ -1084,6 +1085,25 @@ public class VisitService {
                 .plannedVisits((int) plannedVisits)
                 .progress(plannedVisits + "/" + requiredVisits)
                 .build();
+    }
+
+    public VisitSummaryResponseDto getVisitSummary(
+            Long fieldExecutiveId,
+            LocalDate from,
+            LocalDate to
+    ) {
+
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(23, 59, 59);
+
+        VisitSummaryResponseDto response =
+                visitRepository.getVisitSummary(fieldExecutiveId, fromDateTime, toDateTime);
+
+        if (response == null) {
+            return new VisitSummaryResponseDto(0,0,0,0,0,0);
+        }
+
+        return response;
     }
 
 
