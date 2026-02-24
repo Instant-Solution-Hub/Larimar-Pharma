@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.DTOs.ManagerVisitSummaryProjection;
 import com.instantsolutions.larimarpharma.DTOs.ManagerVisitSummaryResponseDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.ManagerVisit;
@@ -12,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long> {
 
@@ -276,24 +278,24 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
 
 
     @Query("""
-    SELECT new com.instantsolutions.larimarpharma.DTOs.ManagerVisitSummaryResponseDto(
-        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' THEN 1 ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' THEN 1 ELSE 0 END),0),
-
-        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'PHARMACIST' THEN 1 ELSE 0 END),0),
-
-        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'PHARMACIST' THEN 1 ELSE 0 END),0)
-    )
+    SELECT
+        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' THEN 1 ELSE 0 END),0) as completedVisitCount,
+        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' THEN 1 ELSE 0 END),0) as missedVisitCount,
+        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0) as completedDoctorVisitCount,
+        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'DOCTOR' THEN 1 ELSE 0 END),0) as missedDoctorVisitCount,
+        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'A_PLUS' THEN 1 ELSE 0 END),0) as completedAPlusVisits,
+        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'A_PLUS' THEN 1 ELSE 0 END),0) as missedAPlusVisits,
+        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'A' THEN 1 ELSE 0 END),0) as completedAVisits,
+        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'A' THEN 1 ELSE 0 END),0) as missedAVisits,
+        COALESCE(SUM(CASE WHEN mv.status = 'COMPLETED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'B' THEN 1 ELSE 0 END),0) as completedBVisits,
+        COALESCE(SUM(CASE WHEN mv.status = 'MISSED' AND mv.visitType = 'DOCTOR' AND mv.doctorCategory = 'B' THEN 1 ELSE 0 END),0) as missedBVisits
     FROM ManagerVisit mv
     WHERE mv.manager.id = :managerId
     AND mv.scheduledDate BETWEEN :fromDate AND :toDate
-""")
-    ManagerVisitSummaryResponseDto getManagerVisitSummary(
+    """)
+    Optional<ManagerVisitSummaryProjection> getManagerVisitSummary(
             @Param("managerId") Long managerId,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate
     );
-
 }

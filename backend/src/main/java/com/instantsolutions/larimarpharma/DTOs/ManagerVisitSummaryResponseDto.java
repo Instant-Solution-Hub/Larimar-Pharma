@@ -7,12 +7,21 @@ import lombok.Data;
 @AllArgsConstructor
 public class ManagerVisitSummaryResponseDto {
 
+    // Overall
     private long completedVisitCount;
     private long missedVisitCount;
 
+    // Doctor Type (Pharmacist skipped)
     private long completedDoctorVisitCount;
-    private long completedPharmacistVisitCount;
-
     private long missedDoctorVisitCount;
-    private long missedPharmacistVisitCount;
+
+    // Category-wise
+    private long completedAPlusVisits;
+    private long missedAPlusVisits;
+
+    private long completedAVisits;
+    private long missedAVisits;
+
+    private long completedBVisits;
+    private long missedBVisits;
 }

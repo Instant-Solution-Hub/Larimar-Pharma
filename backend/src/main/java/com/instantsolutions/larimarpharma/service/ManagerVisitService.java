@@ -620,18 +620,28 @@ public class ManagerVisitService {
         LocalDateTime fromDateTime = from.atStartOfDay();
         LocalDateTime toDateTime = to.atTime(23, 59, 59);
 
-        ManagerVisitSummaryResponseDto response =
-                managerVisitRepository.getManagerVisitSummary(
-                        managerId,
-                        fromDateTime,
-                        toDateTime
-                );
+        return managerVisitRepository.getManagerVisitSummary(managerId, fromDateTime, toDateTime)
+                .map(projection -> new ManagerVisitSummaryResponseDto(
+                        getValueOrDefault(projection.getCompletedVisitCount()),
+                        getValueOrDefault(projection.getMissedVisitCount()),
+                        getValueOrDefault(projection.getCompletedDoctorVisitCount()),
+                        getValueOrDefault(projection.getMissedDoctorVisitCount()),
+                        getValueOrDefault(projection.getCompletedAPlusVisits()),
+                        getValueOrDefault(projection.getMissedAPlusVisits()),
+                        getValueOrDefault(projection.getCompletedAVisits()),
+                        getValueOrDefault(projection.getMissedAVisits()),
+                        getValueOrDefault(projection.getCompletedBVisits()),
+                        getValueOrDefault(projection.getMissedBVisits())
+                ))
+                .orElse(new ManagerVisitSummaryResponseDto(0, 0,
+                        0, 0,
+                        0, 0,
+                        0, 0,
+                        0, 0));
+    }
 
-        if (response == null) {
-            return new ManagerVisitSummaryResponseDto(0,0,0,0,0,0);
-        }
-
-        return response;
+    private long getValueOrDefault(Long value) {
+        return value != null ? value : 0L;
     }
 
 

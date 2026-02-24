@@ -1092,18 +1092,30 @@ public class VisitService {
             LocalDate from,
             LocalDate to
     ) {
-
         LocalDateTime fromDateTime = from.atStartOfDay();
         LocalDateTime toDateTime = to.atTime(23, 59, 59);
 
-        VisitSummaryResponseDto response =
-                visitRepository.getVisitSummary(fieldExecutiveId, fromDateTime, toDateTime);
-
-        if (response == null) {
-            return new VisitSummaryResponseDto(0,0,0,0,0,0);
-        }
-
-        return response;
+        return visitRepository.getFullVisitSummary(fieldExecutiveId, fromDateTime, toDateTime)
+                .map(projection -> new VisitSummaryResponseDto(
+                        projection.getCompletedVisitCount(),
+                        projection.getMissedVisitCount(),
+                        projection.getCompletedDoctorVisitCount(),
+                        projection.getCompletedPharmacistVisitCount(),
+                        projection.getMissedDoctorVisitCount(),
+                        projection.getMissedPharmacistVisitCount(),
+                        projection.getCompletedAPlusVisits(),
+                        projection.getMissedAPlusVisits(),
+                        projection.getCompletedAVisits(),
+                        projection.getMissedAVisits(),
+                        projection.getCompletedBVisits(),
+                        projection.getMissedBVisits()
+                ))
+                .orElseGet(() -> new VisitSummaryResponseDto(0, 0,
+                        0, 0,
+                        0, 0,
+                        0, 0,
+                        0, 0,
+                        0, 0));
     }
 
 
