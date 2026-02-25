@@ -10,6 +10,7 @@ public class DateUtil {
 public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
 
     LocalDate firstDayOfMonth = LocalDate.now()
+            .plusMonths(1)
             .withDayOfMonth(1);
 
     int totalDaysToAdd = (week - 1) * 7 + (dayOfWeek - 1);
@@ -33,7 +34,7 @@ public static LocalDate calculateVisitDate(int week, int dayOfWeek) {
     public static LocalDate getStartOfTheMonth(){
         ZoneId zone = ZoneId.of("Asia/Kolkata");
         return LocalDate.now(zone)
-//                .plusMonths(1)
+                .plusMonths(1)
                 .withDayOfMonth(1);
     }
 
