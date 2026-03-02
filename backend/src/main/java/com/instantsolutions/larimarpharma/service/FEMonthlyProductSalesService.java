@@ -53,14 +53,14 @@ public class FEMonthlyProductSalesService {
         return products.stream().map(product -> {
 
             FEMonthlyProductSales row = existing.get(product.getId());
-            double pts = product.getPts(); // or price field
+            double pts = product.getNewPts(); // or price field
 
             return MonthlySalesRowDto.builder()
                     .productId(product.getId())
                     .productName(product.getName())
                     .pts(pts)
                     .quantity(row != null ? row.getQuantity() : 0)
-                    .sales(row != null ? row.getSales() : 0)
+                    .sales(row != null ? row.getQuantity() * pts : 0)
                     .build();
         }).toList();
     }
@@ -115,7 +115,7 @@ public class FEMonthlyProductSalesService {
                                 .product(product)
                                 .year(ym.getYear())
                                 .month(ym.getMonthValue())
-                                .pts(product.getPts())
+                                .pts(product.getNewPts())
                                 .createdAt(LocalDateTime.now())
                                 .build()
                         );
@@ -126,6 +126,5 @@ public class FEMonthlyProductSalesService {
 
         salesRepository.save(sales);
     }
-
 
 }
