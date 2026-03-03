@@ -12,12 +12,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/visual-aids")
 @RequiredArgsConstructor
 public class VisualAidController {
 
     private final VisualAidService visualAidService;
+
 
     @PostMapping(value="/upload",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<VisualAid> uploadVisualAid(
