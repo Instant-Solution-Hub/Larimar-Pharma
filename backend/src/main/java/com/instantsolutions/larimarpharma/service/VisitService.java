@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.Map;
@@ -678,8 +675,8 @@ public class VisitService {
 
     public List<TodayScheduledVisitDto> getTodayScheduledVisits(Long feId) {
 
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        LocalDate today = LocalDate.now(zone);
+//        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now();
 
         List<Visit> visits = visitRepository.findTodayScheduledVisitsByFieldExecutive(
                 today.atStartOfDay(),
@@ -694,10 +691,7 @@ public class VisitService {
     }
 
     public List<TodayScheduledVisitDto> getTodaysVisits(Long feId) {
-
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        LocalDate today = LocalDate.now(zone);
-
+        LocalDate today = LocalDate.now();
         List<Visit> visits = visitRepository.findTodaysVisitsByFieldExecutive(
                 today.atStartOfDay(),
                 today.plusDays(1).atStartOfDay(),
@@ -1056,8 +1050,8 @@ public class VisitService {
             Long feId,
             Long doctorId
     ) {
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        LocalDate startDate = LocalDate.now(zone);
+//        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         Doctor doctor = doctorRepository.findById(doctorId)

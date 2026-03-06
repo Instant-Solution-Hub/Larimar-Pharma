@@ -612,6 +612,13 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     );
 
 
+    List<Visit> findByVisitTypeAndStatusAndVisitDateBefore(
+            Visit.VisitType visitType,
+            Visit.VisitStatus status,
+            LocalDate visitDate
+    );
+
+
 
 }
 
