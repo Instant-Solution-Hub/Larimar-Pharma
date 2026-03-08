@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.controller;
 
+import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerLeaveRequestDto;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
 import com.instantsolutions.larimarpharma.service.ManagerLeaveRequestService;
@@ -48,6 +49,15 @@ public class ManagerLeaveController {
                         .getConfirmedLeavesForCurrentMonth(managerId);
 
         return ResponseEntity.ok(days);
+    }
+
+    @GetMapping("/{managerId}/fe-leaves")
+    public ResponseEntity<List<LeaveRequestWithFEResponseDto>> getFELeavesUnderManager(
+            @PathVariable Long managerId
+    ) {
+       List< LeaveRequestWithFEResponseDto> result = managerLeaveRequestService.getLeavesOfFEsUnderManager(managerId);
+
+        return ResponseEntity.ok(result);
     }
 
 }

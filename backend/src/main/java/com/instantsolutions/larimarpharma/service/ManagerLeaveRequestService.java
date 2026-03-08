@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
+import com.instantsolutions.larimarpharma.DTOs.LeaveRequestWithFEResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.ManagerLeaveRequestDto;
 import com.instantsolutions.larimarpharma.entity.LeaveRequest;
 import com.instantsolutions.larimarpharma.entity.Manager;
@@ -167,6 +168,26 @@ public class ManagerLeaveRequestService {
                     profile.getSickLeaves() - profile.getApprovedSickLeaves() >= days;
             case EARNED_LEAVE -> true;
         };
+    }
+
+    @Transactional
+    public List<LeaveRequestWithFEResponseDto> getLeavesOfFEsUnderManager(Long managerId) {
+        List<LeaveRequest> leaves =  leaveRequestRepository
+                .findByFieldExecutive_Manager_IdOrderByFromDateDesc(managerId);
+        return leaves.stream()
+                .map(lr -> LeaveRequestWithFEResponseDto.builder()
+                        .id(lr.getId())
+                        .feCode(lr.getFieldExecutive().getEmployeeCode())
+                        .feName(lr.getFieldExecutive().getName())
+                        .leaveType(lr.getLeaveType())
+                        .status(lr.getStatus())
+                        .fromDate(lr.getFromDate())
+                        .toDate(lr.getToDate())
+                        .reason(lr.getReason())
+                        .appliedDate(lr.getAppliedDate())
+                        .build()
+                )
+                .toList();
     }
 
 }
