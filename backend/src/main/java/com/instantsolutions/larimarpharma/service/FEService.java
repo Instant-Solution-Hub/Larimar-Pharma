@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
 
@@ -240,14 +241,57 @@ public class FEService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
-    public FEProfileStatsResponseDto getProfileStats(Long feId) {
+    @Transactional
+    public FEProfileStatsResponseDto getProfileStats(
+            Long feId,
+            Integer month,
+            Integer year
+    ) {
 
-        FieldExecutiveProfile profile = profileRepository
-                .findByFieldExecutiveId(feId)
-                .orElseThrow(() ->
-                        new RuntimeException("Profile not found for FE ID: " + feId)
+        // ✅ Step 1: check exact month/year
+        Optional<FieldExecutiveProfile> exactProfileOpt =
+                profileRepository.findByFieldExecutiveIdAndMonthAndYear(
+                        feId, month, year
                 );
+
+        FieldExecutiveProfile profile;
+
+        if (exactProfileOpt.isPresent()) {
+            profile = exactProfileOpt.get();
+
+        } else {
+
+            // ✅ Step 2: get any existing profile for FE
+            FieldExecutiveProfile baseProfile = profileRepository
+                    .findByFieldExecutiveId(feId)
+                    .orElseThrow(() ->
+                            new RuntimeException("No base profile found for FE ID: " + feId)
+                    );
+
+            // ✅ current month/year
+
+
+
+
+          baseProfile.setMonth(month);
+          baseProfile.setYear(year);
+          baseProfile.setPrimaryTargetSet(0.0);
+          baseProfile.setSecondaryTargetSet(0.0);
+          baseProfile.setPrimaryTargetAchieved(0.0);
+          baseProfile.setSecondaryTargetAchieved(0.0);
+
+                    // copy remaining values
+                    baseProfile.setAttendancePercentage(0);
+                    baseProfile.setPharmacyVisitProgress(0);
+                    baseProfile.setStockistVisitProgress(0);
+                    baseProfile.setDoctorVisitProgress(0);
+                    baseProfile.setAPlusDoctorTarget(0);
+                    baseProfile.setADoctorTarget(0);
+                    baseProfile.setBDoctorTarget(0);
+
+
+            profile = profileRepository.save(baseProfile);
+        }
 
         return FEProfileStatsResponseDto.builder()
                 .targetAchieved(profile.getPrimaryTargetAchieved())
@@ -334,23 +378,42 @@ public class FEService {
                 .orElseThrow(() ->
                         new RuntimeException("Field Executive not found"));
 
-        FieldExecutiveProfile profile =
-                profileRepository
-                        .findByFieldExecutiveIdAndMonthAndYear(
-                                feId, dto.getMonth(), dto.getYear()
-                        )
-                        .orElseGet(() ->
-                                FieldExecutiveProfile.builder()
-                                        .fieldExecutive(fe)
-                                        .month(dto.getMonth())
-                                        .year(dto.getYear())
-                                        .primaryTargetSet(0.0)
-                                        .secondaryTargetSet(0.0)
-                                        .primaryTargetAchieved(0.0)
-                                        .secondaryTargetAchieved(0.0)
-                                        .build()
-                        );
+        FieldExecutiveProfile profile;
 
+        // ✅ Step 1: exact profile check
+        Optional<FieldExecutiveProfile> exactProfileOpt =
+                profileRepository.findByFieldExecutiveIdAndMonthAndYear(
+                        feId, dto.getMonth(), dto.getYear()
+                );
+
+        if (exactProfileOpt.isPresent()) {
+
+            profile = exactProfileOpt.get();
+
+        } else {
+
+            // ✅ Step 2: get latest profile for FE
+            Optional<FieldExecutiveProfile> baseProfileOpt =
+                    profileRepository
+                            .findByFieldExecutiveId(feId);
+
+            if (baseProfileOpt.isPresent()) {
+
+                // 🔥 UPDATE SAME RECORD (no new insert)
+                profile = baseProfileOpt.get();
+                profile.setMonth(dto.getMonth());
+                profile.setYear(dto.getYear());
+
+                profile.setPrimaryTargetAchieved(0.0);
+                profile.setSecondaryTargetAchieved(0.0);
+
+            } else {
+                throw  new RuntimeException("No base profile found for FE ID: " + fe.getId());
+
+            }
+        }
+
+        // ✅ always update targets
         profile.setPrimaryTargetSet(dto.getPrimaryTargetSet());
         profile.setSecondaryTargetSet(dto.getSecondaryTargetSet());
 
@@ -374,45 +437,54 @@ public class FEService {
             Integer month,
             Integer year
     ) {
-        List<FieldExecutive> fes =
-                repository.findByManagerId(managerId);
+        List<FieldExecutive> fes = repository.findByManagerId(managerId);
 
         for (FieldExecutive fe : fes) {
-            profileRepository
-                    .findByFieldExecutiveIdAndMonthAndYear(
+
+            Optional<FieldExecutiveProfile> exactProfileOpt =
+                    profileRepository.findByFieldExecutiveIdAndMonthAndYear(
                             fe.getId(), month, year
-                    )
-                    .orElseGet(() -> {
-                        FieldExecutiveProfile profile =
-                                FieldExecutiveProfile.builder()
-                                        .fieldExecutive(fe)
-                                        .month(month)
-                                        .year(year)
-                                        .primaryTargetSet(0.0)
-                                        .secondaryTargetSet(0.0)
-                                        .primaryTargetAchieved(0.0)
-                                        .secondaryTargetAchieved(0.0)
-                                        .attendancePercentage(0)
-                                        .incentiveEarned(0.0)
-                                        .casualLeaves(10)
-                                        .sickLeaves(10)
-                                        .approvedCasualLeaves(0)
-                                        .approvedSickLeaves(0)
-                                        .pharmacyVisitProgress(0)
-                                        .stockistVisitProgress(0)
-                                        .doctorVisitProgress(0)
-                                        .aPlusDoctorTarget(0)
-                                        .aDoctorTarget(0)
-                                        .bDoctorTarget(0)
-                                        .build();
+                    );
 
-                        return profileRepository.save(profile);
+            if (exactProfileOpt.isEmpty()) {
 
-                    });
+                // ✅ get latest profile of FE
+                FieldExecutiveProfile baseProfile = profileRepository
+                        .findByFieldExecutiveId(fe.getId())
+                        .orElse(null);
+
+                if (baseProfile == null) {
+
+                    throw  new RuntimeException("No base profile found for FE ID: " + fe.getId());
+
+
+                } else {
+
+                    // ✅ UPDATE SAME RECORD (no new insert)
+                    baseProfile.setMonth(month);
+                    baseProfile.setYear(year);
+
+                    baseProfile.setPrimaryTargetSet(0.0);
+                    baseProfile.setSecondaryTargetSet(0.0);
+                    baseProfile.setPrimaryTargetAchieved(0.0);
+                    baseProfile.setSecondaryTargetAchieved(0.0);
+
+                    baseProfile.setAttendancePercentage(0);
+                    baseProfile.setPharmacyVisitProgress(0);
+                    baseProfile.setStockistVisitProgress(0);
+                    baseProfile.setDoctorVisitProgress(0);
+                    baseProfile.setAPlusDoctorTarget(0);
+                    baseProfile.setADoctorTarget(0);
+                    baseProfile.setBDoctorTarget(0);
+
+                    profileRepository.save(baseProfile);
+                }
+            }
         }
 
         return profileRepository.findFEMonthlyTargets(managerId, month, year);
     }
+
 
 
 

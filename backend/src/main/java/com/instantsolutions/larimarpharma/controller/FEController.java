@@ -175,10 +175,12 @@ public class FEController {
 
     @GetMapping("/{feId}/profile-stats")
     public ResponseEntity<FEProfileStatsResponseDto> getProfileStats(
-            @PathVariable Long feId
+            @PathVariable Long feId,
+            @RequestParam Integer month,
+            @RequestParam Integer year
     ) {
         return ResponseEntity.ok(
-                fieldExecutiveService.getProfileStats(feId)
+                fieldExecutiveService.getProfileStats(feId,month,year)
         );
     }
 
