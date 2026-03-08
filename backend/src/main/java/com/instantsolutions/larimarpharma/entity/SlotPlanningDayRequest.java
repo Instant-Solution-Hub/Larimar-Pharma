@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,11 +19,34 @@ public class SlotPlanningDayRequest {
     private Long id;
     private String reason;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_manager_id", nullable = true)
+    private Manager requestedManager;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_fe_id", nullable = true)
+    private FieldExecutive requestedFieldExecutive;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private LocalDateTime requestedAt = LocalDateTime.now();
+    private RequestStatus status = RequestStatus.PENDING;
 
-    private LocalDateTime reviewedAt;
+    @Column(nullable = false)
+    @Builder.Default
+    private LocalDate requestedAt = LocalDate.now();
+
+    private LocalDate reviewedAt;
+
+    @PreUpdate
+    protected void onUpdate() {
+        if (status != RequestStatus.PENDING && reviewedAt == null) {
+            reviewedAt = LocalDate.now();
+        }
+    }
 
     private String adminNotes;
+    public enum RequestStatus {
+        PENDING, APPROVED, REJECTED, CANCELLED
+    }
 }
