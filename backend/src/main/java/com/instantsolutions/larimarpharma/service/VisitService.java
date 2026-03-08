@@ -266,12 +266,12 @@ public class VisitService {
             );
         }
 
-        // 2️⃣ Re-marking allowed only to COMPLETED
-        if (dto.getStatus() != Visit.VisitStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Re-marked visit must be completed"
-            );
-        }
+//        // 2️⃣ Re-marking allowed only to COMPLETED
+//        if (dto.getStatus() != Visit.VisitStatus.COMPLETED) {
+//            throw new IllegalStateException(
+//                    "Re-marked visit must be completed"
+//            );
+//        }
 
         // 3️⃣ Doctor-only restriction
         if (visit.getVisitType() == Visit.VisitType.DOCTOR) {

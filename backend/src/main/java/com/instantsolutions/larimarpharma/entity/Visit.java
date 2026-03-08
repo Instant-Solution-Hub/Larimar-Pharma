@@ -23,6 +23,7 @@ public class Visit {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_executive_id", nullable = false)
+
     private FieldExecutive fieldExecutive;
 
     @ManyToOne(fetch = FetchType.LAZY)
