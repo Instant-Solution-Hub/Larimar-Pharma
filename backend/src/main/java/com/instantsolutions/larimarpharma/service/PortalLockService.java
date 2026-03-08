@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,22 @@ public class PortalLockService {
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private final ManagerRepository managerRepository;
     private final AdminRepository adminRepository;
+
+    private final Set<LocalDate> holidayDates = Set.of(
+            LocalDate.of(2026, 4, 15),  // VISHU
+            LocalDate.of(2026, 5, 1),   // LABOUR DAY
+            LocalDate.of(2026, 5, 27),  // BAKRID
+            LocalDate.of(2026, 6, 25),  // MUHARRAM
+            LocalDate.of(2026, 8, 12),  // KARKIDAKAVAVU
+            LocalDate.of(2026, 8, 15),  // INDEPENDENCE DAY
+            LocalDate.of(2026, 8, 25),  // ONAM
+            LocalDate.of(2026, 8, 26),  // ONAM
+            LocalDate.of(2026, 10, 21), // VIJAYADHASHAMI
+            LocalDate.of(2026, 12, 25), // CHRISTMAS
+            LocalDate.of(2027, 1, 26),  // REPUBLIC DAY
+            LocalDate.of(2027, 3, 6),   // SHIVARATHRI
+            LocalDate.of(2027, 3, 10)   // RAMZAN
+    );
 
     /**
      * Daily job to check and lock portals for users who missed visits
@@ -90,6 +107,10 @@ public class PortalLockService {
             return false;
         }
 
+        if (isHoliday(date)) {
+            return false;
+        }
+
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
@@ -131,6 +152,10 @@ public class PortalLockService {
             return false;
         }
 
+        if (isHoliday(yesterday)) {
+            return false;
+        }
+
         if (isManagerOnLeave(manager, yesterday)) {
             log.debug("Manager {} was on approved leave on {}, skipping lock",
                     manager.getId(), yesterday);
@@ -162,6 +187,10 @@ public class PortalLockService {
 
     private boolean isWeekend(LocalDate date) {
         return date.getDayOfWeek() == DayOfWeek.SUNDAY;
+    }
+
+    private boolean isHoliday(LocalDate date) {
+        return holidayDates.contains(date);
     }
 
     private boolean isFieldExecutiveOnLeave(FieldExecutive fe, LocalDate date) {

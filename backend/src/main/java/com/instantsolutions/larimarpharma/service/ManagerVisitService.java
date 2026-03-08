@@ -217,9 +217,7 @@ public class ManagerVisitService {
 
 
     public List<TodayScheduledVisitDto> getTodaysVisits(Long feId) {
-
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        LocalDate today = LocalDate.now(zone);
+        LocalDate today = LocalDate.now();
 
         LocalDateTime start = today.minusDays(2).atStartOfDay();   // Feb 17 00:00
         LocalDateTime end   = today.plusDays(1).atStartOfDay();    // Feb 20 00:00
@@ -237,9 +235,7 @@ public class ManagerVisitService {
 
 
     public List<TodayScheduledVisitDto> getTodaysVisitsScheduledOnly(Long managerId) {
-
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        LocalDate today = LocalDate.now(zone);
+        LocalDate today = LocalDate.now();
 
         List<ManagerVisit> visits = managerVisitRepository.findTodayScheduledVisitsByManager(
                 today.atStartOfDay(),

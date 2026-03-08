@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,23 +24,23 @@ public class VisitAutoUpdateService {
     /**
      * Runs every day at 12:05 AM
      */
-    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(cron = "0 5 0 * * ?", zone = "Asia/Kolkata")
     @Transactional
     public void markOverdueScheduledVisitsAsMissed() {
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = LocalDate.now();
 
         List<Visit> overdueVisits =
-                visitRepository.findByVisitTypeAndStatusAndScheduledDateBefore(
+                visitRepository.findByVisitTypeAndStatusAndVisitDateBefore(
                         VisitType.DOCTOR,
                         VisitStatus.SCHEDULED,
-                        now
+                        today
                 );
 
         for (Visit visit : overdueVisits) {
             visit.setStatus(VisitStatus.MISSED);
             visit.setNotes("USER DID NOT UPDATE THE STATUS");
-            visit.setActualDate(visit.getScheduledDate());
+            visit.setActualDate(visit.getVisitDate().atStartOfDay());
         }
 
         log.info("Auto-marked {} visits as MISSED", overdueVisits.size());

@@ -51,8 +51,7 @@ public class DateUtil {
 
 
     public static LocalDate getStartOfTheMonth(){
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        return LocalDate.now(zone)
+        return LocalDate.now()
                 .plusMonths(1)
                 .withDayOfMonth(1);
     }
