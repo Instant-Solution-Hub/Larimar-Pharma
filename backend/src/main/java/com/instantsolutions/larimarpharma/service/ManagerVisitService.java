@@ -233,6 +233,25 @@ public class ManagerVisitService {
                 .toList();
     }
 
+    public List<TodayScheduledVisitDto> getTodaysAndMissedVisits(Long feId) {
+        LocalDate today = LocalDate.now();
+
+        LocalDateTime start = today.minusDays(2).atStartOfDay();   // Feb 17 00:00
+        LocalDateTime end   = today.plusDays(1).atStartOfDay();
+        LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();// Feb 20 00:00
+
+        List<ManagerVisit> visits = managerVisitRepository.findTodaysAndMissedVisitsByManager(
+                start,
+                end,
+                monthStart,
+                feId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
 
     public List<TodayScheduledVisitDto> getTodaysVisitsScheduledOnly(Long managerId) {
         LocalDate today = LocalDate.now();

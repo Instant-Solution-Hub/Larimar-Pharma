@@ -25,6 +25,11 @@ public class Pharmacy {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = true)
     private Doctor doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "field_executive_id")
+    private FieldExecutive fieldExecutive;
+
     private String location;
     private String pharmacyName;
     private String contactPerson;

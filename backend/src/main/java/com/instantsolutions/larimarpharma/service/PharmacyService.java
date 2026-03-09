@@ -44,6 +44,13 @@ public class PharmacyService {
                 .toList();
     }
 
+    public List<PharmacyResponseDto> getAllByFE(Long fieldExecutiveId) {
+        return pharmacyRepository.findByFieldExecutiveId(fieldExecutiveId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     /* UPDATE */
     public PharmacyResponseDto update(Long id, PharmacyRequestDto dto) {
         Pharmacy pharmacy = getPharmacy(id);

@@ -703,6 +703,21 @@ public class VisitService {
                 .toList();
     }
 
+    public List<TodayScheduledVisitDto> getTodaysAndMissedVisits(Long feId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
+        List<Visit> visits = visitRepository.findTodaysAndMissedVisitsByFieldExecutive(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+                monthStart,
+                feId
+        );
+
+        return visits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+    }
+
 
     private TodayScheduledVisitDto toTodayScheduledVisitDTO(Visit v) {
 

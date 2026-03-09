@@ -30,6 +30,11 @@ public class PharmacyController {
         return ResponseEntity.ok(pharmacyService.getById(id));
     }
 
+    @GetMapping("/fe/{id}")
+    public ResponseEntity<List<PharmacyResponseDto>> getAllByFE(@PathVariable Long id) {
+        return ResponseEntity.ok(pharmacyService.getAllByFE(id));
+    }
+
     @GetMapping
     public ResponseEntity<List<PharmacyResponseDto>> getAll() {
         return ResponseEntity.ok(pharmacyService.getAll());
