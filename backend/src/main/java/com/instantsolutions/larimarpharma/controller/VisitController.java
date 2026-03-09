@@ -142,6 +142,13 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/today-scheduled-and-missed")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledAndMissedVisits(@RequestParam Long fieldExecutiveId) {
+        return ResponseEntity.ok(
+                visitService.getTodaysAndMissedVisits(fieldExecutiveId)
+        );
+    }
+
     @GetMapping("/get-compliance-record")
     public ResponseEntity<VisitComplianceResponse> getVisitCompliance(
             @RequestParam("fieldExecutiveId") Long fieldExecutiveId,

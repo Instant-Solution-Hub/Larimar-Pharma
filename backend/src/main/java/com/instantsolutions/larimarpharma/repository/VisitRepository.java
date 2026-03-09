@@ -307,6 +307,28 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             @Param("fieldExecutiveId") Long fieldExecutiveId
     );
 
+    @Query("""
+SELECT DISTINCT v
+FROM Visit v
+LEFT JOIN FETCH v.doctor
+LEFT JOIN FETCH v.pharmacy
+LEFT JOIN FETCH v.fieldExecutive fe
+WHERE fe.id = :fieldExecutiveId
+AND (
+      (v.status = 'SCHEDULED'
+        AND v.scheduledDate >= :start
+        AND v.scheduledDate < :nextDay)
+   OR (v.status = 'MISSED'
+        AND v.scheduledDate >= :monthStart
+        AND v.scheduledDate < :start)
+)
+""")
+    List<Visit> findTodaysAndMissedVisitsByFieldExecutive(
+            @Param("start") LocalDateTime start,
+            @Param("nextDay") LocalDateTime nextDay,
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("fieldExecutiveId") Long fieldExecutiveId
+    );
 
     @Query("""
         SELECT 

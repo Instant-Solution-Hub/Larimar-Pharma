@@ -63,6 +63,13 @@ public class ManagerVisitController {
         );
     }
 
+    @GetMapping("/today-scheduled-and-missed")
+    public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledAndMissedVisits(@RequestParam Long managerId) {
+        return ResponseEntity.ok(
+                managerVisitService.getTodaysAndMissedVisits(managerId)
+        );
+    }
+
     @GetMapping("/today-scheduled-only")
     public ResponseEntity<List<TodayScheduledVisitDto>> getTodayScheduledVisitsOnly(@RequestParam Long managerId) {
         return ResponseEntity.ok(

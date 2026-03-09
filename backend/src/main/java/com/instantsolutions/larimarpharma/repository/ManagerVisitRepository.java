@@ -124,6 +124,29 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
 
 
     @Query("""
+SELECT DISTINCT mv
+FROM ManagerVisit mv
+LEFT JOIN FETCH mv.fieldExecutive fe
+LEFT JOIN FETCH mv.originalVisit ov
+WHERE mv.manager.id = :managerId
+AND (
+      (mv.status = com.instantsolutions.larimarpharma.entity.Visit$VisitStatus.SCHEDULED
+        AND mv.scheduledDate >= :start
+        AND mv.scheduledDate < :nextDay)
+   OR (mv.status = com.instantsolutions.larimarpharma.entity.Visit$VisitStatus.MISSED
+        AND mv.scheduledDate >= :monthStart
+        AND mv.scheduledDate < :nextDay)
+)
+""")
+    List<ManagerVisit> findTodaysAndMissedVisitsByManager(
+            @Param("start") LocalDateTime start,
+            @Param("nextDay") LocalDateTime nextDay,
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("managerId") Long managerId
+    );
+
+
+    @Query("""
     SELECT mv
     FROM ManagerVisit mv
     WHERE mv.manager.id = :managerId
