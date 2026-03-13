@@ -307,7 +307,7 @@ public class VisitService {
                         Double.parseDouble(dto.getLongitude())
                 );
 
-                if (distance > 100) {
+                if (distance > 200) {
                     throw new IllegalStateException(
                             "You are not within 100 meters of the doctor location"
                     );
