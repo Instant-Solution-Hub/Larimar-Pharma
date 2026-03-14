@@ -196,7 +196,6 @@ public class VisitService {
         Pharmacy pharmacy = visit.getPharmacy();
 
 
-
         if(visit.getVisitType().equals(Visit.VisitType.DOCTOR) &&
                 !dto.getStatus().equals(Visit.VisitStatus.MISSED)){
             if (dto.getLatitude() == null || dto.getLongitude() == null) {
@@ -278,17 +277,17 @@ public class VisitService {
 
             Doctor doctor = visit.getDoctor();
             LocalDate visitDate = visit.getVisitDate();
+            LocalDate today = LocalDate.now();
 
-            boolean alreadyCompleted =
-                    visitRepository.existsByDoctorIdAndVisitDateAndStatus(
+            boolean alreadyHasVisit =
+                    visitRepository.existsByDoctorIdAndVisitDate(
                             doctor.getId(),
-                            visitDate,
-                            Visit.VisitStatus.COMPLETED
+                            today
                     );
 
-            if (alreadyCompleted) {
+            if (alreadyHasVisit) {
                 throw new IllegalStateException(
-                        "Doctor already has a completed visit for this day"
+                        "Doctor already has a visit for this day"
                 );
             }
 
