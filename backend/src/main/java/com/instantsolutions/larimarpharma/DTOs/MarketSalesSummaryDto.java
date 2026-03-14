@@ -14,5 +14,6 @@ public class MarketSalesSummaryDto {
     private Long id;
     private String marketName;
     private Double secondarySales;
+    private String managerName;
 }
 

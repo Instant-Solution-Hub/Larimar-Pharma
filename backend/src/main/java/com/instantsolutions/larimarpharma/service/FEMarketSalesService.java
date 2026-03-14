@@ -68,22 +68,35 @@ public class FEMarketSalesService {
         List<FEMarketMonthlySales> salesList =
                 salesRepo.findByYearAndMonth(year, month);
 
-        // Group by market and sum sales
-        Map<String, Double> marketSalesMap = salesList.stream()
-                .collect(Collectors.groupingBy(
-                        FEMarketMonthlySales::getMarket,
-                        Collectors.summingDouble(FEMarketMonthlySales::getSalesAmount)
-                ));
+        // group by market
+        Map<String, List<FEMarketMonthlySales>> marketGrouped =
+                salesList.stream()
+                        .collect(Collectors.groupingBy(FEMarketMonthlySales::getMarket));
 
-        // Convert to DTO with serial numbers
         AtomicLong counter = new AtomicLong(1);
 
-        return marketSalesMap.entrySet().stream()
-                .map(entry -> MarketSalesSummaryDto.builder()
-                        .id(counter.getAndIncrement())
-                        .marketName(entry.getKey())
-                        .secondarySales(entry.getValue())
-                        .build())
+        return marketGrouped.entrySet().stream()
+                .map(entry -> {
+
+                    String market = entry.getKey();
+                    List<FEMarketMonthlySales> records = entry.getValue();
+
+                    double totalSales = records.stream()
+                            .mapToDouble(FEMarketMonthlySales::getSalesAmount)
+                            .sum();
+
+                    String managerName = records.get(0)
+                            .getFieldExecutive()
+                            .getManager()
+                            .getName();
+
+                    return MarketSalesSummaryDto.builder()
+                            .id(counter.getAndIncrement())
+                            .marketName(market)
+                            .secondarySales(totalSales)
+                            .managerName(managerName)
+                            .build();
+                })
                 .toList();
     }
 
