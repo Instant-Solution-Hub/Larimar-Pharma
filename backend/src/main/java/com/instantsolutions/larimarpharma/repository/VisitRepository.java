@@ -96,6 +96,11 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             Visit.VisitStatus status
     );
 
+    boolean existsByDoctorIdAndVisitDate(
+            Long doctorId,
+            LocalDate visitDate
+    );
+
 
     @Query("""
         SELECT v
