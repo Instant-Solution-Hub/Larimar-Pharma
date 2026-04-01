@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
+import static com.instantsolutions.larimarpharma.utils.DateUtil.*;
 
 @Service
 @RequiredArgsConstructor
@@ -291,27 +291,31 @@ public class VisitService {
                 );
             }
 
-            // 📍 Location validation (same as markVisit)
-            if (dto.getLatitude() == null || dto.getLongitude() == null) {
-                throw new IllegalArgumentException(
-                        "Please allow location access"
-                );
-            }
-
-            if (doctor.getLatitude() != null && doctor.getLongitude() != null) {
-                double distance = GeoUtil.distanceInMeters(
-                        Double.parseDouble(doctor.getLatitude()),
-                        Double.parseDouble(doctor.getLongitude()),
-                        Double.parseDouble(dto.getLatitude()),
-                        Double.parseDouble(dto.getLongitude())
-                );
-
-                if (distance > 200) {
-                    throw new IllegalStateException(
-                            "You are not within 100 meters of the doctor location"
+            if(!dto.getStatus().equals(Visit.VisitStatus.MISSED)){
+                // 📍 Location validation (same as markVisit)
+                if (dto.getLatitude() == null || dto.getLongitude() == null) {
+                    throw new IllegalArgumentException(
+                            "Please allow location access"
                     );
                 }
+
+                if (doctor.getLatitude() != null && doctor.getLongitude() != null) {
+                    double distance = GeoUtil.distanceInMeters(
+                            Double.parseDouble(doctor.getLatitude()),
+                            Double.parseDouble(doctor.getLongitude()),
+                            Double.parseDouble(dto.getLatitude()),
+                            Double.parseDouble(dto.getLongitude())
+                    );
+
+                    if (distance > 200) {
+                        throw new IllegalStateException(
+                                "You are not within 100 meters of the doctor location"
+                        );
+                    }
+                }
             }
+
+
         }
 
         // Update visit (same fields as markVisit)
@@ -405,15 +409,73 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
+        LocalDate choosedDate = calculateVisitDate(weekNumber, dayOfWeek);
+        System.out.println("CHOOSED DATE");
+        System.out.println(choosedDate);
+
         LocalDate startOfMonth = getStartOfTheMonth();
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findVisitsForSlot(
                 fieldExecutiveId,
-                weekNumber,
-                dayOfWeek,
-                startOfMonth,
-                endOfMonth
+//                weekNumber,
+//                dayOfWeek,
+//                choosedDate,
+                choosedDate
+        );
+
+        Map<Long, Long> completedCountMap = visitRepository
+                .countCompletedVisitsPerDoctor(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        Map<Long, Long> plannedCountMap = visitRepository
+                .countPlannedVisitsPerDoctor(fieldExecutiveId, startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        return visits.stream().map(v -> {
+
+            Long doctorId = v.getDoctor().getId();
+
+            return DoctorVisitSlotDto.builder()
+                    .visitId(v.getId())
+                    .doctorId(doctorId)
+                    .doctorName(v.getDoctor().getName())
+                    .specialization(v.getDoctor().getDesignation())
+                    .hospitalName(v.getDoctor().getHospitalName())
+                    .weekNumber(v.getWeekNumber())
+                    .dayOfWeek(v.getDayOfWeek())
+                    .visitDate(v.getVisitDate())
+                    .practiceType(String.valueOf(v.getDoctor().getPracticeType()))
+                    .category(String.valueOf(v.getDoctor().getCategory()))
+                    .status(v.getStatus())
+                    .visitType(v.getVisitType())
+                    .completedVisitCount(completedCountMap.getOrDefault(doctorId, 0L))
+                    .plannedVisitCount(plannedCountMap.getOrDefault(doctorId, 0L))
+                    .build();
+        }).toList();
+    }
+
+    public List<DoctorVisitSlotDto> getCurrentMonthSlotVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate choosedDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<Visit> visits = visitRepository.findVisitsForSlot(
+                fieldExecutiveId,
+                choosedDate
         );
 
         Map<Long, Long> completedCountMap = visitRepository
@@ -460,14 +522,67 @@ public class VisitService {
             Integer dayOfWeek
     ) {
 
+        LocalDate choosenDate = calculateVisitDate(weekNumber, dayOfWeek);
+
         LocalDate startOfMonth = getStartOfTheMonth();
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
                 fieldExecutiveId,
-                weekNumber,
-                dayOfWeek,
-                startOfMonth,
+                choosenDate
+        );
+
+        Map<Long, Long> completedCountMap =
+                visitRepository.countCompletedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        Map<Long, Long> plannedCountMap =
+                visitRepository.countPlannedVisitsPerPharmacy(
+                        fieldExecutiveId, startOfMonth, endOfMonth
+                ).stream().collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        return visits.stream().map(v -> {
+
+            Long pharmacyId = v.getPharmacy().getId();
+
+            return PharmacyVisitSlotDto.builder()
+                    .visitId(v.getId())
+                    .pharmacyId(pharmacyId)
+                    .pharmacyName(v.getPharmacy().getPharmacyName())
+                    .contactPerson(v.getPharmacy().getContactPerson())
+                    .weekNumber(v.getWeekNumber())
+                    .dayOfWeek(v.getDayOfWeek())
+                    .status(v.getStatus())
+                    .visitType(v.getVisitType())
+                    .completedVisitCount(
+                            completedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .plannedVisitCount(
+                            plannedCountMap.getOrDefault(pharmacyId, 0L)
+                    )
+                    .build();
+        }).toList();
+    }
+
+    public List<PharmacyVisitSlotDto> getCurrentMonthPharmacySlotVisits(
+            Long fieldExecutiveId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate choosedDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<Visit> visits = visitRepository.findPharmacyVisitsForSlot(
+                fieldExecutiveId,
                 endOfMonth
         );
 

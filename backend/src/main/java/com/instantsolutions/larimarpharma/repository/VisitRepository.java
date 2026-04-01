@@ -102,23 +102,34 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     );
 
 
+//    @Query("""
+//        SELECT v
+//        FROM Visit v
+//        JOIN FETCH v.doctor d
+//        WHERE v.fieldExecutive.id = :feId
+//          AND v.weekNumber = :weekNumber
+//          AND v.dayOfWeek = :dayOfWeek
+//          AND v.visitDate BETWEEN :startDate AND :endDate
+//    """)
+//    List<Visit> findVisitsForSlot(
+//            @Param("feId") Long fieldExecutiveId,
+//            @Param("weekNumber") Integer weekNumber,
+//            @Param("dayOfWeek") Integer dayOfWeek,
+//            @Param("startDate") LocalDate startDate,
+//            @Param("endDate") LocalDate endDate
+//    );
+
     @Query("""
         SELECT v
         FROM Visit v
         JOIN FETCH v.doctor d
         WHERE v.fieldExecutive.id = :feId
-          AND v.weekNumber = :weekNumber
-          AND v.dayOfWeek = :dayOfWeek
-          AND v.visitDate BETWEEN :startDate AND :endDate
+          AND v.visitDate =:selectedDate
     """)
     List<Visit> findVisitsForSlot(
             @Param("feId") Long fieldExecutiveId,
-            @Param("weekNumber") Integer weekNumber,
-            @Param("dayOfWeek") Integer dayOfWeek,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("selectedDate") LocalDate selectedDate
     );
-
     @Query("""
     SELECT v.doctor.id, COUNT(v)
     FROM Visit v
@@ -152,17 +163,12 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     FROM Visit v
     JOIN FETCH v.pharmacy p
     WHERE v.fieldExecutive.id = :feId
-      AND v.weekNumber = :weekNumber
-      AND v.dayOfWeek = :dayOfWeek
       AND v.visitType = 'PHARMACIST'
-      AND v.visitDate BETWEEN :startDate AND :endDate
+      AND v.visitDate = :selectedDate
 """)
     List<Visit> findPharmacyVisitsForSlot(
             @Param("feId") Long fieldExecutiveId,
-            @Param("weekNumber") Integer weekNumber,
-            @Param("dayOfWeek") Integer dayOfWeek,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("selectedDate") LocalDate selectedDate
     );
 
     @Query("""

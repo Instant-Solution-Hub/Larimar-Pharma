@@ -85,6 +85,30 @@ public class VisitController {
         );
     }
 
+    @GetMapping("/current-planned-doctor-visits")
+    public ResponseEntity<List<DoctorVisitSlotDto>> getCurrentMonthSlotVisits(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getCurrentMonthSlotVisits(fieldExecutiveId, weekNumber, dayOfWeek)
+        );
+    }
+
+    @GetMapping("/current-planned-pharmacy-visits")
+    public ResponseEntity<List<PharmacyVisitSlotDto>> getCurrentMonthPharmacySlotVisits(
+            @RequestParam Long fieldExecutiveId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                visitService.getCurrentMonthPharmacySlotVisits(
+                        fieldExecutiveId, weekNumber, dayOfWeek
+                )
+        );
+    }
+
     @GetMapping("/completed-visits")
     public ResponseEntity<List<CompletedVisitDto>> getCompletedVisits(
             @RequestParam Long fieldExecutiveId

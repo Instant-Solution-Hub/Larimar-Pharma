@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,6 +23,7 @@ public class DoctorVisitSlotDto {
 
     private Integer weekNumber;
     private Integer dayOfWeek;
+    private LocalDate visitDate;
 
     private Visit.VisitStatus status;
     private Visit.VisitType visitType;

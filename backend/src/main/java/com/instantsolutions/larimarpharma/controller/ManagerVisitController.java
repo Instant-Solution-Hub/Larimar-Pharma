@@ -138,6 +138,18 @@ public class ManagerVisitController {
         ));
     }
 
+    @PostMapping("/get-current-month-visits")
+    public ResponseEntity<ApiResponseDto<List<CompletedVisitDto>>> getCurrentMonthVisitsForManager(
+            @RequestParam Long managerId,
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.getCurrentMonthVisitsForManager(managerId, weekNumber, dayOfWeek),
+                "Visits fetched successfully"
+        ));
+    }
+
 
     @PostMapping("/admin/mark-visit-as-completed/{visitId}")
     public ResponseEntity<ApiResponseDto<CompletedVisitDto>> markVisitAsCompleted(@PathVariable Long visitId) {

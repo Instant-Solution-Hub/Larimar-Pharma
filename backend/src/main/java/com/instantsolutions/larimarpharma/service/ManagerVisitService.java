@@ -17,7 +17,7 @@ import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.Optional;
 
-import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
+import static com.instantsolutions.larimarpharma.utils.DateUtil.*;
 
 @Service
 @RequiredArgsConstructor
@@ -584,7 +584,7 @@ public class ManagerVisitService {
     ) {
 
         LocalDate now = getStartOfTheMonth();
-
+        LocalDate chosenDate = calculateVisitDate(weekNumber, dayOfWeek);
         LocalDateTime startOfMonth = now.atStartOfDay();
         LocalDateTime endOfMonth =
                 now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
@@ -592,10 +592,31 @@ public class ManagerVisitService {
         return managerVisitRepository
                 .findByManagerAndWeekAndDayForMonth(
                         managerId,
-                        weekNumber,
-                        dayOfWeek,
-                        startOfMonth,
-                        endOfMonth
+                        chosenDate
+                )
+                .stream()
+                .map(this::mapToCompletedVisitDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompletedVisitDto> getCurrentMonthVisitsForManager(
+            Long managerId,
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate now = getStartOfTheMonth();
+
+        LocalDate choosedDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
+        LocalDateTime startOfMonth = now.atStartOfDay();
+        LocalDateTime endOfMonth =
+                now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
+
+        return managerVisitRepository
+                .findByManagerAndDate(
+                        managerId,
+                        choosedDate
                 )
                 .stream()
                 .map(this::mapToCompletedVisitDto)
