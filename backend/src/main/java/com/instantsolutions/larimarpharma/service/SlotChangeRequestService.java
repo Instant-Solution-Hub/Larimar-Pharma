@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDate;
+import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDateCurrentMonth;
 
 @Service
 @RequiredArgsConstructor
@@ -84,8 +85,15 @@ public class SlotChangeRequestService {
         } else {
             throw new RuntimeException("Invalid requester type");
         }
+        LocalDate today = LocalDate.now();
+        if(today.getDayOfMonth() == 2){
+            request.setRequestedVisitDate(calculateVisitDate(dto.getRequestedWeekNumber(),dto.getRequestedDayOfWeek() ));
+        }else {
+            request.setRequestedVisitDate(calculateVisitDateCurrentMonth(dto.getRequestedWeekNumber(),dto.getRequestedDayOfWeek() ));
+        }
 
-        request.setRequestedVisitDate(calculateVisitDate(dto.getRequestedWeekNumber(),dto.getRequestedDayOfWeek() ));
+
+
         request.setRequestedWeekNumber(dto.getRequestedWeekNumber());
         request.setRequestedDayOfWeek(dto.getRequestedDayOfWeek());
         request.setReason(dto.getReason());
@@ -129,10 +137,19 @@ public class SlotChangeRequestService {
     }
 
     private void updateVisitSlot(Visit visit, SlotChangeRequest request) {
-        LocalDate visitDate = calculateVisitDate(
-                request.getRequestedWeekNumber(),
-                request.getRequestedDayOfWeek()
-        );
+        LocalDate today = LocalDate.now();
+        LocalDate visitDate; // declare here
+        if(today.getDayOfMonth() == 2){
+            visitDate = calculateVisitDate(
+                    request.getRequestedWeekNumber(),
+                    request.getRequestedDayOfWeek()
+            );
+        }else{
+            visitDate = calculateVisitDateCurrentMonth(
+                    request.getRequestedWeekNumber(),
+                    request.getRequestedDayOfWeek()
+            );
+        }
         visit.setVisitDate(visitDate);
         visit.setWeekNumber(request.getRequestedWeekNumber());
         visit.setDayOfWeek(request.getRequestedDayOfWeek());
@@ -141,10 +158,20 @@ public class SlotChangeRequestService {
     }
 
     private void updateManagerVisitSlot(ManagerVisit managerVisit, SlotChangeRequest request) {
-        LocalDate visitDate = calculateVisitDate(
-                request.getRequestedWeekNumber(),
-                request.getRequestedDayOfWeek()
-        );
+        LocalDate today = LocalDate.now();
+        LocalDate visitDate; // declare here
+        if(today.getDayOfMonth() == 2){
+            visitDate = calculateVisitDate(
+                    request.getRequestedWeekNumber(),
+                    request.getRequestedDayOfWeek()
+            );
+        }else{
+            visitDate = calculateVisitDateCurrentMonth(
+                    request.getRequestedWeekNumber(),
+                    request.getRequestedDayOfWeek()
+            );
+        }
+
         managerVisit.setVisitDate(visitDate);
         managerVisit.setWeekNumber(request.getRequestedWeekNumber());
         managerVisit.setDayOfWeek(request.getRequestedDayOfWeek());
