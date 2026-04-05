@@ -33,6 +33,16 @@ public class VisitController {
         ));
     }
 
+    @PostMapping("/plan/week-day/current-month")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> planVisitByWeekForCurrentMonth(
+            @Valid @RequestBody VisitPlanByWeekDto request
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.planVisitByWeekForCurrentMonth(request),
+                "Visits Planned successfully"
+        ));
+    }
+
     @PostMapping("/mark")
     public ResponseEntity<ApiResponseDto<VisitResponseDto>> markVisit(
             @Valid @RequestBody MarkVisitRequestDto request
@@ -71,6 +81,8 @@ public class VisitController {
                 visitService.getSlotVisits(fieldExecutiveId, weekNumber, dayOfWeek)
         );
     }
+
+
 
     @GetMapping("/planned-pharmacy-visits")
     public ResponseEntity<List<PharmacyVisitSlotDto>> getPharmacySlotVisits(
