@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDateCurrentMonth;
 import static com.instantsolutions.larimarpharma.utils.DateUtil.getStartOfTheMonth;
 
 @Service
@@ -356,13 +357,11 @@ public class FEService {
             Integer dayOfWeek
     ) {
 
-        LocalDate startOfMonth = getStartOfTheMonth();
-        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+        LocalDate choosenDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
         List<FieldExecutive> fieldExecutives = repository
                 .findFEsWithScheduledAPriorityDoctorVisits(
                         managerId,
-                        startOfMonth,
-                        endOfMonth
+                        choosenDate
                 );
         return  fieldExecutives.stream().map(this::mapToResponse).toList();
     }

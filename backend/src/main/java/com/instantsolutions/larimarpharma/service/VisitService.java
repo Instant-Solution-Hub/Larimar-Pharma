@@ -188,6 +188,104 @@ public class VisitService {
     }
 
     @Transactional
+    public VisitResponseDto planVisitByWeekForCurrentMonth(VisitPlanByWeekDto dto) {
+
+        LocalDate visitDate = DateUtil.calculateVisitDateCurrentMonth(
+                dto.getWeekNumber(),
+                dto.getDayOfWeek()
+        );
+
+        // Prevent past date planning
+//        if (visitDate.isBefore(LocalDate.now())) {
+//            throw new IllegalStateException("Cannot plan visit for past date");
+//        }
+
+//        if (visitRepository.existsByFieldExecutiveIdAndDoctorIdAndVisitDate(
+//                dto.getFieldExecutiveId(),
+//                dto.getDoctorId(),
+//                visitDate)) {
+//            throw new IllegalStateException("Visit already planned for this date");
+//        }
+
+        FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
+                .orElseThrow(() -> new EntityNotFoundException("FE not found"));
+
+        if(dto.getVisitType().equals(Visit.VisitType.DOCTOR)){
+            Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+
+            boolean alreadyPlanned = visitRepository
+                    .existsByDoctorIdAndVisitDateAndVisitType(
+                            dto.getDoctorId(),
+                            visitDate,
+                            Visit.VisitType.DOCTOR
+                    );
+
+            if (alreadyPlanned) {
+                throw new IllegalStateException(
+                        "Visit already planned for this doctor on the selected date"
+                );
+            }
+
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .doctor(doctor)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        if(dto.getVisitType().equals(Visit.VisitType.PHARMACIST)){
+            Pharmacy pharmacy = pharmacyRepository.findById(dto.getPharmacistId())
+                    .orElseThrow(() -> new EntityNotFoundException("Pharmacy not found"));
+            boolean alreadyPlanned = visitRepository
+                    .existsByPharmacyIdAndVisitDateAndVisitType(
+                            dto.getPharmacistId(),
+                            visitDate,
+                            Visit.VisitType.PHARMACIST
+                    );
+
+            if (alreadyPlanned) {
+                throw new IllegalStateException(
+                        "Visit already planned for this pharmacy on the selected date"
+                );
+            }
+
+            Visit visit = Visit.builder()
+                    .fieldExecutive(fe)
+                    .pharmacy(pharmacy)
+                    .visitType(dto.getVisitType())
+                    .visitDate(visitDate)
+                    .weekNumber(dto.getWeekNumber())
+                    .dayOfWeek(dto.getDayOfWeek())
+                    .status(Visit.VisitStatus.SCHEDULED)
+                    .scheduledDate(visitDate.atStartOfDay())
+                    .pharmacyName(dto.getPharmacyName())
+                    .contactPerson(dto.getContactPerson())
+                    .contactNumber(dto.getContactNumber())
+                    .stockistType(dto.getStockistType())
+                    .stockistName(dto.getStockistName())
+                    .build();
+            Visit visit1 = visitRepository.save(visit);
+            return mapToDto(visit1);
+        }
+
+        return null;
+
+    }
+
+    @Transactional
     public VisitResponseDto markVisit(MarkVisitRequestDto dto) {
         Visit visit = visitRepository.findById(dto.getVisitId())
                 .orElseThrow(() -> new EntityNotFoundException("Visit not found"));

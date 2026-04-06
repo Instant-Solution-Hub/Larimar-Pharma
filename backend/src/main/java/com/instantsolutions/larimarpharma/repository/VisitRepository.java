@@ -446,16 +446,14 @@ AND (
     FROM Visit v
     JOIN v.doctor d
     WHERE v.fieldExecutive.id = :feId
-      AND v.weekNumber = :weekNumber
-      AND v.dayOfWeek = :dayOfWeek
+      AND v.visitDate = :visitDate
       AND v.status = 'SCHEDULED'
       AND v.visitType = 'DOCTOR'
       AND d.category IN ('A_PLUS', 'A')
 """)
     List<Visit> findEligibleManagerVisits(
             Long feId,
-            Integer weekNumber,
-            Integer dayOfWeek
+            LocalDate visitDate
     );
 
     @Query("SELECT COUNT(v) FROM Visit v WHERE v.fieldExecutive.id = :fieldExecutiveId " +

@@ -42,7 +42,7 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
     JOIN v.fieldExecutive fe
     JOIN v.doctor d
     WHERE fe.manager.id = :managerId
-      AND v.visitDate BETWEEN :startOfMonth AND :endOfMonth
+      AND v.visitDate = :visitDate
       AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED
       AND v.visitType = com.instantsolutions.larimarpharma.entity.Visit.VisitType.DOCTOR
       AND d.category IN (
@@ -52,8 +52,7 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
 """)
     List<FieldExecutive> findFEsWithScheduledAPriorityDoctorVisits(
             @Param("managerId") Long managerId,
-            @Param("startOfMonth") LocalDate startOfMonth,
-            @Param("endOfMonth") LocalDate endOfMonth
+            @Param("visitDate") LocalDate visitDate
     );
 
 

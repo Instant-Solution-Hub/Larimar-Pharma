@@ -5,6 +5,7 @@ import com.instantsolutions.larimarpharma.DTOs.ManagerVisitSummaryResponseDto;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.entity.Visit;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +27,11 @@ public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long
             Long managerId,
             Integer weekNumber,
             Integer dayOfWeek
+    );
+
+    List<ManagerVisit> findByManagerIdAndVisitDate(
+            Long managerId,
+            LocalDate visitDate
     );
 
     void deleteByManagerIdAndWeekNumberAndDayOfWeek(
@@ -285,6 +291,11 @@ AND (
             Long fieldExecutiveId,
             Integer weekNumber,
             Integer dayOfWeek
+    );
+
+    List<ManagerVisit> findByFieldExecutiveIdAndVisitDate(
+            Long fieldExecutiveId,
+            LocalDate visitDate
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
