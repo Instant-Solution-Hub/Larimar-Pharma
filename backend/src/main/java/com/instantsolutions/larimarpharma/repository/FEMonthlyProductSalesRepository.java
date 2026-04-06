@@ -52,7 +52,7 @@ public interface FEMonthlyProductSalesRepository
         p.category,
         p.description,
         p.price,
-        p.pts,
+        p.newPts,
         p.ptr,
         COALESCE(SUM(s.sales), 0)
     )
