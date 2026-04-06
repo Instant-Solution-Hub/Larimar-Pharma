@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.service;
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.repository.*;
+import com.instantsolutions.larimarpharma.utils.DateUtil;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,13 @@ public class ManagerVisitService {
     @Transactional
     public void assignManagerToVisit(AssignManagerVisitRequest request) {
 
+        LocalDate visitDate = DateUtil
+                .calculateVisitDateCurrentMonth(request.getWeekNumber(),request.getDayOfWeek());
         // Remove existing assignments (if any)
         List<ManagerVisit> existingAssignments =
-                managerVisitRepository.findByManagerIdAndWeekNumberAndDayOfWeek(
+                managerVisitRepository.findByManagerIdAndVisitDate(
                         request.getManagerId(),
-                        request.getWeekNumber(),
-                        request.getDayOfWeek()
+                        visitDate
                 );
 
         for (ManagerVisit mv : existingAssignments) {
@@ -54,11 +56,12 @@ public class ManagerVisitService {
         // Fetch new FE visits
         List<Visit> visits = visitRepository.findEligibleManagerVisits(
                 request.getFieldExecutiveId(),
-                request.getWeekNumber(),
-                request.getDayOfWeek()
+                visitDate
         );
 
+        System.out.println("VISIT DATE:"+visitDate);
         if (visits.isEmpty()) {
+
             throw new IllegalStateException("No A+ or A visits found");
         }
 
@@ -71,6 +74,7 @@ public class ManagerVisitService {
         //  Assign new visits
         for (Visit visit : visits) {
 
+            System.out.println("VISIT ID: "+visit.getId());
             if (visit.getManagerVisit() != null) {
                 continue;
             }
@@ -107,12 +111,13 @@ public class ManagerVisitService {
             Integer dayOfWeek
     ) {
 
+        LocalDate visitDate = DateUtil
+                .calculateVisitDateCurrentMonth(weekNumber,dayOfWeek);
         List<ManagerVisit> managerVisits =
                 managerVisitRepository
-                        .findByFieldExecutiveIdAndWeekNumberAndDayOfWeek(
+                        .findByFieldExecutiveIdAndVisitDate(
                                 fieldExecutiveId,
-                                weekNumber,
-                                dayOfWeek
+                                visitDate
                         );
 
         if (managerVisits.isEmpty()) {
@@ -605,13 +610,7 @@ public class ManagerVisitService {
             Integer weekNumber,
             Integer dayOfWeek
     ) {
-
-        LocalDate now = getStartOfTheMonth();
-
         LocalDate choosedDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
-        LocalDateTime startOfMonth = now.atStartOfDay();
-        LocalDateTime endOfMonth =
-                now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
 
         return managerVisitRepository
                 .findByManagerAndDate(
