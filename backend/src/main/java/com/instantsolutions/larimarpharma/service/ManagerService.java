@@ -712,6 +712,13 @@ public class ManagerService {
         }).toList();
     }
 
+    public List<DoctorResponseDto> getDoctorsOfTeamMembers(Long managerId) {
+        return managerRepository.findDoctorsByManagerId(managerId)
+                .stream()
+                .map(DoctorResponseDto::fromEntity)
+                .toList();
+    }
+
 }
 
 

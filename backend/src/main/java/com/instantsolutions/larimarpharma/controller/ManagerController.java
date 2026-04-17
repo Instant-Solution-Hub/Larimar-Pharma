@@ -321,6 +321,14 @@ public class ManagerController {
         return ResponseEntity.ok("Stockist assigned to manager successfully");
     }
 
+    @GetMapping("/team-doctors/{managerId}")
+    public ApiResponseDto<List<DoctorResponseDto>> getAllDoctorsAdmin(@PathVariable Long managerId) {
+        return ApiResponseDto.success(
+                managerService.getDoctorsOfTeamMembers(managerId),
+                "All doctors of team members fetched successfully"
+        );
+    }
+
 
 
 

@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -47,6 +48,14 @@ public interface ManagerRepository extends JpaRepository<Manager, Long> {
        WHERE m.id = :id
        """)
     Optional<Manager> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("""
+    SELECT DISTINCT d
+    FROM Doctor d
+    JOIN d.fieldExecutive fe
+    WHERE fe.manager.id = :managerId
+""")
+    List<Doctor> findDoctorsByManagerId(@Param("managerId") Long managerId);
 
 
 }

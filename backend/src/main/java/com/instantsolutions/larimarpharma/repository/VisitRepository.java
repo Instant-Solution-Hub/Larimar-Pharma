@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitStatus;
 import com.instantsolutions.larimarpharma.entity.Visit.VisitType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface VisitRepository extends JpaRepository<Visit, Long> {
+public interface VisitRepository extends JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
 
     long countByFieldExecutiveIdAndVisitTypeAndStatusAndScheduledDateBetween(
@@ -648,6 +649,26 @@ AND (
             Visit.VisitStatus status,
             LocalDate visitDate
     );
+
+    List<Visit> findByVisitDateBetweenAndFieldExecutiveIdAndStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long fieldExecutiveId,
+            VisitStatus status
+    );
+
+    List<Visit> findByVisitDateBetweenAndFieldExecutiveId(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long fieldExecutiveId
+    );
+
+    List<Visit> findByVisitDateBetweenAndStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            VisitStatus status
+    );
+
 
 
 
