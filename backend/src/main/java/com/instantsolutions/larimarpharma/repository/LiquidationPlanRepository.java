@@ -60,11 +60,13 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
             LocalDateTime end
     );
 
-     Optional<LiquidationPlan> findByFieldExecutiveAndProductAndDoctorAndStatus(
+     Optional<LiquidationPlan> findByFieldExecutiveAndProductAndDoctorAndStatusAndCreatedAtBetween(
             FieldExecutive fieldExecutive,
             Product product,
             Doctor doctor,
-            LiquidationPlan.PlanStatus status
+            LiquidationPlan.PlanStatus status,
+            LocalDateTime start,
+            LocalDateTime end
     ) ;
 
     List<LiquidationPlan> findByFieldExecutiveIdAndCreatedAtBetween(

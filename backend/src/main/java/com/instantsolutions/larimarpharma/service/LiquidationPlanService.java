@@ -108,10 +108,18 @@ public class LiquidationPlanService {
             );
         }
 
+        LocalDateTime start = YearMonth.now()
+                .atDay(1)
+                .atStartOfDay();
+
+        LocalDateTime end = YearMonth.now()
+                .atEndOfMonth()
+                .atTime(23, 59, 59);
+
         // 8️⃣ Check duplicate active plan
         liquidationPlanRepository
-                .findByFieldExecutiveAndProductAndDoctorAndStatus(
-                        fe, product, doctor, LiquidationPlan.PlanStatus.ACTIVE
+                .findByFieldExecutiveAndProductAndDoctorAndStatusAndCreatedAtBetween(
+                        fe, product, doctor, LiquidationPlan.PlanStatus.ACTIVE , start , end
                 )
                 .ifPresent(p -> {
                     throw new IllegalStateException(
