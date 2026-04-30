@@ -7,6 +7,7 @@ import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import org.springframework.cglib.core.Local;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long> {
+public interface ManagerVisitRepository extends JpaRepository<ManagerVisit, Long>, JpaSpecificationExecutor<ManagerVisit> {
 
     boolean existsByManagerIdAndOriginalVisitId(
             Long managerId,

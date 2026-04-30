@@ -7,12 +7,15 @@ import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.utils.DateUtil;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.temporal.IsoFields;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -1337,6 +1340,95 @@ public class VisitService {
                         0, 0,
                         0, 0,
                         0, 0));
+    }
+
+    @Transactional
+    public VisitReportDto getVisitReport(Long feId, LocalDate from, LocalDate to,
+                                         String status, String category){
+
+        VisitExcelExportRequest request = VisitExcelExportRequest.builder()
+                .startDate(from)
+                .endDate(to)
+                .fieldExecutiveId(feId)
+                .visitStatus(status.equals("all") ? null : Visit.VisitStatus.valueOf(status))
+                .category(category.equals("all") ? null : Doctor.Category.valueOf(category))
+                .build();
+
+        Specification<Visit> spec = buildSpecification(request);
+        List<Visit> fetchedVisits = visitRepository.findAll(spec);
+
+        List<TodayScheduledVisitDto> mappedVisits = fetchedVisits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+
+        long completedCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        long missedCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.MISSED)
+                .count();
+
+        long pendingCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.SCHEDULED)
+                .count();
+
+        return VisitReportDto.builder()
+                .completedVisitCount(completedCount)
+                .missedVisitCount(missedCount)
+                .pendingVisitCount(pendingCount)
+                .visits(mappedVisits)
+                .build();
+    }
+
+    private Specification<Visit> buildSpecification(VisitExcelExportRequest request) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Date range filter (required)
+            if (request.getStartDate() != null && request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.between(
+                        root.get("visitDate"),
+                        request.getStartDate(),
+                        request.getEndDate()
+                ));
+            } else if (request.getStartDate() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getStartDate()
+                ));
+            } else if (request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getEndDate()
+                ));
+            }
+
+            // Field Executive filter (optional)
+            if (request.getFieldExecutiveId() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("fieldExecutive").get("id"),
+                        request.getFieldExecutiveId()
+                ));
+            }
+
+            // Status filter (optional)
+            if (request.getVisitStatus() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("status"),
+                        request.getVisitStatus()
+                ));
+            }
+
+            if (request.getCategory() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("doctor").get("category"),
+                        request.getCategory()
+                ));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
 
