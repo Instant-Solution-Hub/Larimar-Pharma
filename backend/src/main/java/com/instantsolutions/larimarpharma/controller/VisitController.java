@@ -257,14 +257,27 @@ public class VisitController {
         return ResponseEntity.ok(response);
     }
 
+//    @GetMapping("/visit-report")
+//    public ResponseEntity<VisitSummaryResponseDto> getVisitSummary(
+//            @RequestParam Long fieldExecutiveId,
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+//    ) {
+//        return ResponseEntity.ok(
+//                visitService.getVisitSummary(fieldExecutiveId, from, to)
+//        );
+//    }
+
     @GetMapping("/visit-report")
-    public ResponseEntity<VisitSummaryResponseDto> getVisitSummary(
+    public ResponseEntity<VisitReportDto> getVisitReport(
             @RequestParam Long fieldExecutiveId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam String status,
+            @RequestParam String category
     ) {
         return ResponseEntity.ok(
-                visitService.getVisitSummary(fieldExecutiveId, from, to)
+                visitService.getVisitReport(fieldExecutiveId, from, to, status, category)
         );
     }
 

@@ -6,7 +6,9 @@ import com.instantsolutions.larimarpharma.repository.*;
 import com.instantsolutions.larimarpharma.utils.DateUtil;
 import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.IsoFields;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -644,6 +647,95 @@ public class ManagerVisitService {
         managerVisit.setManagerNotes("Visit marked as completed by admin");
         ManagerVisit updatedVisit = managerVisitRepository.save(managerVisit);
         return mapToCompletedVisitDto(updatedVisit);
+    }
+
+    @Transactional
+    public VisitReportDto getManagerVisitReport(Long managerId, LocalDate from, LocalDate to,
+                                                String status, String category){
+        VisitExcelExportRequest request = VisitExcelExportRequest.builder()
+                .startDate(from)
+                .endDate(to)
+                .managerId(managerId)
+                .visitStatus(status.equals("all") ? null : Visit.VisitStatus.valueOf(status))
+                .category(category.equals("all") ? null : Doctor.Category.valueOf(category))
+                .build();
+
+        Specification<ManagerVisit> spec = buildSpecification(request);
+        List<ManagerVisit> fetchedVisits = managerVisitRepository.findAll(spec);
+
+        List<TodayScheduledVisitDto> mappedVisits = fetchedVisits.stream()
+                .map(this::toTodayScheduledVisitDTO)
+                .toList();
+
+        long completedCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
+                .count();
+
+        long missedCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.MISSED)
+                .count();
+
+        long pendingCount = fetchedVisits.stream()
+                .filter(v -> v.getStatus() == Visit.VisitStatus.SCHEDULED)
+                .count();
+
+        return VisitReportDto.builder()
+                .completedVisitCount(completedCount)
+                .missedVisitCount(missedCount)
+                .pendingVisitCount(pendingCount)
+                .visits(mappedVisits)
+                .build();
+
+    }
+
+    private Specification<ManagerVisit> buildSpecification(VisitExcelExportRequest request) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Date range filter (required)
+            if (request.getStartDate() != null && request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.between(
+                        root.get("visitDate"),
+                        request.getStartDate(),
+                        request.getEndDate()
+                ));
+            } else if (request.getStartDate() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getStartDate()
+                ));
+            } else if (request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getEndDate()
+                ));
+            }
+
+            // Manager filter (optional)
+            if (request.getManagerId() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("manager").get("id"),
+                        request.getManagerId()
+                ));
+            }
+
+            // Status filter (optional)
+            if (request.getVisitStatus() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("status"),
+                        request.getVisitStatus()
+                ));
+            }
+
+            if (request.getCategory() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("doctorCategory"),
+                        request.getCategory()
+                ));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     public ManagerVisitSummaryResponseDto getManagerVisitSummary(

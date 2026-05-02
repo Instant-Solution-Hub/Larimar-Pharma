@@ -58,12 +58,12 @@ public class VisitExportController {
             @RequestParam(required = false) Long fieldExecutiveId,
             @RequestParam(required = false) Visit.VisitStatus visitStatus
     ) {
-        VisitExcelExportRequest request = new VisitExcelExportRequest();
-        request.setStartDate(startDate);
-        request.setEndDate(endDate);
-        request.setFieldExecutiveId(fieldExecutiveId);
-        request.setVisitStatus(visitStatus);
-
+        VisitExcelExportRequest request = VisitExcelExportRequest.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .fieldExecutiveId(fieldExecutiveId)
+                .visitStatus(visitStatus)
+                .build();
         return exportVisitsToExcel(request);
     }
 }

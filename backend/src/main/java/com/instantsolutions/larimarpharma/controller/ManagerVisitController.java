@@ -158,13 +158,15 @@ public class ManagerVisitController {
     }
 
     @GetMapping("/reports")
-    public ResponseEntity<ManagerVisitSummaryResponseDto> getManagerVisitSummary(
+    public ResponseEntity<VisitReportDto> getManagerVisitSummary(
             @RequestParam Long managerId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam String status,
+            @RequestParam String category
     ) {
         return ResponseEntity.ok(
-                managerVisitService.getManagerVisitSummary(managerId, from, to)
+                managerVisitService.getManagerVisitReport(managerId, from, to, status, category)
         );
     }
 
