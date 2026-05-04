@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse2Dto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse3Dto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
 import com.instantsolutions.larimarpharma.repository.*;
@@ -13,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -143,6 +142,46 @@ public class  ManagerJoiningService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Transactional
+    public List<ManagerJoiningResponse4Dto> getJoiningsBetweenDates(
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+
+        List<ManagerJoining> joinings =
+                repository.findByScheduledTimeBetween(from, to);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        return joinings.stream().map(j -> ManagerJoiningResponse4Dto.builder()
+                .id(j.getId())
+
+                .managerId(String.valueOf(j.getManager().getId()))
+                .managerName(j.getManager().getName())
+
+                .feId(j.getFieldExecutive().getEmployeeCode())
+                .feName(j.getFieldExecutive().getName())
+
+                .doctorName(j.getDoctor().getName())
+                .hospital(j.getDoctor().getHospitalName())
+
+                .date(j.getScheduledTime().format(dateFormatter))
+                .scheduledTime(j.getScheduledTime().format(timeFormatter))
+
+                .joiningTime(
+                        j.getActualJoiningTime() != null
+                                ? j.getActualJoiningTime().format(timeFormatter)
+                                : null
+                )
+
+                .notes(j.getNotes())
+                .status(j.getStatus() != null ? j.getStatus().name() : null)
+
+                .build()
+        ).toList();
     }
 
     private ManagerJoiningResponseDto mapToResponse(ManagerJoining entity) {
