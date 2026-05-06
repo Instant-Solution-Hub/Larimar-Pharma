@@ -429,6 +429,14 @@ public class FEService {
                 .build();
     }
 
+    @Transactional
+    public List<FieldExecutiveResponse> getByManagerId(Long managerId) {
+        return repository.findByManagerId(managerId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
 
     @Transactional
     public List<FEMonthlyTargetResponseDto> getFEMonthlyTargets(

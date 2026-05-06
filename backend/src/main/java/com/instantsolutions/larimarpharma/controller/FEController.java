@@ -88,6 +88,11 @@ public class FEController {
         return service.getAll();
     }
 
+    @GetMapping("/manager/{managerId}")
+    public List<FieldExecutiveResponse> getByManagerId(@PathVariable Long managerId) {
+        return service.getByManagerId(managerId);
+    }
+
     @GetMapping("/{id}")
     public FieldExecutiveResponse getById(@PathVariable Long id) {
         return service.getById(id);
