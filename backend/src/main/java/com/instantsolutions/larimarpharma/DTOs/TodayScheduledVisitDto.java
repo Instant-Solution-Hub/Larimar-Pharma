@@ -14,6 +14,10 @@ public class TodayScheduledVisitDto  {
     private Visit.VisitType visitType;
     private LocalDate visitDate;
     private String status;
+    private String latitude;
+    private String longitude;
+    private String locationMethod;
+    private  String photoProofUrl;
 
     // Doctor
     private Long doctorId;

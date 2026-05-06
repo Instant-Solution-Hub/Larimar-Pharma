@@ -102,6 +102,21 @@ public class Visit {
 
     /* ===== Audit ===== */
 
+    @Column(name = "latitude")
+    private String latitude;
+
+    @Column(name = "longitude")
+    private String longitude;
+
+    @Column(name = "photo_proof", columnDefinition = "LONGTEXT")
+    private String photoProof; // Store base64 or reference URL
+
+    @Column(name = "photo_proof_url")
+    private String photoProofUrl; // URL to stored image
+
+    @Column(name = "location_method")
+    private String locationMethod; // "gps" or "photo"
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

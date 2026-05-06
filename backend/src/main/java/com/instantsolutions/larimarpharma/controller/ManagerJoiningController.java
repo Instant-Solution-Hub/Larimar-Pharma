@@ -1,15 +1,13 @@
 package com.instantsolutions.larimarpharma.controller;
 
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse2Dto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponse3Dto;
-import com.instantsolutions.larimarpharma.DTOs.ManagerJoiningResponseDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.ManagerJoiningService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -77,6 +75,14 @@ public class ManagerJoiningController {
         return ResponseEntity.ok(
                 service.getForFeAndMonth(feId, month, year)
         );
+    }
+
+    @GetMapping("/date-wise")
+    public List<ManagerJoiningResponse4Dto> getJoinings(
+            @RequestParam LocalDateTime from,
+            @RequestParam LocalDateTime to
+    ) {
+        return service.getJoiningsBetweenDates(from, to);
     }
 
 

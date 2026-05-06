@@ -285,7 +285,10 @@ public class ManagerVisitService {
                 mv.getVisitType(),
                 mv.getVisitDate(),
                 String.valueOf(mv.getStatus()),
-
+                null,
+                null,
+                null,
+                null,
                 // Doctor snapshot (no entity join)
                 mv.getDoctorId(),
                 mv.getDoctorName(),

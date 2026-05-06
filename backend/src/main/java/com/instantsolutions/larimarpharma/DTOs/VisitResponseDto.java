@@ -19,6 +19,8 @@ public class VisitResponseDto {
 
     private Long doctorId;
     private Long pharmacyId;
+    private String latitude;
+    private String longitude;
 
     private Visit.StockistType stockistType;
 }
