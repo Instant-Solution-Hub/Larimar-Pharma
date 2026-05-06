@@ -1072,7 +1072,10 @@ public class VisitService {
                 v.getVisitType(),
                 v.getVisitDate(),
                String.valueOf( v.getStatus()),
-
+                v.getLatitude() !=null ? v.getLatitude() : "",
+                v.getLongitude() !=null ? v.getLongitude() : "",
+                v.getLocationMethod(),
+                v.getPhotoProofUrl() !=null ? v.getPhotoProofUrl() : null,
                 d != null ? d.getId() : null,
                 d != null ? d.getName() : null,
                 d != null ? d.getDesignation() : null,
