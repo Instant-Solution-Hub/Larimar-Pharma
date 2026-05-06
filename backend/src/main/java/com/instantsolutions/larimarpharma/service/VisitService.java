@@ -9,10 +9,15 @@ import com.instantsolutions.larimarpharma.utils.GeoUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.*;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
@@ -33,6 +38,9 @@ public class VisitService {
     private final ProductRepository productRepository;
 
     private final StockistRepository stockistRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public VisitDashboardResponse getDashboard(Long fieldExecutiveId) {
 
@@ -296,45 +304,87 @@ public class VisitService {
         Doctor doctor = visit.getDoctor();
         Pharmacy pharmacy = visit.getPharmacy();
 
+        // Handle location validation only for non-missed visits
+        if (visit.getVisitType().equals(Visit.VisitType.DOCTOR) &&
+                !dto.getStatus().equals(Visit.VisitStatus.MISSED)) {
 
-        if(visit.getVisitType().equals(Visit.VisitType.DOCTOR) &&
-                !dto.getStatus().equals(Visit.VisitStatus.MISSED)){
-            if (dto.getLatitude() == null || dto.getLongitude() == null) {
-                throw new IllegalArgumentException("Please allow location access to mark the visit");
-            }
-            // If doctor has no location → save it
-            if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
-
-                doctor.setLatitude(dto.getLatitude());
-                doctor.setLongitude(dto.getLongitude());
-                doctorRepository.save(doctor);
-
-            } else {
-                double distance = GeoUtil.distanceInMeters(
-                        Double.parseDouble(doctor.getLatitude()),
-                        Double.parseDouble(doctor.getLongitude()),
-                        Double.parseDouble(dto.getLatitude()),
-                        Double.parseDouble(dto.getLongitude())
-                );
-
-                if (distance > 100) {
-                    throw new IllegalStateException(
-                            "You are not within 100 meters of the doctor/pharmacy location"
-                    );
+            // Check if location was captured via GPS
+            if ("gps".equals(dto.getLocationMethod())) {
+                // GPS-based validation
+                if (dto.getLatitude() == null || dto.getLongitude() == null) {
+                    throw new IllegalArgumentException("GPS location data is required for GPS-based verification");
                 }
+
+                // If doctor has no location → save it
+                if (doctor.getLatitude() == null || doctor.getLongitude() == null) {
+                    doctor.setLatitude(dto.getLatitude());
+                    doctor.setLongitude(dto.getLongitude());
+                    doctorRepository.save(doctor);
+                } else {
+                    double distance = GeoUtil.distanceInMeters(
+                            Double.parseDouble(doctor.getLatitude()),
+                            Double.parseDouble(doctor.getLongitude()),
+                            Double.parseDouble(dto.getLatitude()),
+                            Double.parseDouble(dto.getLongitude())
+                    );
+
+                    if (distance > 100) {
+                        throw new IllegalStateException(
+                                "You are not within 100 meters of the doctor/pharmacy location"
+                        );
+                    }
+                }
+
+                // Save GPS location to visit record for audit
+                visit.setLatitude(dto.getLatitude());
+                visit.setLongitude(dto.getLongitude());
+
             }
+            // Check if location was verified via photo fallback
+            else if ("photo".equals(dto.getLocationMethod())) {
+                // Photo-based verification
+                if (dto.getPhotoProof() == null || dto.getPhotoProof().isEmpty()) {
+                    throw new IllegalArgumentException("Photo proof is required for photo-based verification");
+                }
+
+                // Validate photo format (optional but recommended)
+                if (!isValidPhotoFormat(dto.getPhotoProof())) {
+                    throw new IllegalArgumentException("Invalid photo format. Please provide a valid JPEG/PNG image");
+                }
+
+                // Save photo proof to visit record
+                visit.setPhotoProof(dto.getPhotoProof());
+
+                // Convert base64 to MultipartFile and store using FileStorageService
+                String photoUrl = savePhotoToStorage(dto.getPhotoProof(), "visit-proofs", dto.getVisitId());
+                visit.setPhotoProofUrl(photoUrl);
+
+            }
+            else {
+                // No valid location method provided
+                throw new IllegalArgumentException(
+                        "Please provide either GPS location or photo proof to mark the visit"
+                );
+            }
+        }
+
+        // For MISSED visits or PHARMACIST/STOCKIST visits, location is not required
+        if (dto.getStatus().equals(Visit.VisitStatus.MISSED)) {
+            // Mark as missed, no location validation needed
+            visit.setNotes(dto.getNotes());
         }
 
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
 
-        //  Update visit fields
+        // Update visit fields
         visit.setStatus(dto.getStatus());
         visit.setNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
+        // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
-
             List<ConvertedProduct> visitProducts = dto.getConvertedProducts().stream()
                     .map(p -> ConvertedProduct.builder()
                             .visit(visit)
@@ -348,9 +398,55 @@ public class VisitService {
             visit.getConvertedProducts().addAll(visitProducts);
         }
 
+        Visit savedVisit = visitRepository.save(visit);
+        return mapToDto(savedVisit);
+    }
 
-        Visit visit1 = visitRepository.save(visit);
-        return mapToDto(visit1);
+    // Helper methods
+    private boolean isValidPhotoFormat(String photoProof) {
+        // Check if it's a valid base64 image
+        if (photoProof == null || photoProof.isEmpty()) {
+            return false;
+        }
+
+        // Check for common image formats in base64
+        return photoProof.startsWith("data:image/jpeg;base64,") ||
+                photoProof.startsWith("data:image/jpg;base64,") ||
+                photoProof.startsWith("data:image/png;base64,");
+    }
+
+    private String savePhotoToStorage(String base64Photo, String folder, Long visitId) {
+        try {
+            // Extract base64 data (remove data URL prefix if present)
+            String base64Data = base64Photo;
+            String fileExtension = "jpg"; // default
+
+            if (base64Photo.contains(",")) {
+                String[] parts = base64Photo.split(",");
+                String mimeType = parts[0];
+                base64Data = parts[1];
+
+                // Determine file extension from mime type
+                if (mimeType.contains("jpeg") || mimeType.contains("jpg")) {
+                    fileExtension = "jpg";
+                } else if (mimeType.contains("png")) {
+                    fileExtension = "png";
+                }
+            }
+
+            // Decode base64 to byte array
+            byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Data);
+
+            // Create a MultipartFile implementation
+            MultipartFile multipartFile = new Base64MultipartFile(imageBytes, visitId+"_photo." + fileExtension);
+
+            // Use FileStorageService to store the file
+            return fileStorageService.storeFile(multipartFile, folder);
+
+        } catch (Exception e) {
+//            log.error("Failed to save photo proof", e);
+            throw new RuntimeException("Failed to save photo proof", e);
+        }
     }
 
     @Transactional
@@ -366,25 +462,17 @@ public class VisitService {
             );
         }
 
-//        // 2️⃣ Re-marking allowed only to COMPLETED
-//        if (dto.getStatus() != Visit.VisitStatus.COMPLETED) {
-//            throw new IllegalStateException(
-//                    "Re-marked visit must be completed"
-//            );
-//        }
-
-        // 3️⃣ Doctor-only restriction
+        // 2️⃣ Doctor-only restriction and validation
         if (visit.getVisitType() == Visit.VisitType.DOCTOR) {
 
             Doctor doctor = visit.getDoctor();
             LocalDate visitDate = visit.getVisitDate();
             LocalDate today = LocalDate.now();
 
-            boolean alreadyHasVisit =
-                    visitRepository.existsByDoctorIdAndVisitDate(
-                            doctor.getId(),
-                            today
-                    );
+            boolean alreadyHasVisit = visitRepository.existsByDoctorIdAndVisitDate(
+                    doctor.getId(),
+                    today
+            );
 
             if (alreadyHasVisit) {
                 throw new IllegalStateException(
@@ -392,56 +480,93 @@ public class VisitService {
                 );
             }
 
-            if(!dto.getStatus().equals(Visit.VisitStatus.MISSED)){
-                // 📍 Location validation (same as markVisit)
-                if (dto.getLatitude() == null || dto.getLongitude() == null) {
-                    throw new IllegalArgumentException(
-                            "Please allow location access"
-                    );
-                }
+            if (!dto.getStatus().equals(Visit.VisitStatus.MISSED)) {
+                // Location validation with photo fallback (same as markVisit)
 
-                if (doctor.getLatitude() != null && doctor.getLongitude() != null) {
-                    double distance = GeoUtil.distanceInMeters(
-                            Double.parseDouble(doctor.getLatitude()),
-                            Double.parseDouble(doctor.getLongitude()),
-                            Double.parseDouble(dto.getLatitude()),
-                            Double.parseDouble(dto.getLongitude())
-                    );
-
-                    if (distance > 200) {
-                        throw new IllegalStateException(
-                                "You are not within 100 meters of the doctor location"
-                        );
+                // Check if location was captured via GPS
+                if ("gps".equals(dto.getLocationMethod())) {
+                    // GPS-based validation
+                    if (dto.getLatitude() == null || dto.getLongitude() == null) {
+                        throw new IllegalArgumentException("GPS location data is required for GPS-based verification");
                     }
+
+                    if (doctor.getLatitude() != null && doctor.getLongitude() != null) {
+                        double distance = GeoUtil.distanceInMeters(
+                                Double.parseDouble(doctor.getLatitude()),
+                                Double.parseDouble(doctor.getLongitude()),
+                                Double.parseDouble(dto.getLatitude()),
+                                Double.parseDouble(dto.getLongitude())
+                        );
+
+                        if (distance > 100) {
+                            throw new IllegalStateException(
+                                    "You are not within 100 meters of the doctor location"
+                            );
+                        }
+                    } else {
+                        // Save doctor's location for future visits
+                        doctor.setLatitude(dto.getLatitude());
+                        doctor.setLongitude(dto.getLongitude());
+                        doctorRepository.save(doctor);
+                    }
+
+                    // Save GPS location to visit record for audit
+                    visit.setLatitude(dto.getLatitude());
+                    visit.setLongitude(dto.getLongitude());
+
+                }
+                // Check if location was verified via photo fallback
+                else if ("photo".equals(dto.getLocationMethod())) {
+                    // Photo-based verification
+                    if (dto.getPhotoProof() == null || dto.getPhotoProof().isEmpty()) {
+                        throw new IllegalArgumentException("Photo proof is required for photo-based verification");
+                    }
+
+                    // Validate photo format
+                    if (!isValidPhotoFormat(dto.getPhotoProof())) {
+                        throw new IllegalArgumentException("Invalid photo format. Please provide a valid JPEG/PNG image");
+                    }
+
+                    // Save photo proof to visit record
+                    visit.setPhotoProof(dto.getPhotoProof());
+
+                    // Convert base64 to MultipartFile and store using FileStorageService
+                    String photoUrl = savePhotoToStorage(dto.getPhotoProof(), "visit-proofs", dto.getVisitId());
+                    visit.setPhotoProofUrl(photoUrl);
+
+                }
+                else {
+                    // No valid location method provided
+                    throw new IllegalArgumentException(
+                            "Please provide either GPS location or photo proof to mark the remark visit"
+                    );
                 }
             }
+        }
 
-
+        // For PHARMACIST/STOCKIST visits or MISSED status, location is not required
+        if (dto.getStatus().equals(Visit.VisitStatus.MISSED)) {
+            visit.setNotes(dto.getNotes());
         }
 
         // Update visit (same fields as markVisit)
-        visit.setStatus(Visit.VisitStatus.COMPLETED);
+        visit.setStatus(dto.getStatus()); // Use dto status (COMPLETED or could be MISSED again)
         visit.setActualDate(LocalDateTime.now());
         visit.setActualVisitTime(LocalDateTime.now());
         visit.setNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
+        // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
-
-            List<ConvertedProduct> visitProducts =
-                    dto.getConvertedProducts().stream()
-                            .map(p -> ConvertedProduct.builder()
-                                    .visit(visit)
-                                    .product(
-                                            productRepository.getReferenceById(
-                                                    p.getProductId()
-                                            )
-                                    )
-                                    .quantity(p.getQuantity())
-                                    .value(p.getValue())
-                                    .build()
-                            )
-                            .toList();
+            List<ConvertedProduct> visitProducts = dto.getConvertedProducts().stream()
+                    .map(p -> ConvertedProduct.builder()
+                            .visit(visit)
+                            .product(productRepository.getReferenceById(p.getProductId()))
+                            .quantity(p.getQuantity())
+                            .value(p.getValue())
+                            .build())
+                    .toList();
 
             visit.getConvertedProducts().clear();
             visit.getConvertedProducts().addAll(visitProducts);
@@ -495,6 +620,8 @@ public class VisitService {
                 .stockistType(visit.getStockistType())
                 .fieldExecutiveId(visit.getFieldExecutive().getId())
                 .fieldExecutiveName(visit.getFieldExecutive().getName())
+                .latitude(visit.getLatitude() != null ? visit.getLatitude() : "")
+                .longitude(visit.getLongitude() != null ? visit.getLongitude() : "")
                 .doctorId(
                         visit.getDoctor() != null ? visit.getDoctor().getId() : null
                 )

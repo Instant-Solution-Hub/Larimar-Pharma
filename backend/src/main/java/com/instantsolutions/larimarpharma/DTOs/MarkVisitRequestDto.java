@@ -16,6 +16,11 @@ public class MarkVisitRequestDto {
     @NotNull
     private Visit.VisitStatus status; // COMPLETED or MISSED
 
+    private String locationMethod; // "gps" or "photo"
+
+    // Base64 encoded image
+    private String photoProof;
+
     private String latitude;
     private String longitude;
 
