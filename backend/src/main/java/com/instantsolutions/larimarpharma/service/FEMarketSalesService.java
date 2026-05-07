@@ -60,6 +60,20 @@ public class FEMarketSalesService {
     }
 
     @Transactional
+    public List<MarketSalesDetailDto> getMarketSalesDetailByManager(
+            Long managerId,
+            int year,
+            int month
+    ) {
+
+        return salesRepo.findCurrentMonthMarketSalesDetailByManager(
+                managerId,
+                year,
+                month
+        );
+    }
+
+    @Transactional
     public List<MarketSalesSummaryDto> getCurrentMonthMarketSalesForAllFEs() {
 
         int year = LocalDate.now().getYear();

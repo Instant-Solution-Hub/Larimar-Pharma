@@ -57,6 +57,18 @@ public class FEMonthlyProductSalesController {
         );
     }
 
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<List<MonthlyProductSalesSummaryDto>> getManagerFESalesSummary(
+            @PathVariable Long managerId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+
+        return ResponseEntity.ok(
+                service.getManagerFESalesSummary(managerId, year, month)
+        );
+    }
+
 }
 
 

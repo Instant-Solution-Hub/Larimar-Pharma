@@ -45,6 +45,25 @@ public interface FEMarketMonthlySalesRepository
             int month
     );
 
+    @Query("""
+    SELECT new com.instantsolutions.larimarpharma.DTOs.MarketSalesDetailDto(
+        fe.name,
+        ms.market,
+        ms.salesAmount
+    )
+    FROM FEMarketMonthlySales ms
+    JOIN ms.fieldExecutive fe
+    WHERE fe.manager.id = :managerId
+      AND ms.year = :year
+      AND ms.month = :month
+    ORDER BY fe.name ASC, ms.market ASC
+""")
+    List<MarketSalesDetailDto> findCurrentMonthMarketSalesDetailByManager(
+            @Param("managerId") Long managerId,
+            @Param("year") int year,
+            @Param("month") int month
+    );
+
     List<FEMarketMonthlySales> findByYearAndMonth(int year, int month);
 }
 
