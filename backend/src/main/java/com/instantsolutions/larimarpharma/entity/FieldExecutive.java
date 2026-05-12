@@ -36,6 +36,10 @@ public class FieldExecutive extends BaseUser {
     private String territory;
     private String region;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isPortalLocked = false;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "field_executive_markets",

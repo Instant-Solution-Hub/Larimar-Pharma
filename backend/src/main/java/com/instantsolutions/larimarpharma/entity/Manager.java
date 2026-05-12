@@ -25,6 +25,10 @@ public class Manager extends BaseUser {
     private String department;
     private String designation;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isPortalLocked = false;
+
 
     // Field Executives under this manager
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

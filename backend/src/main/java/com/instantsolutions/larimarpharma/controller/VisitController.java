@@ -53,6 +53,16 @@ public class VisitController {
         ));
     }
 
+    @PostMapping("/change-status/{visitId}/{status}")
+    public ResponseEntity<ApiResponseDto<VisitResponseDto>> changeVisitStatus(
+            @PathVariable Long visitId,@PathVariable String status
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                visitService.changeStatus(visitId, status),
+                "Visits Marked successfully"
+        ));
+    }
+
     @PostMapping("/re-mark")
     public ResponseEntity<VisitResponseDto> reMarkVisit(
             @RequestBody @Valid MarkVisitRequestDto dto
