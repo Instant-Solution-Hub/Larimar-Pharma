@@ -47,4 +47,25 @@ public interface FEMonthlyStockistSalesRepository
             @Param("year") Integer year,
             @Param("month") Integer month
     );
+
+    @Query("""
+       SELECT new com.instantsolutions.larimarpharma.DTOs.MonthlyStockistSalesSummaryDto(
+            s.fieldExecutive.name,
+            s.fieldExecutive.region,
+            s.stockist.name,
+            s.price
+       )
+       FROM FEMonthlyStockistSales s
+       WHERE s.fieldExecutive.manager.id = :managerId
+         AND s.year = :year
+         AND s.month = :month
+         AND s.price IS NOT NULL
+         AND s.price <> 0
+       ORDER BY s.fieldExecutive.name ASC
+       """)
+    List<MonthlyStockistSalesSummaryDto> findAllSummaryByManagerAndMonthAndYear(
+            @Param("managerId") Long managerId,
+            @Param("year") Integer year,
+            @Param("month") Integer month
+    );
 }

@@ -706,6 +706,7 @@ public class ManagerService {
                     .employeeCode(manager.getEmployeeCode())
                     .department(manager.getDepartment())
                     .designation(manager.getDesignation())
+                    .isPortalLocked(manager.getIsPortalLocked())
                     .managedTerritories(territories)
                     .build();
 

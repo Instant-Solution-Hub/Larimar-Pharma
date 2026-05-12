@@ -19,6 +19,7 @@ public class FieldExecutiveResponse {
     private String territory;
     private String region;
     private String managerName;
+    private Boolean isPortalLocked;
 
     private Long managerId;
     private List<String> markets;

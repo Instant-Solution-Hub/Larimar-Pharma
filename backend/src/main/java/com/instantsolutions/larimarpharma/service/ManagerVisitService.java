@@ -775,7 +775,14 @@ public class ManagerVisitService {
     }
 
 
+    @Transactional
+    public ManagerVisitDto changeStatus(Long visitId, String status){
+        ManagerVisit visit = managerVisitRepository.findById(visitId)
+                .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
+        visit.setStatus(Visit.VisitStatus.valueOf(status));
+        return mapToDto(managerVisitRepository.save(visit));
 
+    }
 
 
 }

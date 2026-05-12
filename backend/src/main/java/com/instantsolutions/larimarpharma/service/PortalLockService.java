@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -216,6 +217,7 @@ public class PortalLockService {
             log.debug("FE {} already locked for date {}", fe.getId(), date);
             return;
         }
+        fe.setIsPortalLocked(true);
 
         PortalLockStatus lockStatus = PortalLockStatus.builder()
                 .fieldExecutive(fe)
@@ -227,8 +229,26 @@ public class PortalLockService {
                 .unlockRequested(false)
                 .build();
 
+
         portalLockStatusRepository.save(lockStatus);
+        fieldExecutiveRepository.save(fe);
         log.info("Locked portal for FE {} on date {}", fe.getId(), date);
+    }
+
+    private void unlockFieldExecutivePortal(FieldExecutive fe, LocalDate date) {
+        fe.setIsPortalLocked(false);
+
+        // Get active lock
+        PortalLockStatus lockStatus = portalLockStatusRepository
+                .findTopByFieldExecutiveAndIsLockedOrderByLockedDateDesc(fe, true)
+                .orElseThrow(() -> new IllegalStateException("Field Executive portal is not locked"));
+        lockStatus.setIsUnlocked(true);
+        lockStatus.setIsLocked(false);
+
+
+        portalLockStatusRepository.save(lockStatus);
+        fieldExecutiveRepository.save(fe);
+        log.info("unlocked portal for FE {} on date {}", fe.getId(), date);
     }
 
     private void lockManagerPortal(Manager manager, LocalDate date) {
@@ -241,6 +261,8 @@ public class PortalLockService {
             return;
         }
 
+        manager.setIsPortalLocked(true);
+
         PortalLockStatus lockStatus = PortalLockStatus.builder()
                 .manager(manager)
                 .userType(PortalLockStatus.UserType.MANAGER)
@@ -252,7 +274,24 @@ public class PortalLockService {
                 .build();
 
         portalLockStatusRepository.save(lockStatus);
+        managerRepository.save(manager);
         log.info("Locked portal for Manager {} on date {}", manager.getId(), date);
+    }
+
+    private void unlockManagerPortal(Manager manager, LocalDate date) {
+        manager.setIsPortalLocked(false);
+
+        PortalLockStatus  lockStatus = portalLockStatusRepository
+                .findTopByManagerAndIsLockedOrderByLockedDateDesc(
+                        manager,
+                        true)
+                .orElseThrow(() -> new RuntimeException("Lock status not found"));
+        lockStatus.setIsLocked(false);
+        lockStatus.setIsUnlocked(true);
+
+        portalLockStatusRepository.save(lockStatus);
+        managerRepository.save(manager);
+        log.info("unlocked portal for Manager {} on date {}", manager.getId(), date);
     }
 
     /**
@@ -400,6 +439,7 @@ public class PortalLockService {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found with ID: " + adminId));
 
+
         PortalLockStatus lockStatus;
 
         if (request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE) {
@@ -424,6 +464,17 @@ public class PortalLockService {
             lockStatus.setApprovedBy(admin);
             lockStatus.setUnlockApprovalDate(LocalDateTime.now());
 
+            if(request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE){
+               Optional<FieldExecutive> fe = fieldExecutiveRepository.findById(request.getFieldExecutive().getId());
+               fe.get().setIsPortalLocked(false);
+               fieldExecutiveRepository.save(fe.get());
+
+            }else {
+             Optional<Manager> manager =   managerRepository.findById(request.getManager().getId());
+             manager.get().setIsPortalLocked(false);
+             managerRepository.save(manager.get());
+            }
+
             request.setStatus(PortalUnlockRequest.ApprovalStatus.APPROVED);
             request.setReviewedBy(admin);
             request.setAdminComments(comments);
@@ -433,6 +484,17 @@ public class PortalLockService {
             lockStatus.setUnlockRequested(false);
             lockStatus.setIsUnlocked(false);
             lockStatus.setUnlockRequestStatus(PortalLockStatus.UnlockRequestStatus.REJECTED);
+
+//            if(request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE){
+//                Optional<FieldExecutive> fe = fieldExecutiveRepository.findById(request.getFieldExecutive().getId());
+//                fe.get().setIsPortalLocked(true);
+//                fieldExecutiveRepository.save(fe.get());
+//
+//            }else {
+//                Optional<Manager> manager =   managerRepository.findById(request.getManager().getId());
+//                manager.get().setIsPortalLocked(true);
+//                managerRepository.save(manager.get());
+//            }
 
             request.setStatus(PortalUnlockRequest.ApprovalStatus.REJECTED);
             request.setReviewedBy(admin);
@@ -465,6 +527,27 @@ public class PortalLockService {
         }
     }
 
+    /**
+     * Manual unlock portal (admin function)
+     */
+    @Transactional
+    public void manuallyUnlockPortal(Long userId, String userType, LocalDate date, String reason, Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found with ID: " + adminId));
+
+        if ("FIELD_EXECUTIVE".equals(userType)) {
+            FieldExecutive fe = fieldExecutiveRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Field Executive not found with ID: " + userId));
+            unlockFieldExecutivePortal(fe, date);
+        } else if ("MANAGER".equals(userType)) {
+            Manager manager = managerRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Manager not found with ID: " + userId));
+            unlockManagerPortal(manager, date);
+        } else {
+            throw new IllegalArgumentException("Invalid user type: " + userType);
+        }
+    }
+
     @Transactional
     public void manuallyLockFieldExecutivePortal(FieldExecutive fe, LocalDate date, String reason, Admin admin) {
         lockFieldExecutivePortal(fe, date);
@@ -489,6 +572,7 @@ public class PortalLockService {
         lockStatus.setLockReason(reason + " (Manually locked by Admin: " + admin.getEmail() + ")");
         portalLockStatusRepository.save(lockStatus);
     }
+
 
     /**
      * Get all active locks for a field executive

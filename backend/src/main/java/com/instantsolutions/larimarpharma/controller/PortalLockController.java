@@ -130,6 +130,25 @@ public class PortalLockController {
         ));
     }
 
+    /**
+     * Admin: Manually unlock user portal
+     */
+    @PostMapping("/admin/manual-unlock")
+    public ResponseEntity<?> manuallyUnlockPortal(@Valid @RequestBody ManualLockRequestDto lockDto) {
+
+        portalLockService.manuallyUnlockPortal(
+                lockDto.getUserId(),
+                lockDto.getUserType(),
+                lockDto.getLockDate(),
+                lockDto.getReason(),
+                lockDto.getAdminId()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Portal unlocked manually"
+        ));
+    }
+
 
     /**
      * Admin: get all unlock requests

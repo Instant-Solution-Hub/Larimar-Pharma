@@ -38,6 +38,16 @@ public class ManagerVisitController {
         return ResponseEntity.ok(ApiResponseDto.success(null,"Visits un-assigned successfully"));
     }
 
+    @PostMapping("/change-status")
+    public ResponseEntity<ApiResponseDto<ManagerVisitDto>> changeStatus(
+            @PathVariable Long visitId,@PathVariable String status
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.changeStatus(visitId, status),
+                "Visits Marked successfully"
+        ));
+    }
+
 
     @PostMapping("/mark")
     public ResponseEntity<ApiResponseDto<ManagerVisitDto>> markVisit(

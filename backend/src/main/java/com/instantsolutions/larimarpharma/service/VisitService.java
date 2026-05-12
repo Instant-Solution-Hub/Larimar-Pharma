@@ -1561,6 +1561,15 @@ public class VisitService {
         };
     }
 
+    @Transactional
+    public VisitResponseDto changeStatus(Long visitId, String status){
+        Visit visit = visitRepository.findById(visitId)
+                .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
+        visit.setStatus(Visit.VisitStatus.valueOf(status));
+        return mapToDto(visitRepository.save(visit));
+
+    }
+
 
 
 

@@ -170,6 +170,7 @@ public class FEService {
                 .email(fe.getEmail())
                 .phone(fe.getPhone())
                 .employeeCode(fe.getEmployeeCode())
+                .isPortalLocked(fe.getIsPortalLocked())
                 .territory(fe.getTerritory())
                 .region(fe.getRegion())
                 .managerId(

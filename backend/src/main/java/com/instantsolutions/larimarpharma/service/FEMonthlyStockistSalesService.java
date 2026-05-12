@@ -104,6 +104,16 @@ public class FEMonthlyStockistSalesService {
                 .findAllSummaryByMonthAndYear(year, month);
     }
 
+    @Transactional
+    public List<MonthlyStockistSalesSummaryDto> getManagerFESummary(
+            Long managerId,
+            int year,
+            int month
+    ) {
+        return repository
+                .findAllSummaryByManagerAndMonthAndYear(managerId, year, month);
+    }
+
     // 🔹 UPDATE price
     public void updatePrice(Long feId, Long stockistId, Double price) {
 

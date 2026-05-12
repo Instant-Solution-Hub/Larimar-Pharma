@@ -75,6 +75,20 @@ public class FEMonthlyProductSalesService {
     }
 
     @Transactional
+    public List<MonthlyProductSalesSummaryDto> getManagerFESalesSummary(
+            Long managerId,
+            int year,
+            int month
+    ) {
+
+        return salesRepository.findAllSummaryByManagerAndMonthAndYear(
+                managerId,
+                year,
+                month
+        );
+    }
+
+    @Transactional
     public List<MonthlyProductSummaryDto> getPreviousMonthSalesSummary() {
 
         YearMonth previousMonth = YearMonth.now().minusMonths(1);

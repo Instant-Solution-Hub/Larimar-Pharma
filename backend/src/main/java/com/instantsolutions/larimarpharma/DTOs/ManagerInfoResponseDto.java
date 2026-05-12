@@ -23,6 +23,7 @@ public class ManagerInfoResponseDto {
     private String employeeCode;
     private String department;
     private String designation;
+    private Boolean isPortalLocked;
 
     private Set<String> managedTerritories;
 

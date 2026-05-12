@@ -46,6 +46,28 @@ public interface FEMonthlyProductSalesRepository
     );
 
     @Query("""
+       SELECT new com.instantsolutions.larimarpharma.DTOs.MonthlyProductSalesSummaryDto(
+            s.fieldExecutive.name,
+            s.product.name,
+            s.pts,
+            s.quantity,
+            s.sales
+       )
+       FROM FEMonthlyProductSales s
+       WHERE s.fieldExecutive.manager.id = :managerId
+         AND s.year = :year
+         AND s.month = :month
+         AND s.sales IS NOT NULL
+         AND s.sales <> 0
+       ORDER BY s.fieldExecutive.name ASC
+       """)
+    List<MonthlyProductSalesSummaryDto> findAllSummaryByManagerAndMonthAndYear(
+            @Param("managerId") Long managerId,
+            @Param("year") Integer year,
+            @Param("month") Integer month
+    );
+
+    @Query("""
     SELECT new com.instantsolutions.larimarpharma.DTOs.MonthlyProductSummaryDto(
         p.id,
         p.name,

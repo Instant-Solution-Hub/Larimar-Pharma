@@ -46,4 +46,15 @@ public class FEMonthlyStockistSalesController {
                 service.getAllFESummary(year, month)
         );
     }
+
+    @GetMapping("/manager/summary")
+    public ResponseEntity<List<MonthlyStockistSalesSummaryDto>> getManagerFESummary(
+            @RequestParam Long managerId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return ResponseEntity.ok(
+                service.getManagerFESummary(managerId, year, month)
+        );
+    }
 }

@@ -47,6 +47,17 @@ public class FEMarketSalesController {
                     service.getCurrentMonthMarketSalesForAllFEs()
             );
         }
+
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<List<MarketSalesDetailDto>> getSalesDetailForManagerFEs(
+            @PathVariable Long managerId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return ResponseEntity.ok(
+                service.getMarketSalesDetailByManager(managerId, year, month)
+        );
+    }
     }
 
 
