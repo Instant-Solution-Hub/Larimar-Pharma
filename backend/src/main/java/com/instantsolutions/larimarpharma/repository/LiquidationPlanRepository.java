@@ -6,6 +6,7 @@ import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,10 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
     List<LiquidationPlan> findByFieldExecutive(FieldExecutive fieldExecutive);
 
     List<LiquidationPlan> findByFieldExecutiveId(Long fieldExecutiveId);
+    List<LiquidationPlan> findByCreatedAtBetween(
+            LocalDateTime start,
+            LocalDateTime end
+    );
 
     List<LiquidationPlan> findByProductId(Long productId);
 
@@ -43,6 +48,18 @@ public interface LiquidationPlanRepository extends JpaRepository<LiquidationPlan
             Long managerId,
             int month,
             int year
+    );
+
+    @Query("""
+    SELECT lp
+    FROM LiquidationPlan lp
+    WHERE lp.fieldExecutive.manager.id = :managerId
+      AND lp.createdAt BETWEEN :from AND :to
+""")
+    List<LiquidationPlan> findAllByManagerIdAndCreatedAtBetween(
+            @Param("managerId") Long managerId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
     );
 
 

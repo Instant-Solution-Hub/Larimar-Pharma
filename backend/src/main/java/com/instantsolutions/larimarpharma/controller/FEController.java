@@ -3,6 +3,7 @@ package com.instantsolutions.larimarpharma.controller;
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.AttendanceService;
 import com.instantsolutions.larimarpharma.service.FEVisitService;
+
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.instantsolutions.larimarpharma.service.FEService;
@@ -54,6 +55,20 @@ public class FEController {
                 ApiResponseDto.success(
                         attendance,
                         "Attendance calculated successfully"
+                )
+        );
+    }
+
+    @GetMapping("/basic")
+    public ResponseEntity<ApiResponseDto<List<FEBasicInfoDto>>> getAllFEBasicInfo() {
+
+        List<FEBasicInfoDto> response =
+                fieldExecutiveService.getAllFEBasicInfo();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "Field executives fetched successfully"
                 )
         );
     }
@@ -177,6 +192,7 @@ public class FEController {
                 )
         );
     }
+
 
     @GetMapping("/{feId}/profile-stats")
     public ResponseEntity<FEProfileStatsResponseDto> getProfileStats(

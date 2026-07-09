@@ -19,6 +19,9 @@ public class ManagerLiquidationPlanDto {
     private String doctor;
     private Integer targetLiquidation;
     private Integer achievedUnits;
+    private Integer liquidated1;
+    private Integer liquidated2;
+    private Integer liquidated3;
     private String marketName;
     private String medicalShopName;
     private String status;   // managerApprovalStatus

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
@@ -156,8 +157,12 @@ public class LiquidationPlanService {
         existing.setStrategy(dto.getStrategy());
         existing.setMedicalShopName(dto.getMedicalShopName());
         existing.setMarketName(dto.getMarketName());
+        existing.setLiquidated1(dto.getLiquidated1());
+        existing.setLiquidated2(dto.getLiquidated2());
+        existing.setLiquidated3(dto.getLiquidated3());
 
-        return mapToResponse(existing);
+
+        return mapToResponse2(existing);
     }
 
     @Transactional
@@ -174,7 +179,7 @@ public class LiquidationPlanService {
         return liquidationPlanRepository
                 .findByFieldExecutiveIdAndCreatedAtBetween(feId, start, end)
                 .stream()
-                .map(this::mapToResponse)
+                .map(this::mapToResponse2)
                 .toList();
     }
 
@@ -213,6 +218,41 @@ public class LiquidationPlanService {
                 )
                 .stream()
                 .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional
+    public List<LiquidationPlanResponseDto> getCurrentMonthPlans() {
+
+        LocalDateTime start = YearMonth.now()
+                .atDay(1)
+                .atStartOfDay();
+
+        LocalDateTime end = YearMonth.now()
+                .atEndOfMonth()
+                .atTime(23, 59, 59);
+
+        return liquidationPlanRepository
+                .findByCreatedAtBetween(start, end)
+                .stream()
+                .map(this::mapToResponse3)
+                .toList();
+    }
+
+
+    @Transactional
+    public List<LiquidationPlanResponseDto> getPlansBetweenDates(
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+
+        LocalDateTime from = fromDate.atStartOfDay();
+        LocalDateTime to = toDate.atTime(LocalTime.MAX);
+
+        return liquidationPlanRepository
+                .findByCreatedAtBetween(from, to)
+                .stream()
+                .map(this::mapToResponse3)
                 .toList();
     }
 
@@ -276,6 +316,51 @@ public class LiquidationPlanService {
                 .marketName(plan.getMarketName())
                 .quantity(plan.getAvailableUnits())
                 .managerApprovalStatus(plan.getManagerApprovalStatus())
+                .build();
+    }
+
+    private LiquidationPlanResponseDto mapToResponse2(LiquidationPlan plan) {
+        return LiquidationPlanResponseDto.builder()
+                .id(plan.getId())
+                .productId(plan.getProduct().getId())
+                .productName(plan.getProduct().getName())
+                .doctorId(plan.getDoctor().getId())
+                .doctorName(plan.getDoctor().getName())
+                .targetLiquidation(plan.getTargetLiquidation())
+                .achievedUnits(plan.getAchievedUnits())
+                .medicalShopName(plan.getMedicalShopName())
+                .deadline(plan.getDeadline())
+                .strategy(plan.getStrategy())
+                .createdAt(plan.getCreatedAt())
+                .marketName(plan.getMarketName())
+                .quantity(plan.getAvailableUnits())
+                .managerApprovalStatus(plan.getManagerApprovalStatus())
+                .liquidated1(plan.getLiquidated1())
+                .liquidated2(plan.getLiquidated2())
+                .liquidated3(plan.getLiquidated3())
+                .build();
+    }
+
+    private LiquidationPlanResponseDto mapToResponse3(LiquidationPlan plan) {
+        return LiquidationPlanResponseDto.builder()
+                .id(plan.getId())
+                .productId(plan.getProduct().getId())
+                .productName(plan.getProduct().getName())
+                .doctorId(plan.getDoctor().getId())
+                .doctorName(plan.getDoctor().getName())
+                .targetLiquidation(plan.getTargetLiquidation())
+                .achievedUnits(plan.getAchievedUnits())
+                .medicalShopName(plan.getMedicalShopName())
+                .deadline(plan.getDeadline())
+                .strategy(plan.getStrategy())
+                .createdAt(plan.getCreatedAt())
+                .marketName(plan.getMarketName())
+                .quantity(plan.getAvailableUnits())
+                .managerApprovalStatus(plan.getManagerApprovalStatus())
+                .liquidated1(plan.getLiquidated1())
+                .liquidated2(plan.getLiquidated2())
+                .liquidated3(plan.getLiquidated3())
+                .employeeId(plan.getFieldExecutive().getId())
                 .build();
     }
 

@@ -21,6 +21,10 @@ public class LiquidationPlanResponseDto {
 
     private Integer targetLiquidation;
     private Integer achievedUnits;
+    private Integer liquidated1;
+    private Integer liquidated2;
+    private Integer liquidated3;
+    private Long employeeId;
 
     private String medicalShopName;
     private LocalDateTime deadline;

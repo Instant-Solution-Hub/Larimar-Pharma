@@ -1,14 +1,17 @@
 package com.instantsolutions.larimarpharma.controller;
 
+import com.instantsolutions.larimarpharma.DTOs.ApiResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.LiquidationPlanResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.UpdateLiquidationApprovalDto;
 import com.instantsolutions.larimarpharma.service.LiquidationPlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 @RestController
 @RequestMapping("/api/fe/liquidation-plans")
@@ -35,6 +38,31 @@ public class LiquidationPlanController {
     ) {
         return ResponseEntity.ok(
                 liquidationPlanService.update(planId, feId, dto)
+        );
+    }
+
+    @GetMapping("/current-month")
+    public ResponseEntity<ApiResponseDto<List<LiquidationPlanResponseDto>>> getCurrentMonthPlans() {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        liquidationPlanService.getCurrentMonthPlans(),
+                        "Current month liquidation plans fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/date-range")
+    public ResponseEntity<ApiResponseDto<List<LiquidationPlanResponseDto>>> getPlansBetweenDates(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        liquidationPlanService.getPlansBetweenDates(fromDate, toDate),
+                        "Liquidation plans fetched successfully"
+                )
         );
     }
 
