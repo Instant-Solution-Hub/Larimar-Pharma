@@ -22,6 +22,7 @@ import java.util.List;
 @Builder
 public class ManagerVisit {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -88,6 +89,11 @@ public class ManagerVisit {
     private Doctor.Category doctorCategory;
 
     private String hospitalName;
+
+    // Product relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = true)
+    private Product product;
 
     /* ===== MANAGER-SPECIFIC DATA ===== */
 

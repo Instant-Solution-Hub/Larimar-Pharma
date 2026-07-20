@@ -33,6 +33,7 @@ public class ManagerVisitService {
     private final VisitRepository visitRepository;
     private final ManagerVisitRepository managerVisitRepository;
     private final DoctorRepository doctorRepository;
+    private final ProductRepository productRepository;
 
     @Transactional
     public void assignManagerToVisit(AssignManagerVisitRequest request) {
@@ -153,6 +154,18 @@ public class ManagerVisitService {
         visit.setStatus(dto.getStatus());
         visit.setManagerNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with manager visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+
+            // Set product relationship
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - clear product association
+            visit.setProduct(null);
+        }
         ManagerVisit savedVisit = managerVisitRepository.save(visit);
         return mapToDto(savedVisit);
     }
@@ -204,6 +217,18 @@ public class ManagerVisitService {
         visit.setJoinedAt(LocalDateTime.now());
         visit.setManagerNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with manager visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+
+            // Set product relationship
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - clear product association
+            visit.setProduct(null);
+        }
         ManagerVisit savedVisit = managerVisitRepository.save(visit);
         return mapToDto(savedVisit);
     }
@@ -364,6 +389,8 @@ public class ManagerVisitService {
                         .managerName(v.getManager().getName())
                         .managerEmpCode(v.getManager().getEmployeeCode())
                         .userRole("MANAGER")
+                        .productId(v.getProduct() !=null ? v.getProduct().getId() : null)
+                        .productName(v.getProduct() !=null ? v.getProduct().getName() : "")
                         .notes(v.getManagerNotes());
 
         // 🔁 Doctor mapping with fallback

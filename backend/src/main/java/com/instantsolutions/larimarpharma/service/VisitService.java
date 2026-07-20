@@ -383,6 +383,18 @@ public class VisitService {
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
+        // Check if product detailing was done during the visit
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - ensure product is null
+            visit.setProduct(null);
+        }
+
         // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
             List<ConvertedProduct> visitProducts = dto.getConvertedProducts().stream()
@@ -556,6 +568,18 @@ public class VisitService {
         visit.setNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
+
+        // Check if product detailing was done during the visit
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - ensure product is null
+            visit.setProduct(null);
+        }
 
         // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
@@ -908,6 +932,8 @@ public class VisitService {
                         .dayOfWeek(v.getDayOfWeek())
                         .actualVisitTime(v.getActualVisitTime())
                         .location(v.getLocation())
+                        .productId(v.getProduct() !=null ? v.getProduct().getId() : null)
+                        .productName(v.getProduct() !=null ? v.getProduct().getName() : "")
                         .notes(v.getNotes());
 
         switch (v.getVisitType()) {
