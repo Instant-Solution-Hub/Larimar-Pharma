@@ -20,9 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.*;
 import java.time.temporal.IsoFields;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.instantsolutions.larimarpharma.utils.DateUtil.*;
@@ -383,6 +381,18 @@ public class VisitService {
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
+        // Check if product detailing was done during the visit
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - ensure product is null
+            visit.setProduct(null);
+        }
+
         // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
             List<ConvertedProduct> visitProducts = dto.getConvertedProducts().stream()
@@ -556,6 +566,18 @@ public class VisitService {
         visit.setNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
+
+        // Check if product detailing was done during the visit
+        if (dto.getProductId() != null) {
+            // Product detailing was done - associate product with visit
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+            visit.setProduct(product);
+
+        } else {
+            // No product detailing done - ensure product is null
+            visit.setProduct(null);
+        }
 
         // Handle converted products
         if (dto.getConvertedProducts() != null && !dto.getConvertedProducts().isEmpty()) {
@@ -908,6 +930,8 @@ public class VisitService {
                         .dayOfWeek(v.getDayOfWeek())
                         .actualVisitTime(v.getActualVisitTime())
                         .location(v.getLocation())
+                        .productId(v.getProduct() !=null ? v.getProduct().getId() : null)
+                        .productName(v.getProduct() !=null ? v.getProduct().getName() : "")
                         .notes(v.getNotes());
 
         switch (v.getVisitType()) {
@@ -1067,30 +1091,43 @@ public class VisitService {
         Pharmacy p = v.getPharmacy();
         FieldExecutive fe = v.getFieldExecutive();
 
-        return new TodayScheduledVisitDto(
-                v.getId(),
-                v.getVisitType(),
-                v.getVisitDate(),
-               String.valueOf( v.getStatus()),
-                v.getLatitude() !=null ? v.getLatitude() : "",
-                v.getLongitude() !=null ? v.getLongitude() : "",
-                v.getLocationMethod(),
-                v.getPhotoProofUrl() !=null ? v.getPhotoProofUrl() : null,
-                d != null ? d.getId() : null,
-                d != null ? d.getName() : null,
-                d != null ? d.getDesignation() : null,
-                d != null ? String.valueOf(d.getCategory()) : null,
-                d != null ? String.valueOf(d.getPracticeType()) : null,
-                d != null ? d.getHospitalName() : "",
+        return TodayScheduledVisitDto.builder()
+                .visitId(v.getId())
+                .visitType(v.getVisitType())
+                .visitDate(v.getVisitDate())
+                .status(String.valueOf(v.getStatus()))
+                .latitude(v.getLatitude() != null ? v.getLatitude() : "")
+                .longitude(v.getLongitude() != null ? v.getLongitude() : "")
+                .locationMethod(v.getLocationMethod())
+                .photoProofUrl(v.getPhotoProofUrl() != null ? v.getPhotoProofUrl() : null)
 
-                p != null ? p.getId() : null,
-                p != null ? p.getPharmacyName() : null,
-                p != null ? p.getContactPerson() : null,
-                p != null ? p.getContactNumber() : null,
+                // Doctor fields
+                .doctorId(d != null ? d.getId() : null)
+                .doctorName(d != null ? d.getName() : null)
+                .designation(d != null ? d.getDesignation() : null)
+                .category(d != null ? String.valueOf(d.getCategory()) : null)
+                .practiceType(d != null ? String.valueOf(d.getPracticeType()) : null)
+                .hospital(d != null ? d.getHospitalName() : "")
 
-                fe.getId(),
-                fe.getName()
-        );
+                // Pharmacy fields
+                .pharmacyId(p != null ? p.getId() : null)
+                .pharmacyName(p != null ? p.getPharmacyName() : null)
+                .contactPerson(p != null ? p.getContactPerson() : null)
+                .contactNumber(p != null ? p.getContactNumber() : null)
+
+                // Field Executive fields
+                .fieldExecutiveId(fe != null ? fe.getId() : null)
+                .fieldExecutiveName(fe != null ? fe.getName() : null)
+
+                // Sequence fields (will be set later)
+                .visitSequence(null)
+                .sequenceLabel(null)
+                .requiredVisits(null)
+                .visitProgress(null)
+                .isMinimumMet(false)
+                .requirementStatus(null)
+
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -1474,7 +1511,7 @@ public class VisitService {
 
     @Transactional
     public VisitReportDto getVisitReport(Long feId, LocalDate from, LocalDate to,
-                                         String status, String category){
+                                         String status, String category, String docType){
 
         VisitExcelExportRequest request = VisitExcelExportRequest.builder()
                 .startDate(from)
@@ -1482,14 +1519,60 @@ public class VisitService {
                 .fieldExecutiveId(feId)
                 .visitStatus(status.equals("all") ? null : Visit.VisitStatus.valueOf(status))
                 .category(category.equals("all") ? null : Doctor.Category.valueOf(category))
+                .docType(docType.equals("all") ? null : Doctor.PracticeType.valueOf(docType))
                 .build();
 
         Specification<Visit> spec = buildSpecification(request);
         List<Visit> fetchedVisits = visitRepository.findAll(spec);
 
-        List<TodayScheduledVisitDto> mappedVisits = fetchedVisits.stream()
-                .map(this::toTodayScheduledVisitDTO)
-                .toList();
+        // NEW: Calculate visit sequences for A and A+ doctors
+        Map<Long, Integer> doctorVisitCounter = new HashMap<>();
+        Map<Doctor.Category, Integer> requiredVisitsMap = Map.of(
+                Doctor.Category.A_PLUS, 3,
+                Doctor.Category.A, 2
+        );
+
+        // Sort visits by date and time to ensure correct sequence
+        List<Visit> sortedVisits = fetchedVisits.stream()
+                .sorted(Comparator.comparing(Visit::getVisitDate)
+                        .thenComparing(Visit::getActualVisitTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+
+        List<TodayScheduledVisitDto> mappedVisits = sortedVisits.stream()
+                .map(visit -> {
+                    TodayScheduledVisitDto dto = toTodayScheduledVisitDTO(visit);
+
+                    // Only calculate sequence for A and A+ doctors
+                    Doctor doctor = visit.getDoctor();
+                    if (doctor != null && isCategoryAOrAPlus(doctor.getCategory())) {
+                        // Increment visit counter for this doctor
+                        Long doctorId = doctor.getId();
+                        int currentVisitNumber = doctorVisitCounter.getOrDefault(doctorId, 0) + 1;
+                        doctorVisitCounter.put(doctorId, currentVisitNumber);
+
+                        // Set sequence information
+                        int requiredVisits = requiredVisitsMap.getOrDefault(doctor.getCategory(), 0);
+                        boolean isMinimumMet = currentVisitNumber >= requiredVisits;
+
+                        dto.setVisitSequence(currentVisitNumber);
+                        dto.setSequenceLabel(getSequenceLabel(currentVisitNumber));
+                        dto.setRequiredVisits(requiredVisits);
+                        dto.setVisitProgress(currentVisitNumber + "/" + requiredVisits);
+                        dto.setMinimumMet(isMinimumMet);
+                        dto.setRequirementStatus(getRequirementStatus(currentVisitNumber, requiredVisits));
+                    } else {
+                        // For non-A/A+ doctors, set defaults
+                        dto.setVisitSequence(null);
+                        dto.setSequenceLabel("N/A");
+                        dto.setRequiredVisits(null);
+                        dto.setVisitProgress("N/A");
+                        dto.setMinimumMet(false);
+                        dto.setRequirementStatus("N/A");
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
         long completedCount = fetchedVisits.stream()
                 .filter(v -> v.getStatus() == Visit.VisitStatus.COMPLETED)
@@ -1557,8 +1640,38 @@ public class VisitService {
                 ));
             }
 
+            if (request.getDocType() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("doctor").get("practiceType"),
+                        request.getDocType()
+                ));
+            }
+
+
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private boolean isCategoryAOrAPlus(Doctor.Category category) {
+        return category == Doctor.Category.A_PLUS || category == Doctor.Category.A;
+    }
+
+    private String getSequenceLabel(int number) {
+        if (number == 1) return "1st Visit";
+        if (number == 2) return "2nd Visit";
+        if (number == 3) return "3rd Visit";
+        return number + "th Visit";
+    }
+
+    private String getRequirementStatus(int current, int required) {
+        if (current >= required) {
+            return "Met";
+        } else if (current == required - 1) {
+            return "One more required";
+        } else {
+            return "" + (required - current) + " more required";
+        }
     }
 
     @Transactional

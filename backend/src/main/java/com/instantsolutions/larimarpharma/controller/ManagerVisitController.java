@@ -173,10 +173,11 @@ public class ManagerVisitController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam String status,
-            @RequestParam String category
+            @RequestParam String category,
+            @RequestParam String docType
     ) {
         return ResponseEntity.ok(
-                managerVisitService.getManagerVisitReport(managerId, from, to, status, category)
+                managerVisitService.getManagerVisitReport(managerId, from, to, status, category,docType)
         );
     }
 
