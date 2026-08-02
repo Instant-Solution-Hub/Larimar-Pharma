@@ -38,6 +38,10 @@ public class CompletedVisitDto {
 
     private String userRole;
 
+    /* ===== Product Details ===== */
+    private String productName;
+    private Long productId;
+
     /* ===== Execution Details ===== */
     private List<String> activitiesPerformed;
     private Double orderValue;

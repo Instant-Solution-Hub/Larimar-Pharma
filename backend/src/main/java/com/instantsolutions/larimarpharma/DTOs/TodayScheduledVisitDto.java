@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TodayScheduledVisitDto  {
 
     private Long visitId;
@@ -36,4 +37,11 @@ public class TodayScheduledVisitDto  {
     // Field Executive
     private Long fieldExecutiveId;
     private String fieldExecutiveName;
+
+    private Integer visitSequence;        // 1, 2, 3, etc.
+    private String sequenceLabel;         // "1st", "2nd", "3rd"
+    private Integer requiredVisits;       // 2 for A, 3 for A+
+    private String visitProgress;         // "1/3", "2/3", "3/3"
+    private boolean isMinimumMet;         // true if required visits completed
+    private String requirementStatus;
 }

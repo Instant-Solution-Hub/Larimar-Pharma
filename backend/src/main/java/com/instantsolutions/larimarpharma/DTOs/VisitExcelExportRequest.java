@@ -22,4 +22,5 @@ public class VisitExcelExportRequest {
 
     private VisitStatus visitStatus; // optional - can be null
     private Doctor.Category category;// optional - can be null
+    private Doctor.PracticeType docType;// optional - can be null
 }

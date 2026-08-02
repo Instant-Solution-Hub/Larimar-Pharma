@@ -35,6 +35,10 @@ public class Visit {
     private Pharmacy pharmacy;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = true)
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stockist_id", nullable = true)
     private Stockist stockist;
 
