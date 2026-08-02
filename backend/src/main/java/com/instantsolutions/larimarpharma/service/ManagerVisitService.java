@@ -304,33 +304,46 @@ public class ManagerVisitService {
     private TodayScheduledVisitDto toTodayScheduledVisitDTO(ManagerVisit mv) {
 
         FieldExecutive fe = mv.getFieldExecutive();
+        Doctor originalDoctor = mv.getOriginalVisit() != null ? mv.getOriginalVisit().getDoctor() : null;
 
-        return new TodayScheduledVisitDto(
-                mv.getId(),
-                mv.getVisitType(),
-                mv.getVisitDate(),
-                String.valueOf(mv.getStatus()),
-                null,
-                null,
-                null,
-                null,
-                // Doctor snapshot (no entity join)
-                mv.getDoctorId(),
-                mv.getDoctorName(),
-                mv.getDoctorDesignation(), // designation not stored in ManagerVisit
-                mv.getDoctorCategory() != null ? mv.getDoctorCategory().name() : null,
-                null, // practiceType not stored
-                mv.getHospitalName(),
+        return TodayScheduledVisitDto.builder()
+                .visitId(mv.getId())
+                .visitType(mv.getVisitType())
+                .visitDate(mv.getVisitDate())
+                .status(String.valueOf(mv.getStatus()))
+                .latitude(null)
+                .longitude(null)
+                .locationMethod(null)
+                .photoProofUrl(null)
 
-                // Pharmacy not applicable in ManagerVisit snapshots
-                null,
-                null,
-                null,
-                null,
+                // Doctor snapshot fields
+                .doctorId(mv.getDoctorId())
+                .doctorName(mv.getDoctorName())
+                .designation(mv.getDoctorDesignation()) // designation not stored in ManagerVisit
+                .category(mv.getDoctorCategory() != null ? mv.getDoctorCategory().name() : null)
+                .practiceType(originalDoctor != null && originalDoctor.getPracticeType() != null
+                        ? originalDoctor.getPracticeType().toString()
+                        : null) // practiceType not stored in ManagerVisit
+                .hospital(mv.getHospitalName())
 
-                fe.getId(),
-                fe.getName()
-        );
+                // Pharmacy fields (not applicable in ManagerVisit snapshots)
+                .pharmacyId(null)
+                .pharmacyName(null)
+                .contactPerson(null)
+                .contactNumber(null)
+
+                // Field Executive fields
+                .fieldExecutiveId(fe != null ? fe.getId() : null)
+                .fieldExecutiveName(fe != null ? fe.getName() : null)
+
+                // Sequence fields (will be set later)
+                .visitSequence(null)
+                .sequenceLabel(null)
+                .requiredVisits(null)
+                .visitProgress(null)
+                .isMinimumMet(false)
+                .requirementStatus(null)
+                .build();
     }
 
     public List<CompletedVisitDto> getCompletedVisits(Long managerId) {
@@ -681,13 +694,14 @@ public class ManagerVisitService {
 
     @Transactional
     public VisitReportDto getManagerVisitReport(Long managerId, LocalDate from, LocalDate to,
-                                                String status, String category){
+                                                String status, String category, String docType){
         VisitExcelExportRequest request = VisitExcelExportRequest.builder()
                 .startDate(from)
                 .endDate(to)
                 .managerId(managerId)
                 .visitStatus(status.equals("all") ? null : Visit.VisitStatus.valueOf(status))
                 .category(category.equals("all") ? null : Doctor.Category.valueOf(category))
+                .docType(docType.equals("all") ? null : Doctor.PracticeType.valueOf(docType))
                 .build();
 
         Specification<ManagerVisit> spec = buildSpecification(request);
@@ -761,6 +775,13 @@ public class ManagerVisitService {
                 predicates.add(criteriaBuilder.equal(
                         root.get("doctorCategory"),
                         request.getCategory()
+                ));
+            }
+
+            if (request.getDocType() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("originalVisit").get("doctor").get("practiceType"),
+                        request.getDocType()
                 ));
             }
 

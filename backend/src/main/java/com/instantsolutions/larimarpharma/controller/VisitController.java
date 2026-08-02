@@ -284,10 +284,11 @@ public class VisitController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam String status,
-            @RequestParam String category
+            @RequestParam String category,
+            @RequestParam String docType
     ) {
         return ResponseEntity.ok(
-                visitService.getVisitReport(fieldExecutiveId, from, to, status, category)
+                visitService.getVisitReport(fieldExecutiveId, from, to, status, category,docType)
         );
     }
 
