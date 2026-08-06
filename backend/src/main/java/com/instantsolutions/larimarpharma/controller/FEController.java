@@ -2,7 +2,9 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.AttendanceService;
+import com.instantsolutions.larimarpharma.service.DoctorChangeRequestService;
 import com.instantsolutions.larimarpharma.service.FEVisitService;
+
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.instantsolutions.larimarpharma.service.FEService;
@@ -24,6 +26,7 @@ public class FEController {
     @Autowired
     FEVisitService feVisitService;
     final FEService service;
+    private final DoctorChangeRequestService doctorChangeRequestService;
 
     @GetMapping("/{feId}/doctor-visits/monthly")
     public MonthlyDoctorVisitStatDto getMonthlyDoctorVisits(
@@ -54,6 +57,20 @@ public class FEController {
                 ApiResponseDto.success(
                         attendance,
                         "Attendance calculated successfully"
+                )
+        );
+    }
+
+    @GetMapping("/basic")
+    public ResponseEntity<ApiResponseDto<List<FEBasicInfoDto>>> getAllFEBasicInfo() {
+
+        List<FEBasicInfoDto> response =
+                fieldExecutiveService.getAllFEBasicInfo();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        response,
+                        "Field executives fetched successfully"
                 )
         );
     }
@@ -178,6 +195,7 @@ public class FEController {
         );
     }
 
+
     @GetMapping("/{feId}/profile-stats")
     public ResponseEntity<FEProfileStatsResponseDto> getProfileStats(
             @PathVariable Long feId,
@@ -232,6 +250,65 @@ public class FEController {
                         managerId,
                         weekNumber,
                         dayOfWeek
+                )
+        );
+    }
+
+    @PostMapping("/{feId}/doctor-change-requests")
+    public ResponseEntity<ApiResponseDto<DoctorChangeRequestResponseDto>>
+    createDoctorChangeRequest(
+            @PathVariable Long feId,
+            @Valid @RequestBody DoctorChangeRequestDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        doctorChangeRequestService.createRequest(
+                                feId,
+                                dto
+                        ),
+                        "Doctor change request created successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{feId}/doctor-change-requests")
+    public ResponseEntity<ApiResponseDto<List<DoctorChangeRequestResponseDto>>>
+    getDoctorChangeRequests(
+            @PathVariable Long feId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        doctorChangeRequestService.getRequestsByFE(feId),
+                        "Doctor change requests fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{feId}/doctor-change-stats")
+    public ResponseEntity<ApiResponseDto<DoctorChangeStatsDto>>
+    getDoctorChangeStats(
+            @PathVariable Long feId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        doctorChangeRequestService.getStats(feId),
+                        "Doctor change statistics fetched successfully"
+                )
+        );
+    }
+
+
+    @GetMapping("/doctor-change-stats")
+    public ResponseEntity<ApiResponseDto<List<DoctorChangeStatsDto>>>
+    getAllFEDoctorChangeStats() {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        doctorChangeRequestService.getAllFEDoctorChangeStats(),
+                        "Doctor change statistics fetched successfully"
                 )
         );
     }

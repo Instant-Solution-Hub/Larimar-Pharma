@@ -53,7 +53,7 @@ public class FEMonthlyProductSalesService {
         return products.stream().map(product -> {
 
             FEMonthlyProductSales row = existing.get(product.getId());
-            double pts = product.getNewPts(); // or price field
+            double pts = product.getPts(); // or price field
 
             return MonthlySalesRowDto.builder()
                     .productId(product.getId())
@@ -129,7 +129,7 @@ public class FEMonthlyProductSalesService {
                                 .product(product)
                                 .year(ym.getYear())
                                 .month(ym.getMonthValue())
-                                .pts(product.getNewPts())
+                                .pts(product.getPts())
                                 .createdAt(LocalDateTime.now())
                                 .build()
                         );

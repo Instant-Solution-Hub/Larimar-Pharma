@@ -40,6 +40,14 @@ public class FieldExecutive extends BaseUser {
     @Builder.Default
     private Boolean isPortalLocked = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer upgradedCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer downgradedCount = 0;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "field_executive_markets",
@@ -48,6 +56,12 @@ public class FieldExecutive extends BaseUser {
     @Column(name = "market")
     @Builder.Default
     private List<String> markets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "fieldExecutive",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<DoctorChangeRequest> doctorChangeRequests = new HashSet<>();
 
 
     // Visits planned and conducted by this FE

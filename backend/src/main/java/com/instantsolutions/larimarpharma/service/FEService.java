@@ -430,6 +430,21 @@ public class FEService {
                 .build();
     }
 
+    @jakarta.transaction.Transactional
+    public List<FEBasicInfoDto> getAllFEBasicInfo() {
+
+        List<FieldExecutive> executives = repository.findAll();
+
+        return executives.stream()
+                .map(fe -> FEBasicInfoDto.builder()
+                        .id(fe.getId())
+                        .name(fe.getName())
+                        .employeeCode(fe.getEmployeeCode())
+                        .territory(fe.getTerritory())
+                        .build())
+                .toList();
+    }
+
     @Transactional
     public List<FieldExecutiveResponse> getByManagerId(Long managerId) {
         return repository.findByManagerId(managerId)

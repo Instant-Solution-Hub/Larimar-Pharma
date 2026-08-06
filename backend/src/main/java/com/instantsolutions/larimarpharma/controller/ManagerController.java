@@ -19,10 +19,12 @@ import com.instantsolutions.larimarpharma.service.TerritoryMonthlyTargetService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -308,6 +310,31 @@ public class ManagerController {
                         managerService
                                 .getCurrentMonthLiquidationPlansUnderManager(managerId),
                         "Current month liquidation plans fetched successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{managerId}/liquidation-plans/date-range")
+    public ResponseEntity<ApiResponseDto<List<ManagerLiquidationPlanDto>>>
+    getLiquidationPlansUnderManagerByDateRange(
+            @PathVariable Long managerId,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        managerService.getLiquidationPlansUnderManagerByDateRange(
+                                managerId,
+                                fromDate,
+                                toDate
+                        ),
+                        "Liquidation plans fetched successfully"
                 )
         );
     }

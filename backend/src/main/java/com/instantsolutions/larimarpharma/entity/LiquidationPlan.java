@@ -55,6 +55,12 @@ public class LiquidationPlan {
 
     private Integer availableUnits;
 
+    private Integer liquidated1;
+
+    private Integer liquidated2;
+
+    private Integer liquidated3;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

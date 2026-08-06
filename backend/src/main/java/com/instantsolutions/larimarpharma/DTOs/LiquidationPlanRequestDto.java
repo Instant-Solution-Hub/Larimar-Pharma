@@ -23,6 +23,15 @@ public class LiquidationPlanRequestDto {
     @Min(1)
     private Integer targetLiquidation;
 
+
+    private Integer liquidated1;
+
+
+    private Integer liquidated2;
+
+
+    private Integer liquidated3;
+
     @NotNull
     private LocalDateTime deadline;
 

@@ -64,6 +64,12 @@ public class Doctor {
     @JoinColumn(name = "field_executive_id")
     private FieldExecutive fieldExecutive;
 
+    @OneToMany(mappedBy = "doctor",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<DoctorChangeRequest> doctorChangeRequests = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

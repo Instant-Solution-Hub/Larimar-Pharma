@@ -536,8 +536,47 @@ public class ManagerService {
                         .status(plan.getManagerApprovalStatus().name())
                         .createdAt(plan.getCreatedAt())
                         .employeeId(plan.getFieldExecutive().getId())
+                        .liquidated1(plan.getLiquidated1())
+                        .liquidated2(plan.getLiquidated2())
+                        .liquidated3(plan.getLiquidated3())
                         .build()
                 )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ManagerLiquidationPlanDto> getLiquidationPlansUnderManagerByDateRange(
+            Long managerId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+
+        LocalDateTime from = fromDate.atStartOfDay();
+        LocalDateTime to = toDate.atTime(LocalTime.MAX);
+
+        List<LiquidationPlan> plans =
+                liquidationPlanRepository.findAllByManagerIdAndCreatedAtBetween(
+                        managerId,
+                        from,
+                        to
+                );
+
+        return plans.stream()
+                .map(plan -> ManagerLiquidationPlanDto.builder()
+                        .id(plan.getId())
+                        .product(plan.getProduct().getName())
+                        .quantity(plan.getAvailableUnits())
+                        .doctor(plan.getDoctor().getName())
+                        .targetLiquidation(plan.getTargetLiquidation())
+                        .marketName(plan.getMarketName())
+                        .medicalShopName(plan.getMedicalShopName())
+                        .status(plan.getManagerApprovalStatus().name())
+                        .createdAt(plan.getCreatedAt())
+                        .employeeId(plan.getFieldExecutive().getId())
+                        .liquidated1(plan.getLiquidated1())
+                        .liquidated2(plan.getLiquidated2())
+                        .liquidated3(plan.getLiquidated3())
+                        .build())
                 .toList();
     }
 
