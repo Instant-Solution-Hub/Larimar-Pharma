@@ -634,11 +634,8 @@ public class ManagerVisitService {
             Integer dayOfWeek
     ) {
 
-        LocalDate now = getStartOfTheMonth();
         LocalDate chosenDate = calculateVisitDate(weekNumber, dayOfWeek);
-        LocalDateTime startOfMonth = now.atStartOfDay();
-        LocalDateTime endOfMonth =
-                now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX);
+        System.out.println("CHOOSEN DATE---------------"+chosenDate.toString());
 
         return managerVisitRepository
                 .findByManagerAndWeekAndDayForMonth(

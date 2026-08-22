@@ -24,7 +24,7 @@ public class DateUtil {
 
         // First day of next month
         LocalDate firstDayOfNextMonth = LocalDate.now()
-                .plusMonths(1)
+//                .plusMonths(1)
                 .withDayOfMonth(1);
 
         // Find the Sunday on or before the 1st
