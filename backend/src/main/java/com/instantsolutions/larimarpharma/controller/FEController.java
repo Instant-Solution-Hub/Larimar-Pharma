@@ -254,6 +254,19 @@ public class FEController {
         );
     }
 
+    @GetMapping("/zsm/a-priority-field-executives")
+    public ResponseEntity<List<FieldExecutiveResponse>> getAPriorityFEsForZsm(
+            @RequestParam Integer weekNumber,
+            @RequestParam Integer dayOfWeek
+    ) {
+        return ResponseEntity.ok(
+                fieldExecutiveService.getFEsWithAPriorityVisitsForZsm(
+                        weekNumber,
+                        dayOfWeek
+                )
+        );
+    }
+
     @PostMapping("/{feId}/doctor-change-requests")
     public ResponseEntity<ApiResponseDto<DoctorChangeRequestResponseDto>>
     createDoctorChangeRequest(

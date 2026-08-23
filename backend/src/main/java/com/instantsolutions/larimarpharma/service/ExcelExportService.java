@@ -4,8 +4,10 @@ import com.instantsolutions.larimarpharma.DTOs.VisitExcelExportRequest;
 import com.instantsolutions.larimarpharma.entity.Doctor;
 import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.entity.Visit;
+import com.instantsolutions.larimarpharma.entity.ZsmVisit;
 import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
 import com.instantsolutions.larimarpharma.repository.VisitRepository;
+import com.instantsolutions.larimarpharma.repository.ZsmVisitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -29,6 +31,7 @@ public class ExcelExportService {
 
     private final VisitRepository visitRepository;
     private final ManagerVisitRepository managerVisitRepository;
+    private final ZsmVisitRepository zsmVisitRepository;
 
     private static final String[] HEADERS = {
             "Visit ID", "Visit Date", "Week Number", "Day of Week", "Status", "Visit Type",
@@ -155,6 +158,50 @@ public class ExcelExportService {
         }
     }
 
+    @Transactional
+    public ByteArrayInputStream exportZsmVisitsToExcel(VisitExcelExportRequest request) {
+        List<ZsmVisit> visits = fetchZsmVisits(request);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Visits Report");
+
+            // Create header style
+            CellStyle headerStyle = createHeaderStyle(workbook);
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < HEADERS.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(HEADERS[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.autoSizeColumn(i);
+            }
+
+            // Create data rows
+            int rowNum = 1;
+            for (ZsmVisit visit : visits) {
+                Row row = sheet.createRow(rowNum++);
+                populateZsmRowData(row, visit);
+            }
+
+            // Auto-size all columns
+            for (int i = 0; i < HEADERS.length; i++) {
+                sheet.autoSizeColumn(i);
+                // Set minimum width to avoid too narrow columns
+                if (sheet.getColumnWidth(i) < 3000) {
+                    sheet.setColumnWidth(i, 3000);
+                }
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+
+        } catch (IOException e) {
+            log.error("Failed to create Excel file", e);
+            throw new RuntimeException("Failed to create Excel file", e);
+        }
+    }
+
     private List<Visit> fetchVisits(VisitExcelExportRequest request) {
         Specification<Visit> spec = buildSpecification(request);
         return visitRepository.findAll(spec);
@@ -260,9 +307,64 @@ public class ExcelExportService {
         };
     }
 
+    private Specification<ZsmVisit> buildZsmSpecification(VisitExcelExportRequest request) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Date range filter (required)
+            if (request.getStartDate() != null && request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.between(
+                        root.get("visitDate"),
+                        request.getStartDate(),
+                        request.getEndDate()
+                ));
+            } else if (request.getStartDate() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getStartDate()
+                ));
+            } else if (request.getEndDate() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("visitDate"),
+                        request.getEndDate()
+                ));
+            }
+
+            // Manager filter (optional)
+            if (request.getZsmId() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("zsmAdmin").get("id"),
+                        request.getZsmId()
+                ));
+            }
+
+            // Status filter (optional)
+            if (request.getVisitStatus() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("status"),
+                        request.getVisitStatus()
+                ));
+            }
+
+            if (request.getCategory() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("doctorCategory"),
+                        request.getCategory()
+                ));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
     private List<ManagerVisit> fetchManagerVisits(VisitExcelExportRequest request) {
         Specification<ManagerVisit> spec = buildManagerSpecification(request);
         return managerVisitRepository.findAll(spec);
+    }
+
+    private List<ZsmVisit> fetchZsmVisits(VisitExcelExportRequest request) {
+        Specification<ZsmVisit> spec = buildZsmSpecification(request);
+        return zsmVisitRepository.findAll(spec);
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {
@@ -394,6 +496,118 @@ public class ExcelExportService {
         if (visit.getManager() != null) {
             setCellValue(row, col++, visit.getManager().getName());
             setCellValue(row, col++, visit.getManager().getEmployeeCode());
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+
+        // Doctor Info
+        if (visit.getOriginalVisit() != null && visit.getOriginalVisit().getDoctor() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getDoctor().getName());
+            setCellValue(row, col++, visit.getOriginalVisit().getDoctor().getDesignation());
+            setCellValue(row, col++, visit.getOriginalVisit().getDoctor().getContactNumber());
+            setCellValue(row, col++, visit.getDoctorCategory() != null ? visit.getDoctorCategory().name() : "");
+//            setCellValue(row, col++, visit.getDoctorPracticeType() != null ? visit.getDoctorPracticeType().name() : "");
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+
+        // Pharmacy Info
+        if (visit.getOriginalVisit() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getPharmacyName());
+            setCellValue(row, col++, visit.getOriginalVisit().getLocation());
+            setCellValue(row, col++, visit.getOriginalVisit().getContactPerson());
+            setCellValue(row, col++, visit.getOriginalVisit().getContactNumber());
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+
+        // Stockist Info
+        if (visit.getOriginalVisit() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getStockistName());
+            setCellValue(row, col++, visit.getOriginalVisit().getStockistType() != null ? visit.getOriginalVisit().getStockistType().name() : "");
+            setCellValue(row, col++, visit.getOriginalVisit().getOrderValue());
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+
+        // Visit Details
+        if (visit.getOriginalVisit() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getActualVisitTime() != null ?
+                    visit.getOriginalVisit().getActualVisitTime().format(dateTimeFormatter) : "");
+            setCellValue(row, col++, visit.getOriginalVisit().getLocation());
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+        setCellValue(row, col++, visit.getManagerNotes());
+        setCellValue(row, col++, visit.getActivitiesPerformed() != null ? String.join(", ", visit.getActivitiesPerformed()) : "");
+
+        // Dates
+        setCellValue(row, col++, visit.getScheduledDate() != null ? visit.getScheduledDate().format(dateTimeFormatter) : "");
+        if (visit.getOriginalVisit() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getActualDate() != null ?
+                    visit.getOriginalVisit().getActualDate().format(dateTimeFormatter) : "");
+            setCellValue(row, col++, visit.getOriginalVisit().getUpdatedAt() != null ?
+                    visit.getOriginalVisit().getUpdatedAt().format(dateTimeFormatter) : "");
+        } else {
+            setCellValue(row, col++, "");
+            setCellValue(row, col++, "");
+        }
+        setCellValue(row, col++, visit.getCreatedAt() != null ? visit.getCreatedAt().format(dateTimeFormatter) : "");
+
+        // Manager Visit Info
+        if (visit.getOriginalVisit() != null && visit.getOriginalVisit().getManagerVisit() != null &&
+                visit.getOriginalVisit().getManagerVisit().getStatus() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getManagerVisit().getStatus().name());
+        } else {
+            setCellValue(row, col++, "");
+        }
+
+        // Counts
+        setCellValue(row, col++, visit.getSlotChangeRequests() != null ? visit.getSlotChangeRequests().size() : 0);
+        if (visit.getOriginalVisit() != null) {
+            setCellValue(row, col++, visit.getOriginalVisit().getConvertedProducts() != null ?
+                    visit.getOriginalVisit().getConvertedProducts().size() : 0);
+        } else {
+            setCellValue(row, col++, 0);
+        }
+
+        // Visit Sequence Information - Not applicable for Manager Visits
+        setCellValue(row, col++, "");
+        setCellValue(row, col++, "N/A");
+        setCellValue(row, col++, "");
+        setCellValue(row, col++, "N/A");
+        setCellValue(row, col++, "N/A");
+    }
+
+    private void populateZsmRowData(Row row, ZsmVisit visit) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        int col = 0;
+
+        // Basic Info
+        setCellValue(row, col++, visit.getId());
+        setCellValue(row, col++, visit.getVisitDate() != null ? visit.getVisitDate().format(dateFormatter) : "");
+        setCellValue(row, col++, visit.getWeekNumber());
+        setCellValue(row, col++, visit.getDayOfWeek());
+        setCellValue(row, col++, visit.getStatus() != null ? visit.getStatus().name() : "");
+        setCellValue(row, col++, visit.getVisitType() != null ? visit.getVisitType().name() : "");
+
+        // Manager Info
+        if (visit.getZsmAdmin() != null) {
+            setCellValue(row, col++, visit.getZsmAdmin().getName());
+            setCellValue(row, col++, visit.getZsmAdmin().getEmployeeCode());
         } else {
             setCellValue(row, col++, "");
             setCellValue(row, col++, "");

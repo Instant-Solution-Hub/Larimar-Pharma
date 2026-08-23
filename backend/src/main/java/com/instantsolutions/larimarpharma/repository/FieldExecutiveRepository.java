@@ -55,5 +55,22 @@ public interface FieldExecutiveRepository extends JpaRepository<FieldExecutive, 
             @Param("visitDate") LocalDate visitDate
     );
 
+    @Query("""
+    SELECT DISTINCT fe
+    FROM Visit v
+    JOIN v.fieldExecutive fe
+    JOIN v.doctor d
+    WHERE v.visitDate = :visitDate
+      AND v.status = com.instantsolutions.larimarpharma.entity.Visit.VisitStatus.SCHEDULED
+      AND v.visitType = com.instantsolutions.larimarpharma.entity.Visit.VisitType.DOCTOR
+      AND d.category IN (
+          com.instantsolutions.larimarpharma.entity.Doctor.Category.A_PLUS,
+          com.instantsolutions.larimarpharma.entity.Doctor.Category.A
+      )
+""")
+    List<FieldExecutive> findFEsWithScheduledAPriorityDoctorVisitsForZsm(
+            @Param("visitDate") LocalDate visitDate
+    );
+
 
 }

@@ -92,4 +92,30 @@ public class VisitExportController {
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(resource);
     }
+
+    @PostMapping("/export/zsm/excel")
+    public ResponseEntity<InputStreamResource> exportZsmVisitsToExcel(@RequestBody VisitExcelExportRequest request) {
+
+        // Validate dates
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            throw new IllegalArgumentException("Start date and end date are required");
+        }
+
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
+        // Generate filename with timestamp
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = String.format("visits_report_%s.xlsx", timestamp);
+
+        InputStreamResource resource = new InputStreamResource(
+                excelExportService.exportZsmVisitsToExcel(request)
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+    }
 }

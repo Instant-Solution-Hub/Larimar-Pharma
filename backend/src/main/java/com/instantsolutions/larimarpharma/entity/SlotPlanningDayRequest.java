@@ -24,6 +24,10 @@ public class SlotPlanningDayRequest {
     private Manager requestedManager;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_zsm_id", nullable = true)
+    private Admin requestedZsm;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_fe_id", nullable = true)
     private FieldExecutive requestedFieldExecutive;
 

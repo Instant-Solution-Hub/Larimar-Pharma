@@ -367,6 +367,21 @@ public class FEService {
         return  fieldExecutives.stream().map(this::mapToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<FieldExecutiveResponse> getFEsWithAPriorityVisitsForZsm(
+            Integer weekNumber,
+            Integer dayOfWeek
+    ) {
+
+        LocalDate choosenDate = calculateVisitDateCurrentMonth(weekNumber, dayOfWeek);
+        System.out.println("Choosen Date -----------------"+choosenDate.toString());
+        List<FieldExecutive> fieldExecutives = repository
+                .findFEsWithScheduledAPriorityDoctorVisitsForZsm(
+                        choosenDate
+                );
+        return  fieldExecutives.stream().map(this::mapToResponse).toList();
+    }
+
 
 
     @Transactional

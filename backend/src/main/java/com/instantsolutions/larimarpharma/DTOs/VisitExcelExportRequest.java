@@ -19,6 +19,7 @@ public class VisitExcelExportRequest {
     private LocalDate endDate;
     private Long fieldExecutiveId;  // optional - can be null
     private Long managerId;  // optional - can be null
+    private Long zsmId;  // optional - can be null
 
     private VisitStatus visitStatus; // optional - can be null
     private Doctor.Category category;// optional - can be null
