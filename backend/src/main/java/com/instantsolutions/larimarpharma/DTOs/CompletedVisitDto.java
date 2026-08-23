@@ -36,6 +36,9 @@ public class CompletedVisitDto {
     private String managerName;
     private String managerEmpCode;
 
+    private String zsmName;
+    private String zsmEmpCode;
+
     private String userRole;
 
     /* ===== Product Details ===== */

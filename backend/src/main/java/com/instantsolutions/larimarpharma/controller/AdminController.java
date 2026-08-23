@@ -117,4 +117,14 @@ public class AdminController {
         );
     }
 
+    @GetMapping("/get-all-zsm")
+    public ResponseEntity<ApiResponseDto<List<ZsmResponseDto>>> getAllZsm() {
+        return ResponseEntity.ok(
+                ApiResponseDto.success(
+                        adminService.getAllZsm(),
+                        "Contact details fetched successfully"
+                )
+        );
+    }
+
 }

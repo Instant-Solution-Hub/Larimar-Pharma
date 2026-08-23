@@ -5,9 +5,11 @@ import com.instantsolutions.larimarpharma.DTOs.ApprovedSlotPlanRequestCheckDto;
 import com.instantsolutions.larimarpharma.DTOs.SlotPlanningDayRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.SlotPlanningDayRequestResponseDto;
 import com.instantsolutions.larimarpharma.DTOs.SlotPlanningDayRequestUpdateDto;
+import com.instantsolutions.larimarpharma.entity.Admin;
 import com.instantsolutions.larimarpharma.entity.SlotPlanningDayRequest;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
+import com.instantsolutions.larimarpharma.repository.AdminRepository;
 import com.instantsolutions.larimarpharma.repository.SlotPlanningDayRequestRepository;
 import com.instantsolutions.larimarpharma.repository.ManagerRepository;
 import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
@@ -25,6 +27,7 @@ public class SlotPlanningDayRequestService {
 
     private final SlotPlanningDayRequestRepository requestRepository;
     private final ManagerRepository managerRepository;
+    private final AdminRepository adminRepository;
     private final FieldExecutiveRepository fieldExecutiveRepository;
 
     @Transactional
@@ -54,7 +57,18 @@ public class SlotPlanningDayRequestService {
                     fe, SlotPlanningDayRequest.RequestStatus.PENDING, request.getRequestedAt())) {
                 throw new RuntimeException("A pending request already exists for this date");
             }
-        } else {
+        }else if ("ZSM".equalsIgnoreCase(requesterType)){
+            Admin zsmAdmin = adminRepository.findById(requesterId)
+                    .orElseThrow(() -> new RuntimeException("ZSM not found with id: " + requesterId));
+            request.setRequestedZsm(zsmAdmin);
+
+            // Check for existing pending request
+            if (requestRepository.existsByRequestedZsmAndStatusAndRequestedAt(
+                    zsmAdmin, SlotPlanningDayRequest.RequestStatus.PENDING, request.getRequestedAt())) {
+                throw new RuntimeException("A pending request already exists for this date");
+            }
+        }
+        else {
             throw new RuntimeException("Invalid requester type");
         }
 
@@ -93,6 +107,16 @@ public class SlotPlanningDayRequestService {
                 .orElseThrow(() -> new RuntimeException("Manager not found with id: " + managerId));
 
         return requestRepository.findByRequestedManager(manager).stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SlotPlanningDayRequestResponseDto> getRequestsByZsm(Long zsmId) {
+        Admin zsmAdmin = adminRepository.findById(zsmId)
+                .orElseThrow(() -> new RuntimeException("ZSM not found with id: " + zsmId));
+
+        return requestRepository.findByRequestedZsm(zsmAdmin).stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -159,6 +183,11 @@ public class SlotPlanningDayRequestService {
         if (request.getRequestedManager() != null) {
             dto.setRequestedManagerId(request.getRequestedManager().getId());
             dto.setRequestedManagerName(request.getRequestedManager().getName()); // Assuming Manager has getName()
+        }
+
+        if (request.getRequestedZsm() != null) {
+            dto.setRequestedManagerId(request.getRequestedZsm().getId());
+            dto.setRequestedManagerName(request.getRequestedZsm().getName()); // Assuming Manager has getName()
         }
 
         if (request.getRequestedFieldExecutive() != null) {
@@ -262,7 +291,16 @@ public class SlotPlanningDayRequestService {
                     SlotPlanningDayRequest.RequestStatus.APPROVED,
                     LocalDate.now()
             );
-        } else if ("FE".equalsIgnoreCase(requesterType)) {
+        }else if ("ZSM".equalsIgnoreCase(requesterType)) {
+            Admin zsmAdmin = adminRepository.findById(requesterId)
+                    .orElseThrow(() -> new RuntimeException("Field Executive not found"));
+            return requestRepository.hasApprovedRequestForZsm(
+                    zsmAdmin,
+                    SlotPlanningDayRequest.RequestStatus.APPROVED,
+                    LocalDate.now()
+            );
+        }
+        else if ("FE".equalsIgnoreCase(requesterType)) {
             FieldExecutive fe = fieldExecutiveRepository.findById(requesterId)
                     .orElseThrow(() -> new RuntimeException("Field Executive not found"));
             return requestRepository.hasApprovedRequestForFieldExecutive(

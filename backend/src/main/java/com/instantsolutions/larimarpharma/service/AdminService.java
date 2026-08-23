@@ -26,6 +26,25 @@ public class AdminService {
     private  final ManagerRepository managerRepository;
 
 
+    public List<ZsmResponseDto> getAllZsm(){
+        List<Admin> zonalManagers =  adminRepository.findByDepartment("ZONAL SALES MANAGER");
+        return zonalManagers.stream()
+                .map(this::mapToZsmResponseDto)
+                .toList();
+
+    }
+
+    public ZsmResponseDto mapToZsmResponseDto(Admin zsm){
+      return  ZsmResponseDto.builder()
+                .name(zsm.getName())
+                .department(zsm.getDepartment())
+                .email(zsm.getEmail())
+                .employeeCode(zsm.getEmployeeCode())
+                .id(zsm.getId())
+                .phone(zsm.getPhone())
+                .build();
+    }
+
     public AdminContactResponseDto getAdminContact() {
         Admin admin = adminRepository.findAll()
                 .stream()

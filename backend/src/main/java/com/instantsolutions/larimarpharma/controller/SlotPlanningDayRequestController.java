@@ -34,6 +34,15 @@ public class SlotPlanningDayRequestController {
         return new ResponseEntity<>(createdRequest, HttpStatus.CREATED);
     }
 
+    // Endpoint for ZSM to create requests
+    @PostMapping("/zsm/{zsmId}")
+    public ResponseEntity<SlotPlanningDayRequestResponseDto> createRequestByZsm(
+            @PathVariable Long zsmId,
+            @Valid @RequestBody SlotPlanningDayRequestDto requestDto) {
+        SlotPlanningDayRequestResponseDto createdRequest = requestService.createRequest(requestDto, "ZSM",zsmId);
+        return new ResponseEntity<>(createdRequest, HttpStatus.CREATED);
+    }
+
     // Endpoint for Field Executives to create requests
     @PostMapping("/field-executive/{feId}")
     public ResponseEntity<SlotPlanningDayRequestResponseDto> createRequestByFieldExecutive(
@@ -64,6 +73,13 @@ public class SlotPlanningDayRequestController {
     @GetMapping("/manager/{managerId}")
     public ResponseEntity<List<SlotPlanningDayRequestResponseDto>> getRequestsByManager(@PathVariable Long managerId) {
         List<SlotPlanningDayRequestResponseDto> requests = requestService.getRequestsByManager(managerId);
+        return ResponseEntity.ok(requests);
+    }
+
+    // Get requests by ZSM
+    @GetMapping("/zsm/{zsmId}")
+    public ResponseEntity<List<SlotPlanningDayRequestResponseDto>> getRequestsByZsm(@PathVariable Long zsmId) {
+        List<SlotPlanningDayRequestResponseDto> requests = requestService.getRequestsByZsm(zsmId);
         return ResponseEntity.ok(requests);
     }
 

@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Admin;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.SlotPlanningDayRequest;
@@ -13,6 +14,8 @@ import java.util.Optional;
 
 public interface SlotPlanningDayRequestRepository extends JpaRepository<SlotPlanningDayRequest, Long> {
     List<SlotPlanningDayRequest> findByRequestedManager(Manager manager);
+
+    List<SlotPlanningDayRequest> findByRequestedZsm(Admin zsmAdmin);
 
     List<SlotPlanningDayRequest> findByRequestedFieldExecutive(FieldExecutive fieldExecutive);
 
@@ -40,6 +43,12 @@ public interface SlotPlanningDayRequestRepository extends JpaRepository<SlotPlan
             LocalDate requestedAt
     );
 
+    boolean existsByRequestedZsmAndStatusAndRequestedAt(
+            Admin zsmAdmin,
+            SlotPlanningDayRequest.RequestStatus status,
+            LocalDate requestedAt
+    );
+
     boolean existsByRequestedFieldExecutiveAndStatusAndRequestedAt(
             FieldExecutive fe,
             SlotPlanningDayRequest.RequestStatus status,
@@ -62,6 +71,14 @@ public interface SlotPlanningDayRequestRepository extends JpaRepository<SlotPlan
             "WHERE r.requestedManager = :manager AND r.status = :status AND r.requestedAt = :date")
     boolean hasApprovedRequestForManager(
             @Param("manager") Manager manager,
+            @Param("status") SlotPlanningDayRequest.RequestStatus status,
+            @Param("date") LocalDate date
+    );
+
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM SlotPlanningDayRequest r " +
+            "WHERE r.requestedZsm = :zsm AND r.status = :status AND r.requestedAt = :date")
+    boolean hasApprovedRequestForZsm(
+            @Param("zsm") Admin zsm,
             @Param("status") SlotPlanningDayRequest.RequestStatus status,
             @Param("date") LocalDate date
     );

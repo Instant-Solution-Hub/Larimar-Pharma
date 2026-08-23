@@ -28,12 +28,21 @@ public class SlotChangeRequest {
     private ManagerVisit managerVisit;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zsm_visit_id", nullable = true)
+    private ZsmVisit zsmVisit;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_manager_id", nullable = true)
     private Manager requestedManager;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_fe_id", nullable = true)
     private FieldExecutive requestedFieldExecutive;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_zsm_id", nullable = true)
+    private Admin requestedZsm;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by_id", nullable = true)

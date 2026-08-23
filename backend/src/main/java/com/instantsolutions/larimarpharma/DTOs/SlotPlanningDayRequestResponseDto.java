@@ -9,6 +9,8 @@ public class SlotPlanningDayRequestResponseDto {
     private String reason;
     private Long requestedManagerId;
     private String requestedManagerName;
+    private Long requestedZsmId;
+    private String requestedZsmName;
     private Long requestedFieldExecutiveId;
     private String requestedFieldExecutiveName;
     private SlotPlanningDayRequest.RequestStatus status;
