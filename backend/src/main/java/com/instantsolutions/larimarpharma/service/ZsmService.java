@@ -20,6 +20,10 @@ import java.util.List;
 
 import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDate;
 import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDateCurrentMonth;
+import com.instantsolutions.larimarpharma.entity.ZsmFieldExecutiveRequest;
+import com.instantsolutions.larimarpharma.repository.ZsmFieldExecutiveRequestRepository;
+import java.time.LocalDate;
+import static com.instantsolutions.larimarpharma.utils.DateUtil.calculateVisitDateCurrentMonth;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,8 @@ public class ZsmService {
     private final ZsmVisitRepository zsmVisitRepository;
     private final DoctorRepository doctorRepository;
     private final ProductRepository productRepository;
+    private final ZsmFieldExecutiveRequestRepository zsmFeRequestRepository;
+
 
     @Transactional
     public void assignZsmToVisit(AssignZsmVisitRequest request) {
@@ -247,6 +253,7 @@ public class ZsmService {
                 .toList();
     }
 
+    @Transactional
     public List<TodayScheduledVisitDto> getTodaysAndMissedVisits(Long feId) {
         LocalDate today = LocalDate.now();
 
@@ -281,6 +288,7 @@ public class ZsmService {
                 .toList();
     }
 
+    @Transactional
     public List<CompletedVisitDto> getCompletedVisits(Long zsmId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
@@ -293,6 +301,7 @@ public class ZsmService {
                 .toList();
     }
 
+    @Transactional
     public List<CompletedVisitDto> getMissedVisits(Long fieldExecutiveId) {
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
@@ -357,6 +366,71 @@ public class ZsmService {
                 .records(records)
                 .totalWeeks(totalWeeks)
                 .build();
+    }
+
+    @Transactional
+    public ZsmVisitDto createAndMarkUnscheduledVisit(
+            CreateUnscheduledManagerVisitRequest dto
+    ) {
+
+        Admin zsm = adminRepository.findById(dto.getManagerId())
+                .orElseThrow(() -> new EntityNotFoundException("Manager not found"));
+
+//        FieldExecutive fe = fieldExecutiveRepository.findById(dto.getFieldExecutiveId())
+//                .orElseThrow(() -> new EntityNotFoundException("FE not found"));
+
+        Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Rule: only ONE completed visit per doctor per day (manager)
+        boolean alreadyCompleted =
+                zsmVisitRepository
+                        .existsByZsmAdminIdAndDoctorIdAndVisitDateAndStatus(
+                                zsm.getId(),
+                                doctor.getId(),
+                                now.toLocalDate(),
+                                Visit.VisitStatus.COMPLETED
+                        );
+
+        if (alreadyCompleted) {
+            throw new IllegalStateException(
+                    "Doctor already has a completed visit for today"
+            );
+        }
+
+        ZsmVisit visit = ZsmVisit.builder()
+                .zsmAdmin(zsm)
+//                .fieldExecutive(fe)
+
+                // Unscheduled
+                .unscheduled(true)
+                .originalVisit(null)
+
+                // Snapshot
+                .visitDate(now.toLocalDate())
+                .weekNumber(now.getDayOfYear() / 7 + 1) // optional
+                .dayOfWeek(now.getDayOfWeek().getValue())
+                .scheduledDate(now)
+
+                .visitType(Visit.VisitType.DOCTOR)
+                .status(Visit.VisitStatus.COMPLETED)
+
+                .doctorId(doctor.getId())
+                .doctorName(doctor.getName())
+                .doctorCategory(doctor.getCategory())
+                .hospitalName(doctor.getHospitalName())
+
+                // Manager data
+                .joinedAt(now)
+                .managerNotes(dto.getNotes())
+                .activitiesPerformed(dto.getActivitiesPerformed())
+
+                .build();
+
+        ZsmVisit saved = zsmVisitRepository.save(visit);
+        return mapToDto(saved);
     }
 
 
@@ -709,6 +783,227 @@ public class ZsmService {
                 .longitude(d.getLongitude())
                 .active(d.isActive())
                 .build();
+    }
+
+    @Transactional
+    public ZsmFeRequestResponseDto requestNewFieldExecutive(
+            RequestNewFieldExecutiveDto dto
+    ) {
+        // 1. Validate ZSM
+        Admin zsm = adminRepository.findById(dto.getZsmId())
+                .orElseThrow(() -> new EntityNotFoundException("ZSM not found"));
+
+        // 2. Validate requested FE
+        FieldExecutive requestedFe = fieldExecutiveRepository
+                .findById(dto.getRequestedFieldExecutiveId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Requested field executive not found"));
+
+        // 3. Validate week/day
+        if (dto.getWeekNumber() == null || dto.getDayOfWeek() == null) {
+            throw new IllegalArgumentException("Week and day are required");
+        }
+
+        // Compute targetDate FIRST
+        LocalDate targetDate = DateUtil.calculateVisitDateCurrentMonth(
+                dto.getWeekNumber(),
+                dto.getDayOfWeek()
+        );
+
+
+        // 4. Prevent duplicate pending request
+        boolean duplicate = zsmFeRequestRepository.existsPendingRequest(
+                dto.getZsmId(),
+                dto.getRequestedFieldExecutiveId(),
+                targetDate
+        );
+
+        if (duplicate) {
+            throw new IllegalStateException(
+                    "A pending request already exists for this FE and slot");
+        }
+
+        // 5. Resolve current FE (optional)
+        FieldExecutive currentFe = null;
+        if (dto.getCurrentFieldExecutiveId() != null) {
+            currentFe = fieldExecutiveRepository
+                    .findById(dto.getCurrentFieldExecutiveId())
+                    .orElse(null);
+        }
+
+        // 7. Save request
+        ZsmFieldExecutiveRequest request = ZsmFieldExecutiveRequest.builder()
+                .zsmAdmin(zsm)
+                .requestedFieldExecutive(requestedFe)
+                .currentFieldExecutive(currentFe)
+                .weekNumber(dto.getWeekNumber())
+                .dayOfWeek(dto.getDayOfWeek())
+                .targetDate(targetDate)
+                .reason(dto.getReason())
+                .status(ZsmFieldExecutiveRequest.RequestStatus.PENDING)
+                .build();
+
+        ZsmFieldExecutiveRequest saved = zsmFeRequestRepository.save(request);
+
+        return ZsmFeRequestResponseDto.fromEntity(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ZsmFeRequestResponseDto> getRequestsForZsm(Long zsmId) {
+        return zsmFeRequestRepository
+                .findByZsmAdminIdOrderByCreatedAtDesc(zsmId)
+                .stream()
+                .map(ZsmFeRequestResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ZsmFeRequestResponseDto> getAllPendingRequests() {
+        return zsmFeRequestRepository
+                .findByStatusOrderByCreatedAtAsc(
+                        ZsmFieldExecutiveRequest.RequestStatus.PENDING)
+                .stream()
+                .map(ZsmFeRequestResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public ZsmFeRequestResponseDto approveRequest(
+            ApproveRejectFeRequestDto dto
+    ) {
+        ZsmFieldExecutiveRequest request = zsmFeRequestRepository
+                .findById(dto.getRequestId())
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        // Only PENDING can be approved
+        if (request.getStatus() != ZsmFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only pending requests can be approved");
+        }
+
+        Admin admin = adminRepository.findById(dto.getAdminId())
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found"));
+
+        Long zsmId = request.getZsmAdmin().getId();
+        Integer weekNumber = request.getWeekNumber();
+        Integer dayOfWeek = request.getDayOfWeek();
+
+        /* 1. UNASSIGN existing FE visits for this slot */
+        LocalDate visitDate = DateUtil.calculateVisitDateCurrentMonth(
+                weekNumber, dayOfWeek);
+
+        List<ZsmVisit> existingAssignments =
+                zsmVisitRepository.findByZsmAdminIdAndVisitDate(zsmId, visitDate);
+
+        for (ZsmVisit zv : existingAssignments) {
+            Visit originalVisit = zv.getOriginalVisit();
+            if (originalVisit != null) {
+                originalVisit.setZsmVisit(null);
+            }
+        }
+        zsmVisitRepository.deleteAll(existingAssignments);
+
+        /* 2. ASSIGN new FE visits for this slot */
+        List<Visit> newVisits = visitRepository.findEligibleManagerVisits(
+                request.getRequestedFieldExecutive().getId(),
+                visitDate
+        );
+
+        if (newVisits.isEmpty()) {
+            throw new IllegalStateException(
+                    "No A+ or A visits found for the requested FE on this day. " +
+                            "Cannot approve request.");
+        }
+
+        FieldExecutive newFe = request.getRequestedFieldExecutive();
+
+        for (Visit visit : newVisits) {
+            // Skip if already assigned by another ZSM
+            if (visit.getZsmVisit() != null) {
+                continue;
+            }
+
+            ZsmVisit zv = ZsmVisit.builder()
+                    .zsmAdmin(request.getZsmAdmin())
+                    .fieldExecutive(newFe)
+                    .originalVisit(visit)
+                    .visitDate(visit.getVisitDate())
+                    .weekNumber(visit.getWeekNumber())
+                    .dayOfWeek(visit.getDayOfWeek())
+                    .visitType(visit.getVisitType())
+                    .status(visit.getStatus())
+                    .scheduledDate(visit.getScheduledDate())
+                    .doctorId(visit.getDoctor().getId())
+                    .doctorName(visit.getDoctor().getName())
+                    .doctorDesignation(visit.getDoctor().getDesignation())
+                    .doctorCategory(visit.getDoctor().getCategory())
+                    .hospitalName(visit.getDoctor().getHospitalName())
+                    .build();
+
+            zsmVisitRepository.save(zv);
+            visit.setZsmVisit(zv);
+        }
+
+        /* 3. Mark request as approved */
+        request.setStatus(ZsmFieldExecutiveRequest.RequestStatus.APPROVED);
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        if (dto.getAdminRemarks() != null) {
+            request.setAdminRemarks(dto.getAdminRemarks());
+        }
+
+        ZsmFieldExecutiveRequest saved = zsmFeRequestRepository.save(request);
+
+        // TODO: notify ZSM
+
+        return ZsmFeRequestResponseDto.fromEntity(saved);
+    }
+
+    @Transactional
+    public ZsmFeRequestResponseDto rejectRequest(
+            ApproveRejectFeRequestDto dto
+    ) {
+        ZsmFieldExecutiveRequest request = zsmFeRequestRepository
+                .findById(dto.getRequestId())
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        if (request.getStatus() != ZsmFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only pending requests can be rejected");
+        }
+
+        Admin admin = adminRepository.findById(dto.getAdminId())
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found"));
+
+        request.setStatus(ZsmFieldExecutiveRequest.RequestStatus.REJECTED);
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        request.setAdminRemarks(dto.getAdminRemarks());
+
+        ZsmFieldExecutiveRequest saved = zsmFeRequestRepository.save(request);
+
+        // TODO: notify ZSM
+
+        return ZsmFeRequestResponseDto.fromEntity(saved);
+    }
+
+    @Transactional
+    public ZsmFeRequestResponseDto cancelRequest(Long requestId, Long zsmId) {
+        ZsmFieldExecutiveRequest request = zsmFeRequestRepository
+                .findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        if (!request.getZsmAdmin().getId().equals(zsmId)) {
+            throw new IllegalStateException("Not authorized to cancel this request");
+        }
+
+        if (request.getStatus() != ZsmFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be cancelled");
+        }
+
+        request.setStatus(ZsmFieldExecutiveRequest.RequestStatus.CANCELLED);
+        return ZsmFeRequestResponseDto.fromEntity(
+                zsmFeRequestRepository.save(request));
     }
 
 

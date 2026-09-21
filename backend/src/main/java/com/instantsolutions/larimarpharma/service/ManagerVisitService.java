@@ -34,6 +34,8 @@ public class ManagerVisitService {
     private final ManagerVisitRepository managerVisitRepository;
     private final DoctorRepository doctorRepository;
     private final ProductRepository productRepository;
+    private final ManagerFieldExecutiveRequestRepository managerFeRequestRepository;
+    private final AdminRepository adminRepository;
 
     @Transactional
     public void assignManagerToVisit(AssignManagerVisitRequest request) {
@@ -827,6 +829,221 @@ public class ManagerVisitService {
         visit.setStatus(Visit.VisitStatus.valueOf(status));
         return mapToDto(managerVisitRepository.save(visit));
 
+    }
+
+    /* ============================================================
+   FE Change Request — CREATE
+   ============================================================ */
+    @Transactional
+    public ManagerFeRequestResponseDto requestNewFieldExecutive(
+            RequestNewManagerFeDto dto
+    ) {
+        Manager manager = managerRepository.findById(dto.getManagerId())
+                .orElseThrow(() -> new EntityNotFoundException("Manager not found"));
+
+        FieldExecutive requestedFe = fieldExecutiveRepository
+                .findById(dto.getRequestedFieldExecutiveId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Requested field executive not found"));
+
+        if (dto.getWeekNumber() == null || dto.getDayOfWeek() == null) {
+            throw new IllegalArgumentException("Week and day are required");
+        }
+
+        LocalDate targetDate = DateUtil.calculateVisitDateCurrentMonth(
+                dto.getWeekNumber(),
+                dto.getDayOfWeek()
+        );
+
+        boolean duplicate = managerFeRequestRepository.existsPendingRequest(
+                dto.getManagerId(),
+                dto.getRequestedFieldExecutiveId(),
+                targetDate
+        );
+
+        if (duplicate) {
+            throw new IllegalStateException(
+                    "A pending request already exists for this FE on " + targetDate);
+        }
+
+        FieldExecutive currentFe = null;
+        if (dto.getCurrentFieldExecutiveId() != null) {
+            currentFe = fieldExecutiveRepository
+                    .findById(dto.getCurrentFieldExecutiveId())
+                    .orElse(null);
+        }
+
+        ManagerFieldExecutiveRequest request = ManagerFieldExecutiveRequest.builder()
+                .manager(manager)
+                .requestedFieldExecutive(requestedFe)
+                .currentFieldExecutive(currentFe)
+                .weekNumber(dto.getWeekNumber())
+                .dayOfWeek(dto.getDayOfWeek())
+                .targetDate(targetDate)
+                .reason(dto.getReason())
+                .status(ManagerFieldExecutiveRequest.RequestStatus.PENDING)
+                .build();
+
+        // TODO: notify admin
+
+        return ManagerFeRequestResponseDto.fromEntity(
+                managerFeRequestRepository.save(request));
+    }
+
+    /* ============================================================
+       FE Change Request — READ
+       ============================================================ */
+    @Transactional(readOnly = true)
+    public List<ManagerFeRequestResponseDto> getRequestsForManager(Long managerId) {
+        return managerFeRequestRepository
+                .findByManagerIdOrderByCreatedAtDesc(managerId)
+                .stream()
+                .map(ManagerFeRequestResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ManagerFeRequestResponseDto> getAllPendingRequests() {
+        return managerFeRequestRepository
+                .findByStatusOrderByCreatedAtAsc(
+                        ManagerFieldExecutiveRequest.RequestStatus.PENDING)
+                .stream()
+                .map(ManagerFeRequestResponseDto::fromEntity)
+                .toList();
+    }
+
+    /* ============================================================
+       FE Change Request — APPROVE
+       ============================================================ */
+    @Transactional
+    public ManagerFeRequestResponseDto approveRequest(
+            ApproveRejectFeRequestDto dto
+    ) {
+        ManagerFieldExecutiveRequest request = managerFeRequestRepository
+                .findById(dto.getRequestId())
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        if (request.getStatus() != ManagerFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be approved");
+        }
+
+        Admin admin = adminRepository.findById(dto.getAdminId())
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found"));
+
+        Long managerId = request.getManager().getId();
+        LocalDate targetDate = request.getTargetDate();
+
+        /* 1. Unassign existing visits for this slot */
+        List<ManagerVisit> existing = managerVisitRepository
+                .findByManagerIdAndVisitDate(managerId, targetDate);
+
+        for (ManagerVisit mv : existing) {
+            Visit originalVisit = mv.getOriginalVisit();
+            if (originalVisit != null) {
+                originalVisit.setManagerVisit(null);
+            }
+        }
+        managerVisitRepository.deleteAll(existing);
+
+        /* 2. Assign new FE's visits */
+        List<Visit> newVisits = visitRepository.findEligibleManagerVisits(
+                request.getRequestedFieldExecutive().getId(),
+                targetDate
+        );
+
+        if (newVisits.isEmpty()) {
+            throw new IllegalStateException(
+                    "No A+ or A visits found for the requested FE on " + targetDate
+                            + ". Cannot approve request.");
+        }
+
+        FieldExecutive newFe = request.getRequestedFieldExecutive();
+
+        for (Visit visit : newVisits) {
+            if (visit.getManagerVisit() != null) {
+                continue; // already assigned to another manager
+            }
+
+            ManagerVisit mv = ManagerVisit.builder()
+                    .manager(request.getManager())
+                    .fieldExecutive(newFe)
+                    .originalVisit(visit)
+                    .visitDate(visit.getVisitDate())
+                    .weekNumber(visit.getWeekNumber())
+                    .dayOfWeek(visit.getDayOfWeek())
+                    .visitType(visit.getVisitType())
+                    .status(visit.getStatus())
+                    .scheduledDate(visit.getScheduledDate())
+                    .doctorId(visit.getDoctor().getId())
+                    .doctorName(visit.getDoctor().getName())
+                    .doctorDesignation(visit.getDoctor().getDesignation())
+                    .doctorCategory(visit.getDoctor().getCategory())
+                    .hospitalName(visit.getDoctor().getHospitalName())
+                    .build();
+
+            managerVisitRepository.save(mv);
+            visit.setManagerVisit(mv);
+        }
+
+        /* 3. Mark approved */
+        request.setStatus(ManagerFieldExecutiveRequest.RequestStatus.APPROVED);
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        if (dto.getAdminRemarks() != null) {
+            request.setAdminRemarks(dto.getAdminRemarks());
+        }
+
+        return ManagerFeRequestResponseDto.fromEntity(
+                managerFeRequestRepository.save(request));
+    }
+
+    /* ============================================================
+       FE Change Request — REJECT
+       ============================================================ */
+    @Transactional
+    public ManagerFeRequestResponseDto rejectRequest(
+            ApproveRejectFeRequestDto dto
+    ) {
+        ManagerFieldExecutiveRequest request = managerFeRequestRepository
+                .findById(dto.getRequestId())
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        if (request.getStatus() != ManagerFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be rejected");
+        }
+
+        Admin admin = adminRepository.findById(dto.getAdminId())
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found"));
+
+        request.setStatus(ManagerFieldExecutiveRequest.RequestStatus.REJECTED);
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        request.setAdminRemarks(dto.getAdminRemarks());
+
+        return ManagerFeRequestResponseDto.fromEntity(
+                managerFeRequestRepository.save(request));
+    }
+
+    /* ============================================================
+       FE Change Request — CANCEL (by manager)
+       ============================================================ */
+    @Transactional
+    public ManagerFeRequestResponseDto cancelRequest(Long requestId, Long managerId) {
+        ManagerFieldExecutiveRequest request = managerFeRequestRepository
+                .findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
+
+        if (!request.getManager().getId().equals(managerId)) {
+            throw new IllegalStateException("Not authorized to cancel this request");
+        }
+
+        if (request.getStatus() != ManagerFieldExecutiveRequest.RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be cancelled");
+        }
+
+        request.setStatus(ManagerFieldExecutiveRequest.RequestStatus.CANCELLED);
+        return ManagerFeRequestResponseDto.fromEntity(
+                managerFeRequestRepository.save(request));
     }
 
 

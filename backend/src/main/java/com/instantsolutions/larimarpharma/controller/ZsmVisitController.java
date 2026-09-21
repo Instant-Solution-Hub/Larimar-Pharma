@@ -113,6 +113,15 @@ public class ZsmVisitController {
         );
     }
 
+    @PostMapping("/create-unscheduled")
+    public ResponseEntity<ZsmVisitDto> createUnscheduledVisit(
+            @RequestBody @Valid CreateUnscheduledManagerVisitRequest request
+    ) {
+        return ResponseEntity.ok(
+                zsmVisitService.createAndMarkUnscheduledVisit(request)
+        );
+    }
+
     @GetMapping("/get-manager-compliance-record")
     public ResponseEntity<VisitComplianceResponse> getZsmVisitCompliance(
             @RequestParam("zsmId") Long zsmId,
@@ -167,6 +176,66 @@ public class ZsmVisitController {
                 zsmVisitService.getZsmVisitReport(zsmId, from, to, status, category,docType)
         );
     }
+
+    @PostMapping("/request-new-fe")
+    public ResponseEntity<ApiResponseDto<ZsmFeRequestResponseDto>>
+    requestNewFieldExecutive(
+            @RequestBody @Valid RequestNewFieldExecutiveDto dto
+    ) {
+        ZsmFeRequestResponseDto response =
+                zsmVisitService.requestNewFieldExecutive(dto);
+        return ResponseEntity.ok(ApiResponseDto.success(
+                response, "Request submitted successfully"));
+    }
+
+    @GetMapping("/fe-requests")
+    public ResponseEntity<ApiResponseDto<List<ZsmFeRequestResponseDto>>>
+    getMyRequests(@RequestParam Long zsmId) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                zsmVisitService.getRequestsForZsm(zsmId),
+                "Requests fetched successfully"));
+    }
+
+    @PostMapping("/fe-requests/cancel/{requestId}")
+    public ResponseEntity<ApiResponseDto<ZsmFeRequestResponseDto>>
+    cancelRequest(
+            @PathVariable Long requestId,
+            @RequestParam Long zsmId
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                zsmVisitService.cancelRequest(requestId, zsmId),
+                "Request cancelled"));
+    }
+
+
+    @GetMapping("/admin/fe-requests/pending")
+    public ResponseEntity<ApiResponseDto<List<ZsmFeRequestResponseDto>>>
+    getPendingRequests() {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                zsmVisitService.getAllPendingRequests(),
+                "Pending requests fetched"));
+    }
+
+    @PostMapping("/admin/fe-requests/approve")
+    public ResponseEntity<ApiResponseDto<ZsmFeRequestResponseDto>>
+    approveRequest(
+            @RequestBody @Valid ApproveRejectFeRequestDto dto
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                zsmVisitService.approveRequest(dto),
+                "Request approved and visits re-assigned"));
+    }
+
+    @PostMapping("/admin/fe-requests/reject")
+    public ResponseEntity<ApiResponseDto<ZsmFeRequestResponseDto>>
+    rejectRequest(
+            @RequestBody @Valid ApproveRejectFeRequestDto dto
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                zsmVisitService.rejectRequest(dto),
+                "Request rejected"));
+    }
+
 
 
 }

@@ -182,4 +182,64 @@ public class ManagerVisitController {
     }
 
 
+    /* ============================================================
+   Manager-side: request a new FE
+   ============================================================ */
+    @PostMapping("/request-new-fe")
+    public ResponseEntity<ApiResponseDto<ManagerFeRequestResponseDto>> requestNewFe(
+            @RequestBody @Valid RequestNewManagerFeDto dto
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.requestNewFieldExecutive(dto),
+                "Request submitted successfully"));
+    }
+
+    @GetMapping("/fe-requests")
+    public ResponseEntity<ApiResponseDto<List<ManagerFeRequestResponseDto>>> getMyFeRequests(
+            @RequestParam Long managerId
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.getRequestsForManager(managerId),
+                "Requests fetched successfully"));
+    }
+
+    @PostMapping("/fe-requests/cancel/{requestId}")
+    public ResponseEntity<ApiResponseDto<ManagerFeRequestResponseDto>> cancelFeRequest(
+            @PathVariable Long requestId,
+            @RequestParam Long managerId
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.cancelRequest(requestId, managerId),
+                "Request cancelled"));
+    }
+
+    /* ============================================================
+       Admin-side: review pending manager FE requests
+       ============================================================ */
+    @GetMapping("/admin/fe-requests/pending")
+    public ResponseEntity<ApiResponseDto<List<ManagerFeRequestResponseDto>>> getPendingFeRequests() {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.getAllPendingRequests(),
+                "Pending requests fetched"));
+    }
+
+    @PostMapping("/admin/fe-requests/approve")
+    public ResponseEntity<ApiResponseDto<ManagerFeRequestResponseDto>> approveFeRequest(
+            @RequestBody @Valid ApproveRejectFeRequestDto dto
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.approveRequest(dto),
+                "Request approved and visits re-assigned"));
+    }
+
+    @PostMapping("/admin/fe-requests/reject")
+    public ResponseEntity<ApiResponseDto<ManagerFeRequestResponseDto>> rejectFeRequest(
+            @RequestBody @Valid ApproveRejectFeRequestDto dto
+    ) {
+        return ResponseEntity.ok(ApiResponseDto.success(
+                managerVisitService.rejectRequest(dto),
+                "Request rejected"));
+    }
+
+
 }
