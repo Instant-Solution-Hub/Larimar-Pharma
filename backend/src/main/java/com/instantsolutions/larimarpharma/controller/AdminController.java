@@ -2,6 +2,8 @@ package com.instantsolutions.larimarpharma.controller;
 
 import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.service.AdminService;
+import com.instantsolutions.larimarpharma.service.ZsmService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ZsmService zsmVisitService;
 
     @GetMapping("/contact")
     public ResponseEntity<ApiResponseDto<AdminContactResponseDto>> getAdminContact() {
@@ -126,5 +129,6 @@ public class AdminController {
                 )
         );
     }
+
 
 }

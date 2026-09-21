@@ -31,6 +31,13 @@ public interface ZsmVisitRepository extends JpaRepository<ZsmVisit, Long>, JpaSp
             Long id
     );
 
+    boolean existsByZsmAdminIdAndDoctorIdAndVisitDateAndStatus(
+            Long zsmId,
+            Long doctorId,
+            LocalDate visitDate,
+            Visit.VisitStatus status
+    );
+
     @Query("""
     SELECT DISTINCT zv
     FROM ZsmVisit zv
