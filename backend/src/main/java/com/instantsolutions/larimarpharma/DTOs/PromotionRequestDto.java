@@ -40,8 +40,11 @@ public class PromotionRequestDto {
     @NotNull(message = "Promotion status is required")
     private Promotion.PromotionStatus status;
 
-    @NotBlank(message = "Product is required")
-    private String product;
+    @NotEmpty(message = "Products cannot be empty")
+    private List<
+            @NotBlank(message = "Products cannot be blank")
+                    String
+            > products;
 
     private List<String> benefits;
 
