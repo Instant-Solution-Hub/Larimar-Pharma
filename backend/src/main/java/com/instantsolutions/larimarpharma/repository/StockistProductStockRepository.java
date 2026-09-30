@@ -2,6 +2,8 @@ package com.instantsolutions.larimarpharma.repository;
 
 import com.instantsolutions.larimarpharma.entity.StockistProductStock;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -61,5 +63,18 @@ public interface StockistProductStockRepository
     findByIdAndFieldExecutiveId(
             Long id,
             Long fieldExecutiveId
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(s.quantity), 0)
+        FROM StockistProductStock s
+        WHERE s.fieldExecutive.id = :feId
+        AND s.product.id = :productId
+        AND s.stockMonth = :month
+        """)
+    Integer getTotalCurrentMonthStockByFeAndProduct(
+            @Param("feId") Long feId,
+            @Param("productId") Long productId,
+            @Param("month") LocalDate month
     );
 }

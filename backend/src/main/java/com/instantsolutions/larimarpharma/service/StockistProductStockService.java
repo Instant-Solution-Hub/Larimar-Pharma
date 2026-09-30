@@ -262,6 +262,30 @@ public class StockistProductStockService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Integer getCurrentMonthTotalStockByFeAndProduct(
+            Long feId,
+            Long productId
+    ) {
+
+        validateFieldExecutive(feId);
+
+        productRepository.findById(productId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Product not found with id: " + productId
+                        )
+                );
+
+        LocalDate currentMonth = getCurrentMonth();
+
+        return stockRepository.getTotalCurrentMonthStockByFeAndProduct(
+                feId,
+                productId,
+                currentMonth
+        );
+    }
+
 
     /*
      * HELPERS
