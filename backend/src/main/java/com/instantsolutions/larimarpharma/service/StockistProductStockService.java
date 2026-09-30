@@ -1,169 +1,340 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.StockUpdateRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.StockistProductStockRequestDto;
 import com.instantsolutions.larimarpharma.DTOs.StockistProductStockResponseDto;
-import com.instantsolutions.larimarpharma.entity.Manager;
+import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Product;
 import com.instantsolutions.larimarpharma.entity.Stockist;
 import com.instantsolutions.larimarpharma.entity.StockistProductStock;
-import com.instantsolutions.larimarpharma.repository.*;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import com.instantsolutions.larimarpharma.exceptions.BadRequestException;
+import com.instantsolutions.larimarpharma.exceptions.ResourceNotFoundException;
+import com.instantsolutions.larimarpharma.repository.FieldExecutiveRepository;
+import com.instantsolutions.larimarpharma.repository.ProductRepository;
+import com.instantsolutions.larimarpharma.repository.StockistProductStockRepository;
+import com.instantsolutions.larimarpharma.repository.StockistRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class StockistProductStockService {
 
-    @Autowired
-    StockistProductStockRepository stockRepo;
-    @Autowired
-    StockistRepository stockistRepo;
-    @Autowired
-    ProductRepository productRepo;
-
-    @Autowired
-    ManagerRepository managerRepo;
-
-    @Transactional
-    public StockistProductStock addOrUpdateStock(
-            Long feId,
-            StockUpdateRequestDto request) {
-
-        Stockist stockist = stockistRepo.findById(request.getStockistId())
-                .orElseThrow(() -> new EntityNotFoundException("Stockist not found"));
-
-        Product product = productRepo.findById(request.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+    private final StockistProductStockRepository stockRepository;
+    private final FieldExecutiveRepository fieldExecutiveRepository;
+    private final StockistRepository stockistRepository;
+    private final ProductRepository productRepository;
 
 
-        StockistProductStock stock = stockRepo
-                .findByStockistIdAndProductId(stockist.getId(), product.getId())
-                .orElse(
-                        StockistProductStock.builder()
-                                .stockist(stockist)
-                                .productId(request.getProductId())
-                                .productName(product.getName())
-                                .build()
-                );
-
-        stock.setAvailableQuantity(request.getAvailableQuantity());
-
-        return stockRepo.save(stock);
-    }
-
-    @Transactional
-    public List<StockistProductStock> getStockByStockist(Long stockistId) {
-        return stockRepo.findAllByStockistId(stockistId);
-    }
-
-    @Transactional
+    /*
+     * ADD STOCK
+     */
     public StockistProductStockResponseDto addStock(
+            Long feId,
             StockistProductStockRequestDto dto
     ) {
-        Stockist stockist = validateManagerStockist(
-                dto.getManagerId(), dto.getStockistId()
-        );
 
-        Product product = productRepo.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        validateQuantity(dto.getQuantity());
 
-        stockRepo.findByStockistIdAndProductId(
-                dto.getStockistId(), dto.getProductId()
-        ).ifPresent(s -> {
-            throw new RuntimeException("Stock already exists");
-        });
+        FieldExecutive fieldExecutive =
+                fieldExecutiveRepository.findById(feId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Field Executive not found with id: " + feId
+                                )
+                        );
 
-        StockistProductStock stock = StockistProductStock.builder()
-                .stockist(stockist)
-                .product(product)
-                .availableQuantity(dto.getQuantity())
-                .build();
+        Stockist stockist =
+                stockistRepository.findById(dto.getStockistId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Stockist not found with id: "
+                                                + dto.getStockistId()
+                                )
+                        );
 
-        return mapToDto(stockRepo.save(stock));
-    }
+        Product product =
+                productRepository.findById(dto.getProductId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Product not found with id: "
+                                                + dto.getProductId()
+                                )
+                        );
 
-    @Transactional
-    public StockistProductStockResponseDto updateStock(
-            StockistProductStockRequestDto dto
-    ) {
-        validateManagerStockist(dto.getManagerId(), dto.getStockistId());
+        LocalDate currentMonth = getCurrentMonth();
 
-        StockistProductStock stock = stockRepo
-                .findByStockistIdAndProductId(
-                        dto.getStockistId(), dto.getProductId()
-                )
-                .orElseThrow(() -> new RuntimeException("Stock not found"));
+        /*
+         * IMPORTANT:
+         *
+         * Same FE + Stockist + Product + Month
+         * cannot exist twice.
+         */
+        boolean alreadyExists =
+                stockRepository
+                        .findByFieldExecutiveIdAndStockistIdAndProductIdAndStockMonth(
+                                feId,
+                                dto.getStockistId(),
+                                dto.getProductId(),
+                                currentMonth
+                        )
+                        .isPresent();
 
-        stock.setAvailableQuantity(dto.getQuantity());
-
-        return mapToDto(stockRepo.save(stock));
-    }
-
-    @Transactional
-    public void deleteStock(Long managerId ,Long stockistId, Long productId) {
-        validateManagerStockist(managerId, stockistId);
-        StockistProductStock stock = stockRepo
-                .findByStockistIdAndProductId(stockistId, productId)
-                .orElseThrow(() -> new RuntimeException("Stock not found"));
-
-        stockRepo.delete(stock);
-    }
-
-
-    @Transactional
-    private Stockist validateManagerStockist(
-            Long managerId,
-            Long stockistId
-    ) {
-        Manager manager = managerRepo.findById(managerId)
-                .orElseThrow(() -> new RuntimeException("Manager not found"));
-
-        Stockist stockist = stockistRepo.findById(stockistId)
-                .orElseThrow(() -> new RuntimeException("Stockist not found"));
-
-        if (!stockist.getManagers().contains(manager)) {
-            throw new RuntimeException("Stockist not assigned to this manager");
+        if (alreadyExists) {
+            throw new BadRequestException(
+                    "Stock already exists for this stockist and product "
+                            + "for the current month"
+            );
         }
 
-        return stockist;
+        StockistProductStock stock =
+                StockistProductStock.builder()
+                        .fieldExecutive(fieldExecutive)
+                        .stockist(stockist)
+                        .product(product)
+                        .stockMonth(currentMonth)
+                        .quantity(dto.getQuantity())
+                        .build();
+
+        StockistProductStock saved =
+                stockRepository.save(stock);
+
+        return mapToResponse(saved);
     }
 
-    @Transactional
-    public List<StockistProductStockResponseDto> getAllStocksUnderManager(
-            Long managerId
-    ) {
-        // Validate manager exists (optional but recommended)
-        managerRepo.findById(managerId)
-                .orElseThrow(() -> new RuntimeException("Manager not found"));
 
-        return stockRepo.findAllStocksByManagerId(managerId)
+    /*
+     * UPDATE STOCK
+     */
+    public StockistProductStockResponseDto updateStock(
+            Long feId,
+            Long stockId,
+            StockistProductStockRequestDto dto
+    ) {
+
+        validateQuantity(dto.getQuantity());
+
+        StockistProductStock stock =
+                stockRepository.findByIdAndFieldExecutiveId(
+                                stockId,
+                                feId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Stock record not found for this Field Executive"
+                                )
+                        );
+
+        /*
+         * We don't allow changing FE, month, stockist or product
+         * through update.
+         *
+         * The record represents the current month's
+         * FE + Stockist + Product combination.
+         *
+         * Only quantity is updated.
+         */
+        stock.setQuantity(dto.getQuantity());
+
+        StockistProductStock updated =
+                stockRepository.save(stock);
+
+        return mapToResponse(updated);
+    }
+
+
+    /*
+     * DELETE STOCK
+     */
+    public void deleteStock(
+            Long feId,
+            Long stockId
+    ) {
+
+        StockistProductStock stock =
+                stockRepository.findByIdAndFieldExecutiveId(
+                                stockId,
+                                feId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Stock record not found for this Field Executive"
+                                )
+                        );
+
+        stockRepository.delete(stock);
+    }
+
+
+    /*
+     * GET CURRENT MONTH STOCK
+     *
+     * FE + Product
+     */
+    @Transactional(readOnly = true)
+    public List<StockistProductStockResponseDto>
+    getCurrentMonthStockByFeAndProduct(
+            Long feId,
+            Long productId
+    ) {
+
+        validateFieldExecutive(feId);
+
+        /*
+         * Make sure product exists.
+         */
+        productRepository.findById(productId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Product not found with id: " + productId
+                        )
+                );
+
+        LocalDate currentMonth = getCurrentMonth();
+
+        return stockRepository
+                .findByFieldExecutiveIdAndProductIdAndStockMonth(
+                        feId,
+                        productId,
+                        currentMonth
+                )
                 .stream()
-                .map(this::mapToDto)
+                .map(this::mapToResponse)
                 .toList();
     }
 
 
-    private StockistProductStockResponseDto mapToDto(
-            StockistProductStock stock
+    /*
+     * GET ALL CURRENT MONTH STOCK
+     *
+     * FE + all products + all stockists
+     */
+    @Transactional(readOnly = true)
+    public List<StockistProductStockResponseDto>
+    getCurrentMonthStockByFe(
+            Long feId
     ) {
-        return StockistProductStockResponseDto.builder()
-                .id(stock.getId())
-                .stockistId(stock.getStockist().getId())
-                .stockistName(stock.getStockist().getName())
-                .productId(stock.getProduct().getId())
-                .productName(stock.getProduct().getName())
-                .availableQuantity(stock.getAvailableQuantity())
-                .updatedAt(stock.getUpdatedAt())
-                .marketName(stock.getStockist().getLocation())
-                .build();
+
+        validateFieldExecutive(feId);
+
+        LocalDate currentMonth = getCurrentMonth();
+
+        return stockRepository
+                .findByFieldExecutiveIdAndStockMonth(
+                        feId,
+                        currentMonth
+                )
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
 
-}
+    /*
+     * GET CURRENT MONTH STOCK
+     *
+     * FE + Stockist
+     */
+    @Transactional(readOnly = true)
+    public List<StockistProductStockResponseDto>
+    getCurrentMonthStockByFeAndStockist(
+            Long feId,
+            Long stockistId
+    ) {
 
+        validateFieldExecutive(feId);
+
+        LocalDate currentMonth = getCurrentMonth();
+
+        return stockRepository
+                .findByFieldExecutiveIdAndStockistIdAndStockMonth(
+                        feId,
+                        stockistId,
+                        currentMonth
+                )
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
+    /*
+     * HELPERS
+     */
+
+    private LocalDate getCurrentMonth() {
+        return YearMonth.now().atDay(1);
+    }
+
+
+    private void validateQuantity(Integer quantity) {
+
+        if (quantity == null) {
+            throw new BadRequestException(
+                    "Quantity is required"
+            );
+        }
+
+        if (quantity < 0) {
+            throw new BadRequestException(
+                    "Quantity cannot be negative"
+            );
+        }
+    }
+
+
+    private void validateFieldExecutive(Long feId) {
+
+        if (!fieldExecutiveRepository.existsById(feId)) {
+            throw new ResourceNotFoundException(
+                    "Field Executive not found with id: " + feId
+            );
+        }
+    }
+
+
+    private StockistProductStockResponseDto mapToResponse(
+            StockistProductStock stock
+    ) {
+
+        return StockistProductStockResponseDto.builder()
+                .id(stock.getId())
+
+                .fieldExecutiveId(
+                        stock.getFieldExecutive().getId()
+                )
+
+                .stockistId(
+                        stock.getStockist().getId()
+                )
+
+                .stockistName(
+                        stock.getStockist().getName()
+                )
+
+                .productId(
+                        stock.getProduct().getId()
+                )
+
+                .productName(
+                        stock.getProduct().getName()
+                )
+
+                .quantity(
+                        stock.getQuantity()
+                )
+
+                .month(
+                        YearMonth.from(
+                                stock.getStockMonth()
+                        ).toString()
+                )
+
+                .build();
+    }
+}
