@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -285,6 +286,60 @@ public class StockistProductStockService {
                 currentMonth
         );
     }
+
+    @Transactional(readOnly = true)
+    public List<StockistProductStockResponseDto> getStockByFeAndMonthRange(
+            Long feId,
+            String fromMonth,
+            String toMonth
+    ) {
+
+        validateFieldExecutive(feId);
+
+        Month from;
+        Month to;
+
+        try {
+            from = Month.valueOf(fromMonth.trim().toUpperCase());
+            to = Month.valueOf(toMonth.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(
+                    "Invalid month. Use month names such as January, February, March, etc."
+            );
+        }
+
+        int currentYear = LocalDate.now().getYear();
+
+        LocalDate fromDate = LocalDate.of(
+                currentYear,
+                from,
+                1
+        );
+
+        LocalDate toDate = LocalDate.of(
+                currentYear,
+                to,
+                1
+        );
+
+        if (fromDate.isAfter(toDate)) {
+            throw new BadRequestException(
+                    "From month cannot be after to month"
+            );
+        }
+
+        return stockRepository
+                .findByFieldExecutiveIdAndStockMonthBetweenOrderByStockMonthAsc(
+                        feId,
+                        fromDate,
+                        toDate
+                )
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 
 
     /*

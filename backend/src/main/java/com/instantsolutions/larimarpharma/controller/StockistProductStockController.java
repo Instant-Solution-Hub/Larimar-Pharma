@@ -140,4 +140,31 @@ public class StockistProductStockController {
                 )
         );
     }
+
+    /**
+     * GET STOCK BY MONTH RANGE
+     *
+     * FE + ALL STOCKISTS + ALL PRODUCTS
+     *
+     * Example:
+     * GET /api/stockist-stocks/fe/5/month-range
+     *     ?fromMonth=March
+     *     &toMonth=September
+     */
+    @GetMapping("/fe/{feId}/month-range")
+    public ResponseEntity<List<StockistProductStockResponseDto>>
+    getStockByFeAndMonthRange(
+            @PathVariable Long feId,
+            @RequestParam String fromMonth,
+            @RequestParam String toMonth
+    ) {
+
+        return ResponseEntity.ok(
+                stockService.getStockByFeAndMonthRange(
+                        feId,
+                        fromMonth,
+                        toMonth
+                )
+        );
+    }
 }

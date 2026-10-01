@@ -77,4 +77,13 @@ public interface StockistProductStockRepository
             @Param("productId") Long productId,
             @Param("month") LocalDate month
     );
+
+    List<StockistProductStock>
+    findByFieldExecutiveIdAndStockMonthBetweenOrderByStockMonthAsc(
+            Long fieldExecutiveId,
+            LocalDate fromMonth,
+            LocalDate toMonth
+    );
+
+
 }
