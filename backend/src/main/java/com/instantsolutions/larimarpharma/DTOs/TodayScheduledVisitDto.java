@@ -4,6 +4,7 @@ import com.instantsolutions.larimarpharma.entity.Visit;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -19,6 +20,8 @@ public class TodayScheduledVisitDto  {
     private String longitude;
     private String locationMethod;
     private  String photoProofUrl;
+
+    private List<ProductSummaryDto> detailedProducts;
 
     // Doctor
     private Long doctorId;

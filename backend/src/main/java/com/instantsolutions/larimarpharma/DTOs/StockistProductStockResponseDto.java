@@ -1,22 +1,25 @@
 package com.instantsolutions.larimarpharma.DTOs;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-import java.time.LocalDateTime;
-
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class StockistProductStockResponseDto {
 
     private Long id;
+
+    private Long fieldExecutiveId;
+
     private Long stockistId;
     private String stockistName;
-    private String marketName;
 
     private Long productId;
     private String productName;
 
-    private Integer availableQuantity;
-    private LocalDateTime updatedAt;
+    private Integer quantity;
+
+    private String month;
 }

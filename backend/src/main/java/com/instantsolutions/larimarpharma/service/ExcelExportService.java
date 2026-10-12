@@ -1,10 +1,7 @@
 package com.instantsolutions.larimarpharma.service;
 
 import com.instantsolutions.larimarpharma.DTOs.VisitExcelExportRequest;
-import com.instantsolutions.larimarpharma.entity.Doctor;
-import com.instantsolutions.larimarpharma.entity.ManagerVisit;
-import com.instantsolutions.larimarpharma.entity.Visit;
-import com.instantsolutions.larimarpharma.entity.ZsmVisit;
+import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.repository.ManagerVisitRepository;
 import com.instantsolutions.larimarpharma.repository.VisitRepository;
 import com.instantsolutions.larimarpharma.repository.ZsmVisitRepository;
@@ -42,6 +39,7 @@ public class ExcelExportService {
             "Actual Visit Time", "Location", "Notes", "Activities Performed",
             "Scheduled Date", "Actual Date", "Created At", "Updated At",
             "Manager Visit Status", "Slot Change Requests Count", "Converted Products Count",
+            "Detailed Products",
             "Visit Sequence", "Sequence Label", "Required Visits", "Visit Progress", "Requirement Status"
     };
 
@@ -54,6 +52,7 @@ public class ExcelExportService {
             "actualVisitTime", "location", "notes", "activitiesPerformed",
             "scheduledDate", "actualDate", "createdAt", "updatedAt",
             "managerVisitStatus", "slotChangeRequestsCount", "convertedProductsCount",
+            "detailedProducts",
             "visitSequence", "sequenceLabel", "requiredVisits", "visitProgress", "requirementStatus"
     };
 
@@ -454,6 +453,8 @@ public class ExcelExportService {
         setCellValue(row, col++, visit.getSlotChangeRequests() != null ? visit.getSlotChangeRequests().size() : 0);
         setCellValue(row, col++, visit.getConvertedProducts() != null ? visit.getConvertedProducts().size() : 0);
 
+        setCellValue(row, col++, formatProducts(visit.getDetailedProducts()));
+
         // Visit Sequence Information
         // Only calculate sequence for A and A+ doctors
         if (visit.getDoctor() != null && isCategoryAOrAPlus(visit.getDoctor().getCategory())) {
@@ -582,6 +583,9 @@ public class ExcelExportService {
             setCellValue(row, col++, 0);
         }
 
+        // Detailed Products
+        setCellValue(row, col++, formatProducts(visit.getDetailedProducts()));
+
         // Visit Sequence Information - Not applicable for Manager Visits
         setCellValue(row, col++, "");
         setCellValue(row, col++, "N/A");
@@ -694,6 +698,9 @@ public class ExcelExportService {
             setCellValue(row, col++, 0);
         }
 
+        // Detailed Products (NEW)
+        setCellValue(row, col++, formatProducts(visit.getDetailedProducts()));
+
         // Visit Sequence Information - Not applicable for Manager Visits
         setCellValue(row, col++, "");
         setCellValue(row, col++, "N/A");
@@ -713,6 +720,14 @@ public class ExcelExportService {
         return number + "th Visit";
     }
 
+    private String formatProducts(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            return "";
+        }
+        return products.stream()
+                .map(p -> p.getName() != null ? p.getName() : ("Product#" + p.getId()))
+                .collect(Collectors.joining(", "));
+    }
     private String getRequirementStatus(int current, int required) {
         if (current >= required) {
             return "Met";

@@ -103,35 +103,4 @@ public class StockistService {
     }
 
 
-
-
-
-    public void addOrUpdateProductStock(Long stockistId, Long productId, Integer quantity) {
-
-        Stockist stockist = getEntity(stockistId);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
-
-        StockistProductStock stock =
-                stockRepository.findByStockistIdAndProductId(stockistId, productId)
-                        .orElse(
-                                StockistProductStock.builder()
-                                        .stockist(stockist)
-                                        .product(product)
-                                        .build()
-                        );
-
-        stock.setAvailableQuantity(quantity);
-        stockRepository.save(stock);
-    }
-
-    public void removeProductFromStockist(Long stockistId, Long productId) {
-        StockistProductStock stock =
-                stockRepository.findByStockistIdAndProductId(stockistId, productId)
-                        .orElseThrow(() -> new EntityNotFoundException("Stock not found"));
-
-        stockRepository.delete(stock);
-    }
-
-
 }

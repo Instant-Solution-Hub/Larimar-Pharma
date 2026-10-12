@@ -28,7 +28,6 @@ public class PromotionService {
             throw new BadRequestException("End date must be after start date");
         }
 
-        if(!productRepository.existsByName(dto.getProduct())) throw new ResourceNotFoundException("No product found under the given name");
         Promotion promotion = Promotion.builder()
                 .name(dto.getName().toUpperCase())
                 .description(dto.getDescription())
@@ -37,7 +36,7 @@ public class PromotionService {
                 .endDate(dto.getEndDate())
                 .targetAudience(dto.getTargetAudience())
                 .benefits(dto.getBenefits())
-                .product(dto.getProduct())
+                .products(dto.getProducts())
                 .build();
 
         return promotionRepository.save(promotion);
@@ -48,9 +47,11 @@ public class PromotionService {
         if (dto.getEndDate().isBefore(dto.getStartDate())) {
             throw new BadRequestException("End date must be after start date");
         }
-        if(!productRepository.existsByName(dto.getProduct())) throw new ResourceNotFoundException("No product found under the given name");
-        Promotion promotion = getPromotionById(id);
 
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Promotion not found with id: " + id
+                ));
 
         promotion.setName(dto.getName().toUpperCase());
         promotion.setDescription(dto.getDescription());
@@ -58,7 +59,7 @@ public class PromotionService {
         promotion.setEndDate(dto.getEndDate());
         promotion.setBenefits(dto.getBenefits());
         promotion.setTargetAudience(dto.getTargetAudience());
-        promotion.setProduct(dto.getProduct());
+        promotion.setProducts(dto.getProducts());
 
         return promotionRepository.save(promotion);
     }

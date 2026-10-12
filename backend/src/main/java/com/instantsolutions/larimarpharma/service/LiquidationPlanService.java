@@ -37,7 +37,7 @@ public class LiquidationPlanService {
     FieldExecutiveRepository fieldExecutiveRepository;
 
     @Autowired
-    FEProductAllocationRepository allocationRepository;
+    StockistProductStockService stockistProductStockService;
 
 
     public LiquidationPlanResponseDto create(Long feId, LiquidationPlanRequestDto dto) {
@@ -58,7 +58,13 @@ public class LiquidationPlanService {
                 .deadline(dto.getDeadline())
                 .strategy(dto.getStrategy())
                 .status(LiquidationPlan.PlanStatus.ACTIVE)
-                .availableUnits(allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,dto.getProductId(),getCurrentMonth(),getCurrentYear()).get().getAllocatedQuantity())
+                .availableUnits(
+                        stockistProductStockService
+                                .getCurrentMonthTotalStockByFeAndProduct(
+                                        feId,
+                                        dto.getProductId()
+                                )
+                )
                 .achievedUnits(0)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -95,15 +101,21 @@ public class LiquidationPlanService {
 
 
         // 7️⃣ Check stock availability
-      Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,dto.getProductId(),getCurrentMonth(),getCurrentYear());
-        if(allocation.isEmpty()) throw new IllegalStateException(
-                "No stock allocated for Executive: " + feId +
-                        ", Required: " + dto.getTargetLiquidation()
-        );
-        long availableStock = allocation.get().getAllocatedQuantity();
+        Integer availableStock =
+                stockistProductStockService
+                        .getCurrentMonthTotalStockByFeAndProduct(
+                                feId,
+                                dto.getProductId()
+                        );
+
+        if (availableStock <= 0) {
+            throw new BadRequestException(
+                    "No stock available for this product for the current month"
+            );
+        }
 
         if (availableStock < dto.getTargetLiquidation()) {
-            throw new IllegalStateException(
+            throw new BadRequestException(
                     "Insufficient stock. Available: " + availableStock +
                             ", Required: " + dto.getTargetLiquidation()
             );
@@ -267,12 +279,17 @@ public class LiquidationPlanService {
 
         LocalDateTime start = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime end = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
-        Optional<FEProductAllocation> allocation = allocationRepository.findByFieldExecutiveIdAndProductIdAndMonthAndYear(feId,productId,getCurrentMonth(),getCurrentYear());
-        if(allocation.isEmpty()) throw new IllegalStateException(
-                "No stock allocated for Executive: " + feId +
-                        ", Required: " + newUnits
-        );
-        long currentStock = allocation.get().getAllocatedQuantity();
+        Integer currentStock =
+                stockistProductStockService
+                        .getCurrentMonthTotalStockByFeAndProduct(
+                                feId,
+                                productId
+                        );
+        if (currentStock == null || currentStock <= 0) {
+            throw new BadRequestException(
+                    "No stock available for this product for the current month"
+            );
+        }
 
 
         int usedUnits =
@@ -364,11 +381,4 @@ public class LiquidationPlanService {
                 .build();
     }
 
-    private int getCurrentMonth() {
-        return LocalDate.now().getMonthValue();
-    }
-
-    private int getCurrentYear() {
-        return LocalDate.now().getYear();
-    }
 }

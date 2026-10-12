@@ -21,7 +21,7 @@ public class Promotion {
 
     private String description;
 
-    private String product;
+    private List<String> products;
 
     private List<String> targetAudience;
 
