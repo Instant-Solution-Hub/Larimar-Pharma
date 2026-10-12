@@ -157,17 +157,18 @@ public class ZsmService {
         visit.setStatus(dto.getStatus());
         visit.setManagerNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
-        if (dto.getProductId() != null) {
-            // Product detailing was done - associate product with manager visit
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+        // Handle multiple detailed products
+        if (dto.getDetailedProductIds() != null && !dto.getDetailedProductIds().isEmpty()) {
+            List<Product> products = productRepository.findAllById(dto.getDetailedProductIds());
 
-            // Set product relationship
-            visit.setProduct(product);
+            if (products.size() != dto.getDetailedProductIds().size()) {
+                throw new EntityNotFoundException("One or more detailed products not found");
+            }
 
+            visit.getDetailedProducts().clear();
+            visit.getDetailedProducts().addAll(products);
         } else {
-            // No product detailing done - clear product association
-            visit.setProduct(null);
+            visit.getDetailedProducts().clear();
         }
         ZsmVisit savedVisit = zsmVisitRepository.save(visit);
         return mapToDto(savedVisit);
@@ -220,17 +221,18 @@ public class ZsmService {
         visit.setJoinedAt(LocalDateTime.now());
         visit.setManagerNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());
-        if (dto.getProductId() != null) {
-            // Product detailing was done - associate product with manager visit
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
+        // Handle multiple detailed products
+        if (dto.getDetailedProductIds() != null && !dto.getDetailedProductIds().isEmpty()) {
+            List<Product> products = productRepository.findAllById(dto.getDetailedProductIds());
 
-            // Set product relationship
-            visit.setProduct(product);
+            if (products.size() != dto.getDetailedProductIds().size()) {
+                throw new EntityNotFoundException("One or more detailed products not found");
+            }
 
+            visit.getDetailedProducts().clear();
+            visit.getDetailedProducts().addAll(products);
         } else {
-            // No product detailing done - clear product association
-            visit.setProduct(null);
+            visit.getDetailedProducts().clear();
         }
         ZsmVisit savedVisit = zsmVisitRepository.save(visit);
         return mapToDto(savedVisit);
@@ -702,6 +704,13 @@ public class ZsmService {
                 .longitude(null)
                 .locationMethod(null)
                 .photoProofUrl(null)
+                .detailedProducts(
+                        zv.getDetailedProducts() != null
+                                ? zv.getDetailedProducts().stream()
+                                .map(p -> new ProductSummaryDto(p.getId(), p.getName()))
+                                .toList()
+                                : List.of()
+                )
 
                 // Doctor snapshot fields
                 .doctorId(zv.getDoctorId())
@@ -751,8 +760,13 @@ public class ZsmService {
                         .zsmName(v.getZsmAdmin().getName())
                         .zsmEmpCode(v.getZsmAdmin().getEmployeeCode())
                         .userRole("ZSM")
-                        .productId(v.getProduct() !=null ? v.getProduct().getId() : null)
-                        .productName(v.getProduct() !=null ? v.getProduct().getName() : "")
+                        .detailedProducts(
+                                v.getDetailedProducts() != null
+                                        ? v.getDetailedProducts().stream()
+                                        .map(p -> new ProductSummaryDto(p.getId(), p.getName()))
+                                        .toList()
+                                        : List.of()
+                        )
                         .notes(v.getManagerNotes());
 
         // 🔁 Doctor mapping with fallback

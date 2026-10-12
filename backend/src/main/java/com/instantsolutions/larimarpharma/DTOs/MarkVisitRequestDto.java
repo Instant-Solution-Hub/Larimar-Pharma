@@ -13,7 +13,7 @@ public class MarkVisitRequestDto {
     @NotNull
     private Long visitId;
 
-    private Long productId;
+    private List<Long> detailedProductIds;
 
     @NotNull
     private Visit.VisitStatus status; // COMPLETED or MISSED

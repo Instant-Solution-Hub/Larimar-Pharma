@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,6 +38,15 @@ public class Visit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = true)
     private Product product;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "visit_detailed_products",
+            joinColumns = @JoinColumn(name = "visit_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @Builder.Default
+    private List<Product> detailedProducts = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stockist_id", nullable = true)

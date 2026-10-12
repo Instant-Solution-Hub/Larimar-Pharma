@@ -41,6 +41,8 @@ public class CompletedVisitDto {
 
     private String userRole;
 
+    private List<ProductSummaryDto> detailedProducts;
+
     /* ===== Product Details ===== */
     private String productName;
     private Long productId;

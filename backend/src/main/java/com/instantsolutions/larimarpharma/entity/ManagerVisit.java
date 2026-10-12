@@ -95,6 +95,15 @@ public class ManagerVisit {
     @JoinColumn(name = "product_id", nullable = true)
     private Product product;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "mgr_visit_detailed_products",
+            joinColumns = @JoinColumn(name = "visit_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @Builder.Default
+    private List<Product> detailedProducts = new ArrayList<>();
+
     /* ===== MANAGER-SPECIFIC DATA ===== */
 
     private LocalDateTime joinedAt;

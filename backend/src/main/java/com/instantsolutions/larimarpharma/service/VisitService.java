@@ -382,15 +382,18 @@ public class VisitService {
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
         // Check if product detailing was done during the visit
-        if (dto.getProductId() != null) {
-            // Product detailing was done - associate product with visit
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
-            visit.setProduct(product);
+        // Handle multiple detailed products
+        if (dto.getDetailedProductIds() != null && !dto.getDetailedProductIds().isEmpty()) {
+            List<Product> products = productRepository.findAllById(dto.getDetailedProductIds());
 
+            if (products.size() != dto.getDetailedProductIds().size()) {
+                throw new EntityNotFoundException("One or more detailed products not found");
+            }
+
+            visit.getDetailedProducts().clear();
+            visit.getDetailedProducts().addAll(products);
         } else {
-            // No product detailing done - ensure product is null
-            visit.setProduct(null);
+            visit.getDetailedProducts().clear();
         }
 
         // Handle converted products
@@ -568,15 +571,18 @@ public class VisitService {
         visit.setLocationMethod(dto.getLocationMethod()); // Store how visit was verified
 
         // Check if product detailing was done during the visit
-        if (dto.getProductId() != null) {
-            // Product detailing was done - associate product with visit
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
-            visit.setProduct(product);
+        // Handle multiple detailed products
+        if (dto.getDetailedProductIds() != null && !dto.getDetailedProductIds().isEmpty()) {
+            List<Product> products = productRepository.findAllById(dto.getDetailedProductIds());
 
+            if (products.size() != dto.getDetailedProductIds().size()) {
+                throw new EntityNotFoundException("One or more detailed products not found");
+            }
+
+            visit.getDetailedProducts().clear();
+            visit.getDetailedProducts().addAll(products);
         } else {
-            // No product detailing done - ensure product is null
-            visit.setProduct(null);
+            visit.getDetailedProducts().clear();
         }
 
         // Handle converted products
@@ -930,8 +936,13 @@ public class VisitService {
                         .dayOfWeek(v.getDayOfWeek())
                         .actualVisitTime(v.getActualVisitTime())
                         .location(v.getLocation())
-                        .productId(v.getProduct() !=null ? v.getProduct().getId() : null)
-                        .productName(v.getProduct() !=null ? v.getProduct().getName() : "")
+                        .detailedProducts(
+                                v.getDetailedProducts() != null
+                                        ? v.getDetailedProducts().stream()
+                                        .map(p -> new ProductSummaryDto(p.getId(), p.getName()))
+                                        .toList()
+                                        : List.of()
+                        )
                         .notes(v.getNotes());
 
         switch (v.getVisitType()) {
@@ -1069,6 +1080,7 @@ public class VisitService {
                 .toList();
     }
 
+    @Transactional
     public List<TodayScheduledVisitDto> getTodaysAndMissedVisits(Long feId) {
         LocalDate today = LocalDate.now();
         LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
@@ -1100,6 +1112,14 @@ public class VisitService {
                 .longitude(v.getLongitude() != null ? v.getLongitude() : "")
                 .locationMethod(v.getLocationMethod())
                 .photoProofUrl(v.getPhotoProofUrl() != null ? v.getPhotoProofUrl() : null)
+
+                .detailedProducts(
+                        v.getDetailedProducts() != null
+                                ? v.getDetailedProducts().stream()
+                                .map(pd -> new ProductSummaryDto(pd.getId(), pd.getName()))
+                                .toList()
+                                : List.of()
+                )
 
                 // Doctor fields
                 .doctorId(d != null ? d.getId() : null)
