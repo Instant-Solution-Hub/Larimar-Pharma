@@ -149,7 +149,7 @@ public class ManagerVisitService {
                 .orElseThrow(() -> new EntityNotFoundException("Visit not found"));
 
         Doctor doctor = visit.getOriginalVisit().getDoctor();
-//        visit.setActualDate(LocalDateTime.now());
+        visit.setVisitDate(LocalDate.now());
         visit.setJoinedAt(LocalDateTime.now());
 
         //  Update visit fields
@@ -216,7 +216,7 @@ public class ManagerVisitService {
 
         // Update visit (same fields as markVisit)
         visit.setStatus(Visit.VisitStatus.COMPLETED);
-//        visit.setActualDate(LocalDateTime.now());
+        visit.setVisitDate(LocalDate.now());
         visit.setJoinedAt(LocalDateTime.now());
         visit.setManagerNotes(dto.getNotes());
         visit.setActivitiesPerformed(dto.getActivitiesPerformed());

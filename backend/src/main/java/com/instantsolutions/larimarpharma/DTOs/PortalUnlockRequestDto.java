@@ -1,6 +1,7 @@
 package com.instantsolutions.larimarpharma.DTOs;
 
 
+import com.instantsolutions.larimarpharma.entity.Admin;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.PortalUnlockRequest;
@@ -28,6 +29,7 @@ public class PortalUnlockRequestDto {
 
     private ManagerResponseDto manager;
     private FieldExecutiveResponse fieldExecutive;
+    private ZsmResponseDto zsm;
 
 
 }

@@ -1,9 +1,6 @@
 package com.instantsolutions.larimarpharma.service;
 
-import com.instantsolutions.larimarpharma.DTOs.FieldExecutiveResponse;
-import com.instantsolutions.larimarpharma.DTOs.ManagerResponseDto;
-import com.instantsolutions.larimarpharma.DTOs.PortalUnlockRequestDto;
-import com.instantsolutions.larimarpharma.DTOs.UserIdentityDto;
+import com.instantsolutions.larimarpharma.DTOs.*;
 import com.instantsolutions.larimarpharma.entity.*;
 import com.instantsolutions.larimarpharma.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +20,8 @@ import java.util.Set;
 @Slf4j
 public class PortalLockService {
 
+    private static final Long ZSM_ADMIN_ID = 2L;
+
     private final VisitRepository visitRepository;
     private final ManagerVisitRepository managerVisitRepository;
     private final LeaveRequestRepository leaveRequestRepository;
@@ -31,6 +30,8 @@ public class PortalLockService {
     private final FieldExecutiveRepository fieldExecutiveRepository;
     private final ManagerRepository managerRepository;
     private final AdminRepository adminRepository;
+    private final ZsmVisitRepository zsmVisitRepository;
+
 
     private final Set<LocalDate> holidayDates = Set.of(
             LocalDate.of(2026, 4, 15),  // VISHU
@@ -63,6 +64,7 @@ public class PortalLockService {
 //
 //        // Check managers
 //        checkManagers(yesterday);
+//          checkZSMs(yesterday);
 //    }
 //
 //    private void checkFieldExecutives(LocalDate date) {
@@ -91,6 +93,21 @@ public class PortalLockService {
 //            } catch (Exception e) {
 //                log.error("Error checking portal lock for Manager: {}", manager.getId(), e);
 //            }
+//        }
+//    }
+
+
+//    private void checkZSMs(LocalDate date) {
+//        // ZSM is a specific admin (id=2)
+//        Admin zsm = adminRepository.findById(ZSM_ADMIN_ID)
+//                .orElseThrow(() -> new RuntimeException("ZSM admin not found with id: " + ZSM_ADMIN_ID));
+//
+//        try {
+//            if (shouldLockZSMPortal(zsm, date)) {
+//                lockZSMPortal(zsm, date);
+//            }
+//        } catch (Exception e) {
+//            log.error("Error checking portal lock for ZSM: {}", zsm.getId(), e);
 //        }
 //    }
 
@@ -185,6 +202,89 @@ public class PortalLockService {
 
         return !hasCompletedManagerVisits;
     }
+
+    private boolean shouldLockZSMPortal(Admin zsm, LocalDate yesterday) {
+
+        boolean isAdminUnlocked =
+                portalLockStatusRepository.existsByZsmAndIsUnlocked(zsm, true);
+
+        if (isAdminUnlocked) {
+            return false;
+        }
+
+        if (isWeekend(yesterday)) {
+            return false;
+        }
+
+        if (isHoliday(yesterday)) {
+            return false;
+        }
+
+//        if (isZsmOnLeave(zsm, yesterday)) {
+//            log.debug("ZSM {} was on approved leave on {}, skipping lock",
+//                    zsm.getId(), yesterday);
+//            return false;
+//        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate fromDate = today.minusDays(2);
+
+        LocalDateTime start = fromDate.atStartOfDay();
+        LocalDateTime end   = today.plusDays(1).atStartOfDay();
+
+        boolean hasScheduledZsmVisits =
+                zsmVisitRepository.existsScheduledZsmVisits(zsm, start, end);
+
+        if (!hasScheduledZsmVisits) {
+            log.debug("ZSM {} has no scheduled visits on {}, skipping lock",
+                    zsm.getId(), yesterday);
+            return false;
+        }
+
+        boolean hasCompletedZsmVisits =
+                zsmVisitRepository.existsCompletedZsmVisits(zsm, start, end);
+
+        return !hasCompletedZsmVisits;
+    }
+
+    private void lockZSMPortal(Admin zsm, LocalDate date) {
+        boolean alreadyLocked = portalLockStatusRepository
+                .existsByZsmAndLockedDateAndIsLocked(zsm, date, true);
+
+        if (alreadyLocked) {
+            log.debug("ZSM {} already locked for date {}", zsm.getId(), date);
+            return;
+        }
+
+        PortalLockStatus lockStatus = PortalLockStatus.builder()
+                .zsm(zsm)
+                .userType(PortalLockStatus.UserType.ZSM)
+                .lockedDate(date)
+                .isLocked(true)
+                .isUnlocked(false)
+                .lockReason("No activities completed for scheduled work day")
+                .unlockRequested(false)
+                .build();
+
+        portalLockStatusRepository.save(lockStatus);
+        log.info("Locked portal for ZSM {} on date {}", zsm.getId(), date);
+    }
+
+    private void unlockZSMPortal(Admin zsm, LocalDate date) {
+        PortalLockStatus lockStatus = portalLockStatusRepository
+                .findTopByZsmAndIsLockedOrderByLockedDateDesc(zsm, true)
+                .orElseThrow(() -> new IllegalStateException("ZSM portal is not locked"));
+
+        lockStatus.setIsLocked(false);
+        lockStatus.setIsUnlocked(true);
+        portalLockStatusRepository.save(lockStatus);
+
+        log.info("Unlocked portal for ZSM {} on date {}", zsm.getId(), date);
+    }
+
+//    private boolean isZsmOnLeave(Admin zsm, LocalDate date) {
+//        return leaveRequestRepository.existsApprovedLeaveForZsmOnDate(zsm, date);
+//    }
 
     private boolean isWeekend(LocalDate date) {
         return date.getDayOfWeek() == DayOfWeek.SUNDAY;
@@ -316,6 +416,13 @@ public class PortalLockService {
                 lockManagerPortal(manager,yesterday);
             }
             return portalLockStatusRepository.existsByManagerAndIsLocked(manager, true);
+        } else if ("ZSM".equals(userType)) {
+            Admin zsm = adminRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("ZSM admin not found with ID: " + userId));
+            if (shouldLockZSMPortal(zsm, yesterday)) {
+                lockZSMPortal(zsm, yesterday);
+            }
+            return portalLockStatusRepository.existsByZsmAndIsLocked(zsm, true);
         }
 
         return false;
@@ -335,7 +442,12 @@ public class PortalLockService {
             Manager manager = managerRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Manager not found with ID: " + userId));
             return requestManagerUnlock(manager, reason);
-        } else {
+        }else if ("ZSM".equals(userType)) {
+            Admin zsm = adminRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("ZSM admin not found with ID: " + userId));
+            return requestZSMUnlock(zsm, reason);
+        }
+        else {
             throw new IllegalArgumentException("Unlock request only supported for FIELD_EXECUTIVE and MANAGER");
         }
     }
@@ -412,6 +524,45 @@ public class PortalLockService {
         return portalUnlockRequestRepository.save(unlockRequest);
     }
 
+
+    /**
+     * Request unlock for locked portal - ZSM
+     */
+    @Transactional
+    public PortalUnlockRequest requestZSMUnlock(Admin zsm, String reason) {
+
+        PortalLockStatus lockStatus = portalLockStatusRepository
+                .findTopByZsmAndIsLockedOrderByLockedDateDesc(zsm, true)
+                .orElseThrow(() -> new IllegalStateException("ZSM portal is not locked"));
+
+        boolean alreadyRequested = portalUnlockRequestRepository
+                .existsByZsmAndLockedDateAndStatusIn(
+                        zsm,
+                        lockStatus.getLockedDate(),
+                        List.of(PortalUnlockRequest.ApprovalStatus.PENDING)
+                );
+
+        if (alreadyRequested) {
+            throw new IllegalStateException("Unlock request already submitted for this lock date");
+        }
+
+        PortalUnlockRequest unlockRequest = PortalUnlockRequest.builder()
+                .zsm(zsm)
+                .userType(PortalUnlockRequest.UserType.ZSM)
+                .lockedDate(lockStatus.getLockedDate())
+                .reason(reason)
+                .status(PortalUnlockRequest.ApprovalStatus.PENDING)
+                .build();
+
+        lockStatus.setUnlockRequested(true);
+        lockStatus.setUnlockRequestStatus(PortalLockStatus.UnlockRequestStatus.PENDING);
+        lockStatus.setUnlockRequestReason(reason);
+        lockStatus.setUnlockRequestDate(LocalDateTime.now());
+
+        portalLockStatusRepository.save(lockStatus);
+        return portalUnlockRequestRepository.save(unlockRequest);
+    }
+
     /**
      * Get user unlock requests
      */
@@ -439,68 +590,60 @@ public class PortalLockService {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found with ID: " + adminId));
 
-
         PortalLockStatus lockStatus;
 
         if (request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE) {
             lockStatus = portalLockStatusRepository
                     .findTopByFieldExecutiveAndLockedDateOrderByIdDesc(
-                            request.getFieldExecutive(),
-                            request.getLockedDate())
+                            request.getFieldExecutive(), request.getLockedDate())
                     .orElseThrow(() -> new RuntimeException("Lock status not found"));
-        } else {
+        } else if (request.getUserType() == PortalUnlockRequest.UserType.MANAGER) {
             lockStatus = portalLockStatusRepository
                     .findTopByManagerAndLockedDateOrderByIdDesc(
-                            request.getManager(),
-                            request.getLockedDate())
+                            request.getManager(), request.getLockedDate())
+                    .orElseThrow(() -> new RuntimeException("Lock status not found"));
+        } else { // ZSM
+            lockStatus = portalLockStatusRepository
+                    .findTopByZsmAndLockedDateOrderByIdDesc(
+                            request.getZsm(), request.getLockedDate())
                     .orElseThrow(() -> new RuntimeException("Lock status not found"));
         }
 
         if (approve) {
-            // Approve unlock
             lockStatus.setIsLocked(false);
             lockStatus.setIsUnlocked(true);
             lockStatus.setUnlockRequestStatus(PortalLockStatus.UnlockRequestStatus.APPROVED);
             lockStatus.setApprovedBy(admin);
             lockStatus.setUnlockApprovalDate(LocalDateTime.now());
 
-            if(request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE){
-               Optional<FieldExecutive> fe = fieldExecutiveRepository.findById(request.getFieldExecutive().getId());
-               fe.get().setIsPortalLocked(false);
-               fieldExecutiveRepository.save(fe.get());
-
-            }else {
-             Optional<Manager> manager =   managerRepository.findById(request.getManager().getId());
-             manager.get().setIsPortalLocked(false);
-             managerRepository.save(manager.get());
+            if (request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE) {
+                FieldExecutive fe = fieldExecutiveRepository.findById(request.getFieldExecutive().getId())
+                        .orElseThrow(() -> new RuntimeException("FE not found"));
+                fe.setIsPortalLocked(false);
+                fieldExecutiveRepository.save(fe);
+            } else if (request.getUserType() == PortalUnlockRequest.UserType.MANAGER) {
+                Manager manager = managerRepository.findById(request.getManager().getId())
+                        .orElseThrow(() -> new RuntimeException("Manager not found"));
+                manager.setIsPortalLocked(false);
+                managerRepository.save(manager);
             }
+            // ZSM: no isPortalLocked field on Admin (recommended approach).
+            // If you added the field, uncomment:
+            // Admin z = adminRepository.findById(request.getZsm().getId()).orElseThrow();
+            // z.setIsPortalLocked(false);
+            // adminRepository.save(z);
 
             request.setStatus(PortalUnlockRequest.ApprovalStatus.APPROVED);
-            request.setReviewedBy(admin);
-            request.setAdminComments(comments);
-            request.setReviewedAt(LocalDateTime.now());
         } else {
-            // Reject unlock
             lockStatus.setUnlockRequested(false);
             lockStatus.setIsUnlocked(false);
             lockStatus.setUnlockRequestStatus(PortalLockStatus.UnlockRequestStatus.REJECTED);
-
-//            if(request.getUserType() == PortalUnlockRequest.UserType.FIELD_EXECUTIVE){
-//                Optional<FieldExecutive> fe = fieldExecutiveRepository.findById(request.getFieldExecutive().getId());
-//                fe.get().setIsPortalLocked(true);
-//                fieldExecutiveRepository.save(fe.get());
-//
-//            }else {
-//                Optional<Manager> manager =   managerRepository.findById(request.getManager().getId());
-//                manager.get().setIsPortalLocked(true);
-//                managerRepository.save(manager.get());
-//            }
-
             request.setStatus(PortalUnlockRequest.ApprovalStatus.REJECTED);
-            request.setReviewedBy(admin);
-            request.setAdminComments(comments);
-            request.setReviewedAt(LocalDateTime.now());
         }
+
+        request.setReviewedBy(admin);
+        request.setAdminComments(comments);
+        request.setReviewedAt(LocalDateTime.now());
 
         portalLockStatusRepository.save(lockStatus);
         portalUnlockRequestRepository.save(request);
@@ -522,6 +665,10 @@ public class PortalLockService {
             Manager manager = managerRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Manager not found with ID: " + userId));
             manuallyLockManagerPortal(manager, date, reason, admin);
+        } else if ("ZSM".equals(userType)) {
+            Admin zsm = adminRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("ZSM not found with ID: " + userId));
+            manuallyLockZSMPortal(zsm, date, reason, admin);
         } else {
             throw new IllegalArgumentException("Invalid user type: " + userType);
         }
@@ -543,9 +690,25 @@ public class PortalLockService {
             Manager manager = managerRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Manager not found with ID: " + userId));
             unlockManagerPortal(manager, date);
+        } else if ("ZSM".equals(userType)) {
+            Admin zsm = adminRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("ZSM not found with ID: " + userId));
+            unlockZSMPortal(zsm, date);
         } else {
             throw new IllegalArgumentException("Invalid user type: " + userType);
         }
+    }
+
+    @Transactional
+    public void manuallyLockZSMPortal(Admin zsm, LocalDate date, String reason, Admin admin) {
+        lockZSMPortal(zsm, date);
+
+        PortalLockStatus lockStatus = portalLockStatusRepository
+                .findTopByZsmAndLockedDateOrderByIdDesc(zsm, date)
+                .orElseThrow(() -> new RuntimeException("Lock not found after creation"));
+
+        lockStatus.setLockReason(reason + " (Manually locked by Admin: " + admin.getEmail() + ")");
+        portalLockStatusRepository.save(lockStatus);
     }
 
     @Transactional
@@ -607,6 +770,7 @@ public class PortalLockService {
 
         ManagerResponseDto managerDto = null;
         FieldExecutiveResponse feDto = null;
+        ZsmResponseDto zsmDto = null;
 
         if (request.getManager() != null) {
             Manager m = request.getManager();
@@ -630,6 +794,19 @@ public class PortalLockService {
                     .build();
         }
 
+
+
+        if (request.getZsm() != null) {
+            Admin z = request.getZsm();
+            zsmDto = ZsmResponseDto.builder()
+                    .id(z.getId())
+                    .name(z.getName())
+                    .email(z.getEmail())
+                    .phone(z.getPhone())
+                    .employeeCode(z.getEmployeeCode())
+                    .build();
+        }
+
         return PortalUnlockRequestDto.builder()
                 .id(request.getId())
                 .userType(request.getUserType())
@@ -641,6 +818,7 @@ public class PortalLockService {
                 .adminComments(request.getAdminComments())
                 .manager(managerDto)
                 .fieldExecutive(feDto)
+                .zsm(zsmDto)
                 .build();
     }
 

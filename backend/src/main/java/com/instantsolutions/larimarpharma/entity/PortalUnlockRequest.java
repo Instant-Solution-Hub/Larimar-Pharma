@@ -26,6 +26,10 @@ public class PortalUnlockRequest {
     @JoinColumn(name = "fe_id", nullable = true)
     private FieldExecutive fieldExecutive;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zsm_admin_id", nullable = true)
+    private Admin zsm;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserType userType;
@@ -58,7 +62,7 @@ public class PortalUnlockRequest {
     }
 
     public enum UserType {
-        FIELD_EXECUTIVE, MANAGER
+        FIELD_EXECUTIVE, MANAGER, ZSM
     }
 
     public enum ApprovalStatus {
