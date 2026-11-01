@@ -1,5 +1,6 @@
 package com.instantsolutions.larimarpharma.repository;
 
+import com.instantsolutions.larimarpharma.entity.Admin;
 import com.instantsolutions.larimarpharma.entity.ManagerVisit;
 import com.instantsolutions.larimarpharma.entity.Visit;
 import com.instantsolutions.larimarpharma.entity.ZsmVisit;
@@ -183,6 +184,39 @@ public interface ZsmVisitRepository extends JpaRepository<ZsmVisit, Long>, JpaSp
     List<ZsmVisit> findByZsmAndDate(
             @Param("zsmId") Long zsmId,
             @Param("selectedDate") LocalDate selectedDate
+    );
+
+
+
+    /**
+     * True if the ZSM has at least one visit scheduled in [start, end).
+     */
+    @Query("""
+            SELECT COUNT(zv) > 0
+            FROM ZsmVisit zv
+            WHERE zv.zsmAdmin = :zsm
+              AND zv.scheduledDate >= :start
+              AND zv.scheduledDate < :end
+            """)
+    boolean existsScheduledZsmVisits(
+            @Param("zsm") Admin zsm,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+
+    @Query("""
+    SELECT CASE WHEN COUNT(zv) > 0 THEN true ELSE false END
+    FROM ZsmVisit zv
+    WHERE zv.zsmAdmin = :zsm
+      AND zv.scheduledDate >= :start
+      AND zv.scheduledDate < :end
+      AND zv.status IN ('COMPLETED', 'MISSED')
+    """)
+    boolean existsCompletedZsmVisits(
+            @Param("zsm") Admin zsm,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
 
 

@@ -25,6 +25,10 @@ public class PortalLockStatus {
     @JoinColumn(name = "fe_id", nullable = true)
     private FieldExecutive fieldExecutive;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zsm_admin_id", nullable = true)
+    private Admin zsm;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserType userType; // MANAGER or FIELD_EXECUTIVE
@@ -67,7 +71,7 @@ public class PortalLockStatus {
     }
 
     public enum UserType {
-        FIELD_EXECUTIVE, MANAGER, ADMIN
+        FIELD_EXECUTIVE, MANAGER, ADMIN, ZSM
     }
 
     public enum UnlockRequestStatus {

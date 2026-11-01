@@ -1,4 +1,5 @@
 package com.instantsolutions.larimarpharma.repository;
+import com.instantsolutions.larimarpharma.entity.Admin;
 import com.instantsolutions.larimarpharma.entity.FieldExecutive;
 import com.instantsolutions.larimarpharma.entity.Manager;
 import com.instantsolutions.larimarpharma.entity.PortalUnlockRequest;
@@ -54,4 +55,9 @@ public interface PortalUnlockRequestRepository extends JpaRepository<PortalUnloc
             LocalDate lockedDate,
             List<PortalUnlockRequest.ApprovalStatus> statuses
     );
+
+
+    boolean existsByZsmAndLockedDateAndStatusIn(Admin zsm, LocalDate lockedDate, List<PortalUnlockRequest.ApprovalStatus> statuses);
+
+    List<PortalUnlockRequest> findByZsmOrderByRequestedAtDesc(Admin zsm);
 }

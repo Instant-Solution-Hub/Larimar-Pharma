@@ -59,5 +59,18 @@ public interface PortalLockStatusRepository extends JpaRepository<PortalLockStat
             "p.unlockRequested = true AND " +
             "p.unlockRequestStatus = 'PENDING'")
     List<PortalLockStatus> findAllPendingUnlockRequests();
+
+
+    boolean existsByZsmAndIsUnlocked(Admin zsm, Boolean isUnlocked);
+
+    boolean existsByZsmAndIsLocked(Admin zsm, Boolean isLocked);
+
+    boolean existsByZsmAndLockedDateAndIsLocked(Admin zsm, LocalDate lockedDate, Boolean isLocked);
+
+    Optional<PortalLockStatus> findTopByZsmAndIsLockedOrderByLockedDateDesc(Admin zsm, Boolean isLocked);
+
+    Optional<PortalLockStatus> findTopByZsmAndLockedDateOrderByIdDesc(Admin zsm, LocalDate lockedDate);
+
+    List<PortalLockStatus> findByZsmAndIsLockedOrderByLockedDateDesc(Admin zsm, Boolean isLocked);
 }
 
